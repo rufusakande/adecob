@@ -432,7 +432,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordConfirmInput = document.getElementById('password_confirmation');
     const nameInput = document.getElementById('name');
     const emailInput = document.getElementById('email');
-    const userTypeInput = document.getElementById('user_type');
+    const prenomInput = document.getElementById('prenom');
+    const telephoneInput = document.getElementById('telephone');
+    const communeInput = document.getElementById('commune_id');
     const termsInput = document.getElementById('terms');
     const submitBtn = document.getElementById('submitBtn');
     const submitMessage = document.getElementById('submitMessage');
