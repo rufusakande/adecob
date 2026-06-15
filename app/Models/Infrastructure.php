@@ -83,4 +83,43 @@ class Infrastructure extends Model
     {
         return $this->works()->count();
     }
+
+    /**
+     * Scope: infrastructures visibles selon le rôle.
+     * super_admin: tout • commune_admin: sa commune • agent: ses saisies
+     */
+    public function scopeVisibleTo($query, $user)
+    {
+        if (!$user) return $query->whereRaw('1=0');
+        if ($user->isSuperAdmin()) return $query;
+        if ($user->isCommuneAdmin()) {
+            if (!$user->commune) return $query->whereRaw('1=0');
+            return $query->where(function ($q) use ($user) {
+                $q->where('commune_id', $user->commune_id)
+                  ->orWhere('commune', $user->commune->name);
+            });
+        }
+        if ($user->isAgent()) {
+            return $query->where('user_id', $user->id);
+        }
+        return $query->whereRaw('1=0');
+    }
+
+    /**
+     * Peut être modifiée/supprimée par cet utilisateur ?
+     */
+    public function canBeManagedBy($user): bool
+    {
+        if (!$user) return false;
+        if ($user->isSuperAdmin()) return true;
+        if ($user->isCommuneAdmin()) {
+            if (!$user->commune) return false;
+            return ((int)$this->commune_id === (int)$user->commune_id)
+                || ($this->commune === $user->commune->name);
+        }
+        if ($user->isAgent()) {
+            return (int)$this->user_id === (int)$user->id;
+        }
+        return false;
+    }
 }
