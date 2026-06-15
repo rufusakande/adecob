@@ -42,12 +42,57 @@
                         {{-- Nom --}}
                         <div class="mb-4">
                             <label for="name" class="form-label">
-                                <i class="fas fa-user"></i> Nom Complet
+                                <i class="fas fa-user"></i> Nom
                             </label>
                             <input type="text" id="name" name="name" value="{{ old('name') }}"
                                    required autofocus class="form-control @error('name') is-invalid @enderror"
-                                   placeholder="Jean Dupont">
+                                   placeholder="Dupont">
                             @error('name')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Prénom --}}
+                        <div class="mb-4">
+                            <label for="prenom" class="form-label">
+                                <i class="fas fa-user"></i> Prénom
+                            </label>
+                            <input type="text" id="prenom" name="prenom" value="{{ old('prenom') }}"
+                                   required class="form-control @error('prenom') is-invalid @enderror"
+                                   placeholder="Jean">
+                            @error('prenom')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Téléphone --}}
+                        <div class="mb-4">
+                            <label for="telephone" class="form-label">
+                                <i class="fas fa-phone"></i> Numéro de téléphone
+                            </label>
+                            <input type="tel" id="telephone" name="telephone" value="{{ old('telephone') }}"
+                                   required class="form-control @error('telephone') is-invalid @enderror"
+                                   placeholder="+229 01 00 00 00 00">
+                            @error('telephone')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Commune --}}
+                        <div class="mb-4">
+                            <label for="commune_id" class="form-label">
+                                <i class="fas fa-map-marker-alt"></i> Commune
+                            </label>
+                            <select id="commune_id" name="commune_id" required
+                                    class="form-select @error('commune_id') is-invalid @enderror">
+                                <option value="">-- Sélectionnez votre commune --</option>
+                                @foreach(($communes ?? []) as $commune)
+                                    <option value="{{ $commune->id }}" @selected((string) old('commune_id') === (string) $commune->id)>
+                                        {{ $commune->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('commune_id')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
@@ -64,6 +109,7 @@
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
+
 
                         {{-- Mot de passe --}}
                         <div class="mb-4">
