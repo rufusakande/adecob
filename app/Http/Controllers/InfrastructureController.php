@@ -201,12 +201,20 @@ class InfrastructureController extends Controller
             'existing_photos' => 'nullable|array',
         ]);
 
+        $authUser = auth()->user();
         $infrastructure = new Infrastructure();
-        $infrastructure->user_id = auth()->id();
+        $infrastructure->user_id = $authUser->id;
+        // Pour un agent/admin de commune, forcer la commune à celle de l'utilisateur
+        // (empêche la création d'infras dans une autre commune via le formulaire).
+        if (($authUser->isAgent() || $authUser->isCommuneAdmin()) && $authUser->commune) {
+            $infrastructure->commune    = $authUser->commune->name;
+            $infrastructure->commune_id = $authUser->commune_id;
+        } else {
+            $infrastructure->commune    = $validated['commune'] ?? null;
+        }
         $infrastructure->date = $validated['date'] ?? null;
         $infrastructure->nom_enqueteur = $validated['nom_enqueteur'];
         $infrastructure->numero_telephone = $validated['numero_telephone'] ?? null;
-        $infrastructure->commune = $validated['commune'] ?? null;
         $infrastructure->arrondissement = json_encode($validated['arrondissement'] ?? []);
         $infrastructure->village = $validated['village'] ?? null;
         $infrastructure->hameau = $validated['hameau'] ?? null;
