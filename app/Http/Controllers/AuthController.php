@@ -187,12 +187,12 @@ class AuthController extends Controller
                 ->withErrors(['email' => 'Aucun compte ADECOB n\'est associé à cet email Google. Veuillez vous inscrire d\'abord.']);
         }
 
-        if (!$user->isApproved()) {
+        if (!$user->isSuperAdmin() && !$user->isApproved()) {
             return redirect()->route('registration.pending')
                 ->with('message', 'Votre inscription est en attente de validation par un administrateur.');
         }
 
         Auth::login($user, true);
-        return redirect()->intended('/home');
+        return $this->redirectAfterLogin($user);
     }
 }
