@@ -2,12 +2,10 @@
 
 @section('title', 'Infrastructures publiques — ADECOB')
 
-@push('styles')
+@section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-@endpush
 
-@section('content')
 <style>
     .public-toolbar { background:#f6f9f7; border:1px solid #e3ebe6; border-radius:14px; padding:18px; }
     .infra-card { border:1px solid #eef2ee; border-radius:14px; padding:18px; height:100%; background:#fff; transition:transform .15s ease, box-shadow .15s ease;}
