@@ -572,10 +572,10 @@ class InfrastructureController extends Controller
 
     public function show(Infrastructure $infrastructure)
     {
-        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+        if (!$infrastructure->canBeManagedBy(auth()->user())) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
-        
+
         return view('infrastructures.show', compact('infrastructure'));
     }
 
