@@ -21,29 +21,10 @@ class InfrastructureController extends Controller
     {
         // Récupérer les infrastructures avec des filtres optionnels
         $user = auth()->user();
-        $query = Infrastructure::query();
-        $statsQuery = Infrastructure::query();
-
-        // Filtrage selon le rôle de l'utilisateur
-        if ($user->isSuperAdmin()) {
-            // Super admin voit tout - pas de filtrage
-        } elseif ($user->isCommuneAdmin()) {
-            // Admin commune voit toutes les données de sa commune
-            if ($user->commune) {
-                $query->where('commune', $user->commune->name);
-                $statsQuery->where('commune', $user->commune->name);
-            } else {
-                $query->whereRaw('1=0');
-                $statsQuery->whereRaw('1=0');
-            }
-        } elseif ($user->isAgent()) {
-            // Agent voit seulement ses propres données
-            $query->where('nom_enqueteur', $user->name);
-            $statsQuery->where('nom_enqueteur', $user->name);
-        } else {
-            // Public user ne voit que les statistiques, pas les données
-            $query->whereRaw('1=0');
-        }
+        // Scoping unifié via le scope du modèle (super_admin = tout,
+        // commune_admin = sa commune, agent = ses propres saisies)
+        $query      = Infrastructure::query()->visibleTo($user);
+        $statsQuery = Infrastructure::query()->visibleTo($user);
 
         if ($request->filled('departement')) {
             $query->where('departement', $request->departement);
