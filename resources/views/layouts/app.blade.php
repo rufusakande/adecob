@@ -250,19 +250,22 @@
                             </a>
                         </li>
                     @else
-                        <!-- User Links -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url('/infrastructures') }}">📋 Infrastructures</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url('/mairie-agent/dashboard') }}">🎯 Planification</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('infrastructures.create') }}">➕ Ajouter</a>
-                        </li>
+                        {{-- Navigation contextuelle selon le rôle --}}
+                        @include('layouts.partials.nav-authenticated')
+
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle"></i> {{ Auth::user()->name }}
+                                <i class="bi bi-person-circle"></i>
+                                {{ Auth::user()->prenom ?? '' }} {{ Auth::user()->name }}
+                                @php
+                                    $roleLabels = [
+                                        'super_admin'   => ['Super Admin', 'danger'],
+                                        'commune_admin' => ['Admin Commune', 'primary'],
+                                        'agent'         => ['Agent', 'success'],
+                                    ];
+                                    [$rLabel, $rColor] = $roleLabels[Auth::user()->role] ?? ['Utilisateur', 'secondary'];
+                                @endphp
+                                <span class="badge bg-{{ $rColor }} ms-1">{{ $rLabel }}</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>

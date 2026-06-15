@@ -17,7 +17,7 @@ class HomeController extends Controller
 
         if ($user) {
             if ($user->isSuperAdmin()) {
-                return redirect()->route('admin.users.index');
+                return redirect()->route('admin.dashboard');
             }
             if ($user->isCommuneAdmin()) {
                 return redirect()->route('commune-admin.dashboard');
