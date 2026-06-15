@@ -104,71 +104,26 @@ class InfrastructureController extends Controller
             'planned' => $totalPlanned,
             'maintained' => $totalMaintained,
             'to_maintain' => $totalToMaintain,
-            'by_commune' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('commune')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('commune')
-                ->groupBy('commune')
-                ->orderBy('count', 'desc')
-                ->get(),
-            'by_secteur' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('secteur_domaine')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('secteur_domaine')
-                ->groupBy('secteur_domaine')
-                ->orderBy('count', 'desc')
-                ->get(),
-            'by_type' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('type_infrastructure')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('type_infrastructure')
-                ->groupBy('type_infrastructure')
-                ->orderBy('count', 'desc')
-                ->get(),
-            'by_etat' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('etat_fonctionnement')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('etat_fonctionnement')
-                ->groupBy('etat_fonctionnement')
-                ->orderBy('count', 'desc')
-                ->get(),
-            'by_niveau' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('niveau_degradation')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('niveau_degradation')
-                ->groupBy('niveau_degradation')
-                ->orderBy('count', 'desc')
-                ->get(),
+            'by_commune' => Infrastructure::query()->visibleTo($user)
+                ->select('commune')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('commune')->groupBy('commune')
+                ->orderBy('count', 'desc')->get(),
+            'by_secteur' => Infrastructure::query()->visibleTo($user)
+                ->select('secteur_domaine')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('secteur_domaine')->groupBy('secteur_domaine')
+                ->orderBy('count', 'desc')->get(),
+            'by_type' => Infrastructure::query()->visibleTo($user)
+                ->select('type_infrastructure')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('type_infrastructure')->groupBy('type_infrastructure')
+                ->orderBy('count', 'desc')->get(),
+            'by_etat' => Infrastructure::query()->visibleTo($user)
+                ->select('etat_fonctionnement')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('etat_fonctionnement')->groupBy('etat_fonctionnement')
+                ->orderBy('count', 'desc')->get(),
+            'by_niveau' => Infrastructure::query()->visibleTo($user)
+                ->select('niveau_degradation')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('niveau_degradation')->groupBy('niveau_degradation')
+                ->orderBy('count', 'desc')->get(),
         ];
 
         return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats'));
