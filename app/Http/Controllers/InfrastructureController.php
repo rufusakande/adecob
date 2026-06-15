@@ -21,29 +21,10 @@ class InfrastructureController extends Controller
     {
         // Récupérer les infrastructures avec des filtres optionnels
         $user = auth()->user();
-        $query = Infrastructure::query();
-        $statsQuery = Infrastructure::query();
-
-        // Filtrage selon le rôle de l'utilisateur
-        if ($user->isSuperAdmin()) {
-            // Super admin voit tout - pas de filtrage
-        } elseif ($user->isCommuneAdmin()) {
-            // Admin commune voit toutes les données de sa commune
-            if ($user->commune) {
-                $query->where('commune', $user->commune->name);
-                $statsQuery->where('commune', $user->commune->name);
-            } else {
-                $query->whereRaw('1=0');
-                $statsQuery->whereRaw('1=0');
-            }
-        } elseif ($user->isAgent()) {
-            // Agent voit seulement ses propres données
-            $query->where('nom_enqueteur', $user->name);
-            $statsQuery->where('nom_enqueteur', $user->name);
-        } else {
-            // Public user ne voit que les statistiques, pas les données
-            $query->whereRaw('1=0');
-        }
+        // Scoping unifié via le scope du modèle (super_admin = tout,
+        // commune_admin = sa commune, agent = ses propres saisies)
+        $query      = Infrastructure::query()->visibleTo($user);
+        $statsQuery = Infrastructure::query()->visibleTo($user);
 
         if ($request->filled('departement')) {
             $query->where('departement', $request->departement);
@@ -87,22 +68,11 @@ class InfrastructureController extends Controller
         // Pour les statistiques, on utilise la même restriction que pour la liste
         // Calculate statistics with priority scoring
         $totalPlanned = MairieAgentData::whereHas('infrastructure', function($q) use ($user) {
-            if ($user->isCommuneAdmin() && $user->commune) {
-                $q->where('commune', $user->commune->name);
-            } elseif ($user->isAgent()) {
-                $q->where('nom_enqueteur', $user->name);
-            } elseif (!$user->isSuperAdmin()) {
-                $q->whereRaw('1=0');
-            }
+            $q->visibleTo($user);
         })->count();
-        
+
         // Calculate priority scores for infrastructures (requête indépendante)
-        $priorityQuery = Infrastructure::query();
-        if ($user->isCommuneAdmin() && $user->commune) {
-            $priorityQuery->where('commune', $user->commune->name);
-        } elseif ($user->isAgent()) {
-            $priorityQuery->where('nom_enqueteur', $user->name);
-        }
+        $priorityQuery = Infrastructure::query()->visibleTo($user);
 
         $infrastructuresWithPriority = $priorityQuery->select(
             'id', 'commune', 'secteur_domaine', 'type_infrastructure', 
@@ -134,71 +104,26 @@ class InfrastructureController extends Controller
             'planned' => $totalPlanned,
             'maintained' => $totalMaintained,
             'to_maintain' => $totalToMaintain,
-            'by_commune' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('commune')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('commune')
-                ->groupBy('commune')
-                ->orderBy('count', 'desc')
-                ->get(),
-            'by_secteur' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('secteur_domaine')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('secteur_domaine')
-                ->groupBy('secteur_domaine')
-                ->orderBy('count', 'desc')
-                ->get(),
-            'by_type' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('type_infrastructure')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('type_infrastructure')
-                ->groupBy('type_infrastructure')
-                ->orderBy('count', 'desc')
-                ->get(),
-            'by_etat' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('etat_fonctionnement')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('etat_fonctionnement')
-                ->groupBy('etat_fonctionnement')
-                ->orderBy('count', 'desc')
-                ->get(),
-            'by_niveau' => Infrastructure::query()
-                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
-                    return $q->where('commune', $user->commune->name);
-                })
-                ->when($user->isAgent(), function($q) use ($user) {
-                    return $q->where('nom_enqueteur', $user->name);
-                })
-                ->select('niveau_degradation')
-                ->selectRaw('COUNT(*) as count')
-                ->whereNotNull('niveau_degradation')
-                ->groupBy('niveau_degradation')
-                ->orderBy('count', 'desc')
-                ->get(),
+            'by_commune' => Infrastructure::query()->visibleTo($user)
+                ->select('commune')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('commune')->groupBy('commune')
+                ->orderBy('count', 'desc')->get(),
+            'by_secteur' => Infrastructure::query()->visibleTo($user)
+                ->select('secteur_domaine')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('secteur_domaine')->groupBy('secteur_domaine')
+                ->orderBy('count', 'desc')->get(),
+            'by_type' => Infrastructure::query()->visibleTo($user)
+                ->select('type_infrastructure')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('type_infrastructure')->groupBy('type_infrastructure')
+                ->orderBy('count', 'desc')->get(),
+            'by_etat' => Infrastructure::query()->visibleTo($user)
+                ->select('etat_fonctionnement')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('etat_fonctionnement')->groupBy('etat_fonctionnement')
+                ->orderBy('count', 'desc')->get(),
+            'by_niveau' => Infrastructure::query()->visibleTo($user)
+                ->select('niveau_degradation')->selectRaw('COUNT(*) as count')
+                ->whereNotNull('niveau_degradation')->groupBy('niveau_degradation')
+                ->orderBy('count', 'desc')->get(),
         ];
 
         return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats'));
@@ -276,12 +201,20 @@ class InfrastructureController extends Controller
             'existing_photos' => 'nullable|array',
         ]);
 
+        $authUser = auth()->user();
         $infrastructure = new Infrastructure();
-        $infrastructure->user_id = auth()->id();
+        $infrastructure->user_id = $authUser->id;
+        // Pour un agent/admin de commune, forcer la commune à celle de l'utilisateur
+        // (empêche la création d'infras dans une autre commune via le formulaire).
+        if (($authUser->isAgent() || $authUser->isCommuneAdmin()) && $authUser->commune) {
+            $infrastructure->commune    = $authUser->commune->name;
+            $infrastructure->commune_id = $authUser->commune_id;
+        } else {
+            $infrastructure->commune    = $validated['commune'] ?? null;
+        }
         $infrastructure->date = $validated['date'] ?? null;
         $infrastructure->nom_enqueteur = $validated['nom_enqueteur'];
         $infrastructure->numero_telephone = $validated['numero_telephone'] ?? null;
-        $infrastructure->commune = $validated['commune'] ?? null;
         $infrastructure->arrondissement = json_encode($validated['arrondissement'] ?? []);
         $infrastructure->village = $validated['village'] ?? null;
         $infrastructure->hameau = $validated['hameau'] ?? null;
@@ -379,7 +312,7 @@ class InfrastructureController extends Controller
 
     public function edit(Infrastructure $infrastructure)
     {
-        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+        if (!$infrastructure->canBeManagedBy(auth()->user())) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
         return view('infrastructures.edit', compact('infrastructure'));
@@ -387,8 +320,13 @@ class InfrastructureController extends Controller
 
     public function update(Request $request, Infrastructure $infrastructure)
     {
-        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+        $authUser = auth()->user();
+        if (!$infrastructure->canBeManagedBy($authUser)) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
+        }
+        // Un agent ne peut modifier que ses propres saisies
+        if ($authUser->isAgent() && (int)$infrastructure->user_id !== (int)$authUser->id) {
+            abort(403, 'Les agents ne peuvent modifier que leurs propres infrastructures.');
         }
 
         $validated = $request->validate([
@@ -429,7 +367,13 @@ class InfrastructureController extends Controller
         $infrastructure->date = $validated['date'] ?? null;
         $infrastructure->nom_enqueteur = $validated['nom_enqueteur'];
         $infrastructure->numero_telephone = $validated['numero_telephone'] ?? null;
-        $infrastructure->commune = $validated['commune'] ?? null;
+        // Empêcher un agent / admin commune de déplacer l'infrastructure vers une autre commune
+        if (($authUser->isAgent() || $authUser->isCommuneAdmin()) && $authUser->commune) {
+            $infrastructure->commune    = $authUser->commune->name;
+            $infrastructure->commune_id = $authUser->commune_id;
+        } else {
+            $infrastructure->commune = $validated['commune'] ?? null;
+        }
         $infrastructure->arrondissement = json_encode($validated['arrondissement'] ?? []);
         $infrastructure->village = $validated['village'] ?? null;
         $infrastructure->hameau = $validated['hameau'] ?? null;
@@ -543,10 +487,14 @@ class InfrastructureController extends Controller
 
     public function destroy(Infrastructure $infrastructure)
     {
-        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+        $authUser = auth()->user();
+        if (!$infrastructure->canBeManagedBy($authUser)) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
-        
+        if ($authUser->isAgent() && (int)$infrastructure->user_id !== (int)$authUser->id) {
+            abort(403, 'Les agents ne peuvent supprimer que leurs propres infrastructures.');
+        }
+
         $infrastructure->delete();
         return redirect()->route('infrastructures.index')->with('success', 'Infrastructure supprimée avec succès.');
     }
@@ -558,18 +506,8 @@ class InfrastructureController extends Controller
         $selectedIds = $request->input('selected_ids', []);
         $year = $request->input('year');
 
-        $query = Infrastructure::query();
-        
-        // Si l'utilisateur n'est pas admin, limiter l'export à ses propres infrastructures
-        if (!auth()->user()->isSuperAdmin()) {
-            $query->where('user_id', auth()->id());
-            
-            // Si des IDs sont sélectionnés, vérifier qu'ils appartiennent bien à l'utilisateur
-            if (!empty($selectedIds)) {
-                $query->whereIn('id', $selectedIds)
-                      ->where('user_id', auth()->id());
-            }
-        }
+        // Limiter l'export à ce que l'utilisateur a le droit de voir
+        $query = Infrastructure::query()->visibleTo(auth()->user());
 
         // Apply filters
         $filters = [];
@@ -634,10 +572,10 @@ class InfrastructureController extends Controller
 
     public function show(Infrastructure $infrastructure)
     {
-        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+        if (!$infrastructure->canBeManagedBy(auth()->user())) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
-        
+
         return view('infrastructures.show', compact('infrastructure'));
     }
 
