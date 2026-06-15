@@ -517,7 +517,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const { strength, failedCriteria } = evaluatePasswordStrength();
         const name = nameInput.value.trim();
         const email = emailInput.value.trim();
-        const userType = userTypeInput.value;
+        const prenom = prenomInput.value.trim();
+        const telephone = telephoneInput.value.trim();
+        const commune = communeInput.value;
         const password = passwordInput.value;
         const passwordConfirm = passwordConfirmInput.value;
         const termsChecked = termsInput.checked;
@@ -526,20 +528,12 @@ document.addEventListener('DOMContentLoaded', function() {
         let isValid = true;
         let issues = [];
 
-        if (!name) {
-            isValid = false;
-            issues.push('Entrez votre nom complet');
-        }
+        if (!name)      { isValid = false; issues.push('Entrez votre nom'); }
+        if (!prenom)    { isValid = false; issues.push('Entrez votre prénom'); }
+        if (!email)     { isValid = false; issues.push('Entrez votre email'); }
+        if (!telephone) { isValid = false; issues.push('Entrez votre numéro de téléphone'); }
+        if (!commune)   { isValid = false; issues.push('Sélectionnez votre commune'); }
 
-        if (!email) {
-            isValid = false;
-            issues.push('Entrez votre email');
-        }
-
-        if (!userType) {
-            isValid = false;
-            issues.push('Choisissez un type de compte');
-        }
 
         if (strength < 5) {
             isValid = false;
