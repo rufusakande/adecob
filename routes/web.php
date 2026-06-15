@@ -102,6 +102,10 @@ Route::middleware(['auth', 'admin.access'])->group(function () {
 
 // Routes admin - réservées au super admin
 Route::middleware(['auth', 'super.admin'])->group(function () {
+    // Tableau de bord Super Admin
+    Route::get('/admin/dashboard', [App\Http\Controllers\Admin\SuperAdminDashboardController::class, 'index'])
+        ->name('admin.dashboard');
+
     // Routes pour la gestion des utilisateurs
     Route::get('/admin/users', [App\Http\Controllers\Admin\UserManagementController::class, 'index'])->name('admin.users.index');
     Route::get('/admin/users/{user}/edit', [App\Http\Controllers\Admin\UserManagementController::class, 'edit'])->name('admin.users.edit');
