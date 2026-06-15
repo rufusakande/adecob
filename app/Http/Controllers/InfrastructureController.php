@@ -367,7 +367,13 @@ class InfrastructureController extends Controller
         $infrastructure->date = $validated['date'] ?? null;
         $infrastructure->nom_enqueteur = $validated['nom_enqueteur'];
         $infrastructure->numero_telephone = $validated['numero_telephone'] ?? null;
-        $infrastructure->commune = $validated['commune'] ?? null;
+        // Empêcher un agent / admin commune de déplacer l'infrastructure vers une autre commune
+        if (($authUser->isAgent() || $authUser->isCommuneAdmin()) && $authUser->commune) {
+            $infrastructure->commune    = $authUser->commune->name;
+            $infrastructure->commune_id = $authUser->commune_id;
+        } else {
+            $infrastructure->commune = $validated['commune'] ?? null;
+        }
         $infrastructure->arrondissement = json_encode($validated['arrondissement'] ?? []);
         $infrastructure->village = $validated['village'] ?? null;
         $infrastructure->hameau = $validated['hameau'] ?? null;
