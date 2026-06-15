@@ -17,7 +17,8 @@ class AuthController extends Controller
     public function showRegisterForm()
     {
         $passwordCriteria = PasswordPolicy::getCriteria();
-        return view('auth.register', compact('passwordCriteria'));
+        $communes = \App\Models\Commune::orderBy('name')->get(['id', 'name']);
+        return view('auth.register', compact('passwordCriteria', 'communes'));
     }
 
     public function register(RegisterRequest $request)
