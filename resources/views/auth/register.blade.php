@@ -179,8 +179,7 @@
                             Votre compte sera créé avec le rôle <strong>Agent Collecteur</strong>. Un administrateur (général ou de votre commune) devra valider votre inscription avant que vous puissiez accéder à votre espace.
                         </div>
 
-                            @enderror
-                        </div>
+
 
                         {{-- Conditions d'utilisation --}}
                         <div class="mb-4 form-check">
