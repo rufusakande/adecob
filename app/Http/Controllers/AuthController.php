@@ -17,46 +17,50 @@ class AuthController extends Controller
     public function showRegisterForm()
     {
         $passwordCriteria = PasswordPolicy::getCriteria();
-        return view('auth.register', compact('passwordCriteria'));
+        $communes = \App\Models\Commune::orderBy('name')->get(['id', 'name']);
+        return view('auth.register', compact('passwordCriteria', 'communes'));
     }
 
     public function register(RegisterRequest $request)
     {
         try {
-            // Les données sont validées automatiquement par RegisterRequest
             $validated = $request->validated();
 
+            // Tout nouvel inscrit est un agent collecteur, en attente d'approbation.
             $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => $validated['user_type'], // 'agent' ou 'public_user'
-                'is_approved' => $validated['user_type'] === 'public_user' ? true : false, // public_user auto-approuvé
+                'name'        => $validated['name'],
+                'prenom'      => $validated['prenom'],
+                'email'       => $validated['email'],
+                'telephone'   => $validated['telephone'],
+                'commune_id'  => $validated['commune_id'],
+                'password'    => Hash::make($validated['password']),
+                'role'        => 'agent',
+                'is_approved' => false,
             ]);
 
-            // Essayer d'envoyer les notifications pour les agents
-            if ($validated['user_type'] === 'agent') {
-                try {
-                    // Notifier les administrateurs
-                    $admins = User::where('role', 'super_admin')->get();
-                    foreach ($admins as $admin) {
-                        $admin->notify(new \App\Notifications\NewUserRegistration($user));
-                    }
+            // Notifier super admins + admins de la commune choisie.
+            try {
+                $recipients = User::where('role', 'super_admin')
+                    ->orWhere(function ($q) use ($validated) {
+                        $q->where('role', 'commune_admin')
+                          ->where('commune_id', $validated['commune_id']);
+                    })->get();
 
-                    // Notifier l'utilisateur
-                    $user->notify(new \App\Notifications\RegistrationStatus('pending'));
-                } catch (\Exception $e) {
-                    \Log::error('Erreur lors de l\'envoi des notifications: ' . $e->getMessage());
+                foreach ($recipients as $recipient) {
+                    $recipient->notify(new \App\Notifications\NewUserRegistration($user));
                 }
+
+                $user->notify(new \App\Notifications\RegistrationStatus('pending'));
+            } catch (\Exception $e) {
+                \Log::error('Erreur lors de l\'envoi des notifications: ' . $e->getMessage());
             }
 
-            // Logger l'action
             \Log::info('Nouvel utilisateur inscrit', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'role' => $user->role,
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent()
+                'user_id'    => $user->id,
+                'email'      => $user->email,
+                'role'       => $user->role,
+                'commune_id' => $user->commune_id,
+                'ip'         => $request->ip(),
             ]);
 
             return redirect()->route('registration.pending')
@@ -65,7 +69,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             \Log::error('Erreur lors de l\'inscription: ' . $e->getMessage(), [
                 'email' => $request->email,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             return back()
                 ->withInput()
@@ -155,23 +159,20 @@ class AuthController extends Controller
             return redirect()->route('login.form')->withErrors('Erreur lors de la connexion avec Google.');
         }
 
-        // Check if user already exists
+        // Le public n'a pas besoin de compte : on n'auto-crée plus de profil via Google.
         $user = User::where('email', $googleUser->getEmail())->first();
 
         if (!$user) {
-            // Create new user as public_user (auto-approved)
-            $user = User::create([
-                'name' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
-                'password' => Hash::make(Str::random(16)),
-                'role' => 'public_user',
-                'is_approved' => true
-            ]);
+            return redirect()->route('register.form')
+                ->withErrors(['email' => 'Aucun compte ADECOB n\'est associé à cet email Google. Veuillez vous inscrire d\'abord.']);
         }
 
-        // Log the user in
-        Auth::login($user, true);
+        if (!$user->isApproved()) {
+            return redirect()->route('registration.pending')
+                ->with('message', 'Votre inscription est en attente de validation par un administrateur.');
+        }
 
+        Auth::login($user, true);
         return redirect()->intended('/home');
     }
 }

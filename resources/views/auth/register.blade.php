@@ -42,12 +42,57 @@
                         {{-- Nom --}}
                         <div class="mb-4">
                             <label for="name" class="form-label">
-                                <i class="fas fa-user"></i> Nom Complet
+                                <i class="fas fa-user"></i> Nom
                             </label>
                             <input type="text" id="name" name="name" value="{{ old('name') }}"
                                    required autofocus class="form-control @error('name') is-invalid @enderror"
-                                   placeholder="Jean Dupont">
+                                   placeholder="Dupont">
                             @error('name')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Prénom --}}
+                        <div class="mb-4">
+                            <label for="prenom" class="form-label">
+                                <i class="fas fa-user"></i> Prénom
+                            </label>
+                            <input type="text" id="prenom" name="prenom" value="{{ old('prenom') }}"
+                                   required class="form-control @error('prenom') is-invalid @enderror"
+                                   placeholder="Jean">
+                            @error('prenom')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Téléphone --}}
+                        <div class="mb-4">
+                            <label for="telephone" class="form-label">
+                                <i class="fas fa-phone"></i> Numéro de téléphone
+                            </label>
+                            <input type="tel" id="telephone" name="telephone" value="{{ old('telephone') }}"
+                                   required class="form-control @error('telephone') is-invalid @enderror"
+                                   placeholder="+229 01 00 00 00 00">
+                            @error('telephone')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Commune --}}
+                        <div class="mb-4">
+                            <label for="commune_id" class="form-label">
+                                <i class="fas fa-map-marker-alt"></i> Commune
+                            </label>
+                            <select id="commune_id" name="commune_id" required
+                                    class="form-select @error('commune_id') is-invalid @enderror">
+                                <option value="">-- Sélectionnez votre commune --</option>
+                                @foreach(($communes ?? []) as $commune)
+                                    <option value="{{ $commune->id }}" @selected((string) old('commune_id') === (string) $commune->id)>
+                                        {{ $commune->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('commune_id')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
@@ -64,6 +109,7 @@
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
+
 
                         {{-- Mot de passe --}}
                         <div class="mb-4">
@@ -127,31 +173,13 @@
                             @enderror
                         </div>
 
-                        {{-- Type de compte --}}
-                        <div class="mb-4">
-                            <label for="user_type" class="form-label">
-                                <i class="fas fa-user-tag"></i> Type de Compte
-                            </label>
-                            <select id="user_type" name="user_type" required
-                                    class="form-select @error('user_type') is-invalid @enderror">
-                                <option value="">-- Sélectionnez un type --</option>
-                                <option value="agent"
-                                        @selected(old('user_type') === 'agent')>
-                                    🔧 Agent Collecteur
-                                </option>
-                                <option value="public_user"
-                                        @selected(old('user_type') === 'public_user')>
-                                    👥 Utilisateur Public
-                                </option>
-                            </select>
-                            <small class="form-text text-muted d-block mt-2">
-                                <strong>🔧 Agent Collecteur:</strong> Pour collecter et gérer les données des infrastructures.<br>
-                                <strong>👥 Utilisateur Public:</strong> Pour consulter les statistiques des communes.
-                            </small>
-                            @error('user_type')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
+                        {{-- Le rôle est fixé : tout nouvel inscrit est un agent collecteur en attente de validation. --}}
+                        <div class="alert alert-info small mb-4">
+                            <i class="fas fa-info-circle"></i>
+                            Votre compte sera créé avec le rôle <strong>Agent Collecteur</strong>. Un administrateur (général ou de votre commune) devra valider votre inscription avant que vous puissiez accéder à votre espace.
                         </div>
+
+
 
                         {{-- Conditions d'utilisation --}}
                         <div class="mb-4 form-check">
@@ -404,7 +432,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordConfirmInput = document.getElementById('password_confirmation');
     const nameInput = document.getElementById('name');
     const emailInput = document.getElementById('email');
-    const userTypeInput = document.getElementById('user_type');
+    const prenomInput = document.getElementById('prenom');
+    const telephoneInput = document.getElementById('telephone');
+    const communeInput = document.getElementById('commune_id');
     const termsInput = document.getElementById('terms');
     const submitBtn = document.getElementById('submitBtn');
     const submitMessage = document.getElementById('submitMessage');
@@ -487,7 +517,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const { strength, failedCriteria } = evaluatePasswordStrength();
         const name = nameInput.value.trim();
         const email = emailInput.value.trim();
-        const userType = userTypeInput.value;
+        const prenom = prenomInput.value.trim();
+        const telephone = telephoneInput.value.trim();
+        const commune = communeInput.value;
         const password = passwordInput.value;
         const passwordConfirm = passwordConfirmInput.value;
         const termsChecked = termsInput.checked;
@@ -496,20 +528,12 @@ document.addEventListener('DOMContentLoaded', function() {
         let isValid = true;
         let issues = [];
 
-        if (!name) {
-            isValid = false;
-            issues.push('Entrez votre nom complet');
-        }
+        if (!name)      { isValid = false; issues.push('Entrez votre nom'); }
+        if (!prenom)    { isValid = false; issues.push('Entrez votre prénom'); }
+        if (!email)     { isValid = false; issues.push('Entrez votre email'); }
+        if (!telephone) { isValid = false; issues.push('Entrez votre numéro de téléphone'); }
+        if (!commune)   { isValid = false; issues.push('Sélectionnez votre commune'); }
 
-        if (!email) {
-            isValid = false;
-            issues.push('Entrez votre email');
-        }
-
-        if (!userType) {
-            isValid = false;
-            issues.push('Choisissez un type de compte');
-        }
 
         if (strength < 5) {
             isValid = false;
@@ -552,7 +576,9 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordConfirmInput.addEventListener('input', validateForm);
     nameInput.addEventListener('input', validateForm);
     emailInput.addEventListener('input', validateForm);
-    userTypeInput.addEventListener('change', validateForm);
+    prenomInput.addEventListener('input', validateForm);
+    telephoneInput.addEventListener('input', validateForm);
+    communeInput.addEventListener('change', validateForm);
     termsInput.addEventListener('change', validateForm);
 
     // reCAPTCHA temporarily disabled

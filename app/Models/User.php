@@ -20,11 +20,15 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'prenom',
         'email',
+        'telephone',
         'password',
         'role',
         'commune_id',
-        'is_approved'
+        'is_approved',
+        'approved_at',
+        'rejected_at',
     ];
 
     /**
@@ -44,6 +48,8 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'password' => 'hashed',
         'is_approved' => 'boolean',
     ];
