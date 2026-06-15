@@ -138,7 +138,7 @@ class AuthController extends Controller
     protected function redirectAfterLogin(User $user)
     {
         if ($user->isSuperAdmin()) {
-            return redirect()->intended(route('admin.users.index'));
+            return redirect()->intended(route('admin.dashboard'));
         }
         if ($user->isCommuneAdmin()) {
             return redirect()->intended(route('commune-admin.dashboard'));

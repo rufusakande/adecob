@@ -13,13 +13,13 @@
 
 @if($u->isSuperAdmin())
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.users.index') }}"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
+        <a class="nav-link" href="{{ route('admin.dashboard') }}"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.communes.index') }}"><i class="bi bi-building"></i> Communes</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.users.index') }}"><i class="bi bi-people"></i> Utilisateurs</a>
+        <a class="nav-link" href="{{ route('admin.dashboard') }}"><i class="bi bi-people"></i> Utilisateurs</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" href="{{ url('/infrastructures') }}"><i class="bi bi-list-ul"></i> Infrastructures</a>
