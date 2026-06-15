@@ -173,29 +173,12 @@
                             @enderror
                         </div>
 
-                        {{-- Type de compte --}}
-                        <div class="mb-4">
-                            <label for="user_type" class="form-label">
-                                <i class="fas fa-user-tag"></i> Type de Compte
-                            </label>
-                            <select id="user_type" name="user_type" required
-                                    class="form-select @error('user_type') is-invalid @enderror">
-                                <option value="">-- Sélectionnez un type --</option>
-                                <option value="agent"
-                                        @selected(old('user_type') === 'agent')>
-                                    🔧 Agent Collecteur
-                                </option>
-                                <option value="public_user"
-                                        @selected(old('user_type') === 'public_user')>
-                                    👥 Utilisateur Public
-                                </option>
-                            </select>
-                            <small class="form-text text-muted d-block mt-2">
-                                <strong>🔧 Agent Collecteur:</strong> Pour collecter et gérer les données des infrastructures.<br>
-                                <strong>👥 Utilisateur Public:</strong> Pour consulter les statistiques des communes.
-                            </small>
-                            @error('user_type')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                        {{-- Le rôle est fixé : tout nouvel inscrit est un agent collecteur en attente de validation. --}}
+                        <div class="alert alert-info small mb-4">
+                            <i class="fas fa-info-circle"></i>
+                            Votre compte sera créé avec le rôle <strong>Agent Collecteur</strong>. Un administrateur (général ou de votre commune) devra valider votre inscription avant que vous puissiez accéder à votre espace.
+                        </div>
+
                             @enderror
                         </div>
 
