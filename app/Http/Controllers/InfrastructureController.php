@@ -68,22 +68,11 @@ class InfrastructureController extends Controller
         // Pour les statistiques, on utilise la même restriction que pour la liste
         // Calculate statistics with priority scoring
         $totalPlanned = MairieAgentData::whereHas('infrastructure', function($q) use ($user) {
-            if ($user->isCommuneAdmin() && $user->commune) {
-                $q->where('commune', $user->commune->name);
-            } elseif ($user->isAgent()) {
-                $q->where('nom_enqueteur', $user->name);
-            } elseif (!$user->isSuperAdmin()) {
-                $q->whereRaw('1=0');
-            }
+            $q->visibleTo($user);
         })->count();
-        
+
         // Calculate priority scores for infrastructures (requête indépendante)
-        $priorityQuery = Infrastructure::query();
-        if ($user->isCommuneAdmin() && $user->commune) {
-            $priorityQuery->where('commune', $user->commune->name);
-        } elseif ($user->isAgent()) {
-            $priorityQuery->where('nom_enqueteur', $user->name);
-        }
+        $priorityQuery = Infrastructure::query()->visibleTo($user);
 
         $infrastructuresWithPriority = $priorityQuery->select(
             'id', 'commune', 'secteur_domaine', 'type_infrastructure', 
