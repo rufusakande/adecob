@@ -85,7 +85,6 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         try {
-            // Les données sont validées automatiquement par LoginRequest (incluant reCAPTCHA)
             $validated = $request->validated();
 
             $credentials = [
@@ -95,23 +94,27 @@ class AuthController extends Controller
 
             if (Auth::attempt($credentials, $request->filled('remember'))) {
                 $request->session()->regenerate();
+                $user = Auth::user();
 
-                // Logger la connexion réussie
+                // Bloquer immédiatement les comptes non approuvés (sauf super admin)
+                if (!$user->isSuperAdmin() && !$user->isApproved()) {
+                    return redirect()->route('registration.pending')
+                        ->with('message', 'Votre compte est en attente de validation par un administrateur.');
+                }
+
                 \Log::info('Utilisateur connecté', [
-                    'user_id' => Auth::id(),
-                    'email' => Auth::user()->email,
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'role' => $user->role,
                     'ip' => $request->ip(),
-                    'user_agent' => $request->userAgent()
                 ]);
 
-                return redirect()->intended('/home');
+                return $this->redirectAfterLogin($user);
             }
 
-            // Tentative échouée - credentials invalides
             \Log::warning('Tentative de connexion échouée', [
                 'email' => $validated['email'],
                 'ip' => $request->ip(),
-                'user_agent' => $request->userAgent()
             ]);
 
             return back()->withErrors([
@@ -127,6 +130,23 @@ class AuthController extends Controller
                 ->withInput($request->only('email'))
                 ->withErrors(['error' => 'Une erreur est survenue lors de votre connexion. Veuillez réessayer.']);
         }
+    }
+
+    /**
+     * Redirige l'utilisateur vers l'espace correspondant à son rôle.
+     */
+    protected function redirectAfterLogin(User $user)
+    {
+        if ($user->isSuperAdmin()) {
+            return redirect()->intended(route('admin.users.index'));
+        }
+        if ($user->isCommuneAdmin()) {
+            return redirect()->intended(route('commune-admin.dashboard'));
+        }
+        if ($user->isAgent()) {
+            return redirect()->intended(route('mairie-agent.dashboard'));
+        }
+        return redirect()->intended('/home');
     }
 
     public function logout(Request $request)
