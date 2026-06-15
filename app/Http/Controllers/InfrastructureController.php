@@ -487,10 +487,14 @@ class InfrastructureController extends Controller
 
     public function destroy(Infrastructure $infrastructure)
     {
-        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+        $authUser = auth()->user();
+        if (!$infrastructure->canBeManagedBy($authUser)) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
-        
+        if ($authUser->isAgent() && (int)$infrastructure->user_id !== (int)$authUser->id) {
+            abort(403, 'Les agents ne peuvent supprimer que leurs propres infrastructures.');
+        }
+
         $infrastructure->delete();
         return redirect()->route('infrastructures.index')->with('success', 'Infrastructure supprimée avec succès.');
     }
@@ -502,18 +506,8 @@ class InfrastructureController extends Controller
         $selectedIds = $request->input('selected_ids', []);
         $year = $request->input('year');
 
-        $query = Infrastructure::query();
-        
-        // Si l'utilisateur n'est pas admin, limiter l'export à ses propres infrastructures
-        if (!auth()->user()->isSuperAdmin()) {
-            $query->where('user_id', auth()->id());
-            
-            // Si des IDs sont sélectionnés, vérifier qu'ils appartiennent bien à l'utilisateur
-            if (!empty($selectedIds)) {
-                $query->whereIn('id', $selectedIds)
-                      ->where('user_id', auth()->id());
-            }
-        }
+        // Limiter l'export à ce que l'utilisateur a le droit de voir
+        $query = Infrastructure::query()->visibleTo(auth()->user());
 
         // Apply filters
         $filters = [];
