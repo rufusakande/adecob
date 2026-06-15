@@ -312,7 +312,7 @@ class InfrastructureController extends Controller
 
     public function edit(Infrastructure $infrastructure)
     {
-        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+        if (!$infrastructure->canBeManagedBy(auth()->user())) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
         return view('infrastructures.edit', compact('infrastructure'));
@@ -320,8 +320,13 @@ class InfrastructureController extends Controller
 
     public function update(Request $request, Infrastructure $infrastructure)
     {
-        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+        $authUser = auth()->user();
+        if (!$infrastructure->canBeManagedBy($authUser)) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
+        }
+        // Un agent ne peut modifier que ses propres saisies
+        if ($authUser->isAgent() && (int)$infrastructure->user_id !== (int)$authUser->id) {
+            abort(403, 'Les agents ne peuvent modifier que leurs propres infrastructures.');
         }
 
         $validated = $request->validate([
