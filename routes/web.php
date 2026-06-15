@@ -21,9 +21,10 @@ use App\Http\Controllers\Admin\CommuneAdminController;
 
 use Illuminate\Support\Facades\Auth;
 
-Route::get('/', function () {
-    return auth()->check() ? redirect()->route('home') : redirect()->route('register.form');
-});
+// Pages publiques (accessibles sans connexion)
+Route::get('/', [App\Http\Controllers\PublicController::class, 'landing'])->name('public.landing');
+Route::get('/infrastructures/public', [App\Http\Controllers\PublicController::class, 'infrastructures'])
+    ->name('public.infrastructures');
 
 // Authentication Routes
 Route::get('/register', [App\Http\Controllers\AuthController::class, 'showRegisterForm'])->name('register.form');
