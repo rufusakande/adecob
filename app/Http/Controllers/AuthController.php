@@ -158,23 +158,20 @@ class AuthController extends Controller
             return redirect()->route('login.form')->withErrors('Erreur lors de la connexion avec Google.');
         }
 
-        // Check if user already exists
+        // Le public n'a pas besoin de compte : on n'auto-crée plus de profil via Google.
         $user = User::where('email', $googleUser->getEmail())->first();
 
         if (!$user) {
-            // Create new user as public_user (auto-approved)
-            $user = User::create([
-                'name' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
-                'password' => Hash::make(Str::random(16)),
-                'role' => 'public_user',
-                'is_approved' => true
-            ]);
+            return redirect()->route('register.form')
+                ->withErrors(['email' => 'Aucun compte ADECOB n\'est associé à cet email Google. Veuillez vous inscrire d\'abord.']);
         }
 
-        // Log the user in
-        Auth::login($user, true);
+        if (!$user->isApproved()) {
+            return redirect()->route('registration.pending')
+                ->with('message', 'Votre inscription est en attente de validation par un administrateur.');
+        }
 
+        Auth::login($user, true);
         return redirect()->intended('/home');
     }
 }
