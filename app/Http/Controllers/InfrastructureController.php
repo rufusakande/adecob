@@ -1,0 +1,761 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Infrastructure;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\InfrastructuresImport;
+use App\Exports\InfrastructuresExport;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\MairieAgentData;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+
+class InfrastructureController extends Controller
+{
+
+    public function index(Request $request)
+    {
+        // Récupérer les infrastructures avec des filtres optionnels
+        $user = auth()->user();
+        $query = Infrastructure::query();
+        $statsQuery = Infrastructure::query();
+
+        // Filtrage selon le rôle de l'utilisateur
+        if ($user->isSuperAdmin()) {
+            // Super admin voit tout - pas de filtrage
+        } elseif ($user->isCommuneAdmin()) {
+            // Admin commune voit toutes les données de sa commune
+            if ($user->commune) {
+                $query->where('commune', $user->commune->name);
+                $statsQuery->where('commune', $user->commune->name);
+            } else {
+                $query->whereRaw('1=0');
+                $statsQuery->whereRaw('1=0');
+            }
+        } elseif ($user->isAgent()) {
+            // Agent voit seulement ses propres données
+            $query->where('nom_enqueteur', $user->name);
+            $statsQuery->where('nom_enqueteur', $user->name);
+        } else {
+            // Public user ne voit que les statistiques, pas les données
+            $query->whereRaw('1=0');
+        }
+
+        if ($request->filled('departement')) {
+            $query->where('departement', $request->departement);
+        }
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+        if ($request->filled('commune')) {
+            $query->where('commune', $request->commune);
+        }
+        if ($request->filled('arrondissement')) {
+            $query->whereJsonContains('arrondissement', $request->arrondissement);
+        }
+        if ($request->filled('village')) {
+            $query->where('village', $request->village);
+        }
+        if ($request->filled('secteur_domaine')) {
+            $query->where('secteur_domaine', $request->secteur_domaine);
+        }
+        if ($request->filled('type_infrastructure')) {
+            $query->where('type_infrastructure', $request->type_infrastructure);
+        }
+
+        // Fetch distinct values for filters
+        $communes = Infrastructure::select('commune')->distinct()->orderBy('commune')->pluck('commune')->filter()->values();
+        $arrondissements = Infrastructure::select('arrondissement')->distinct()->orderBy('arrondissement')->pluck('arrondissement')->filter()->values();
+        $villages = Infrastructure::select('village')->distinct()->orderBy('village')->pluck('village')->filter()->values();
+        $secteurs = Infrastructure::select('secteur_domaine')->distinct()->orderBy('secteur_domaine')->pluck('secteur_domaine')->filter()->values();
+        $types = Infrastructure::select('type_infrastructure')->distinct()->orderBy('type_infrastructure')->pluck('type_infrastructure')->filter()->values();
+        $annees = Infrastructure::select('annee_realisation')->distinct()->orderBy('annee_realisation')->pluck('annee_realisation')->filter()->values();
+        $etats = Infrastructure::select('etat_fonctionnement')->distinct()->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement')->filter()->values();
+        $niveaux = Infrastructure::select('niveau_degradation')->distinct()->orderBy('niveau_degradation')->pluck('niveau_degradation')->filter()->values();
+
+        $infrastructures = $query->paginate(15);
+
+        // Get list of infrastructure IDs that are planned (have mairie_agent_data)
+        $plannedInfrastructureIds = MairieAgentData::whereNotNull('infrastructure_id')
+            ->pluck('infrastructure_id')
+            ->toArray();
+
+        // Pour les statistiques, on utilise la même restriction que pour la liste
+        // Calculate statistics with priority scoring
+        $totalPlanned = MairieAgentData::whereHas('infrastructure', function($q) use ($user) {
+            if ($user->isCommuneAdmin() && $user->commune) {
+                $q->where('commune', $user->commune->name);
+            } elseif ($user->isAgent()) {
+                $q->where('nom_enqueteur', $user->name);
+            } elseif (!$user->isSuperAdmin()) {
+                $q->whereRaw('1=0');
+            }
+        })->count();
+        
+        // Calculate priority scores for infrastructures (requête indépendante)
+        $priorityQuery = Infrastructure::query();
+        if ($user->isCommuneAdmin() && $user->commune) {
+            $priorityQuery->where('commune', $user->commune->name);
+        } elseif ($user->isAgent()) {
+            $priorityQuery->where('nom_enqueteur', $user->name);
+        }
+
+        $infrastructuresWithPriority = $priorityQuery->select(
+            'id', 'commune', 'secteur_domaine', 'type_infrastructure', 
+            'etat_fonctionnement', 'niveau_degradation', 'rehabilitation'
+        )->selectRaw(
+            "CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END as note_fonctionnement,"
+            . "CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END as note_degradation,"
+            . "CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END as note_cout,"
+            . "((CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END * 0.40) + "
+            . "(CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END * 0.40) + "
+            . "(CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END * 0.20)) as score_priorite"
+        )->get();
+
+        // Count by priority levels
+        $priorityStats = [
+            'tres_urgent' => $infrastructuresWithPriority->where('score_priorite', '>=', 4.2)->count(),
+            'urgent' => $infrastructuresWithPriority->whereBetween('score_priorite', [3.0, 4.19])->count(),
+            'moyenne' => $infrastructuresWithPriority->whereBetween('score_priorite', [2.0, 2.99])->count(),
+            'faible' => $infrastructuresWithPriority->where('score_priorite', '<', 2.0)->count(),
+        ];
+
+        // Pour le moment, nous considérons que toutes les infrastructures planifiées sont à entretenir
+        $totalMaintained = 0; // À implémenter avec un champ statut dans une future migration
+        $totalToMaintain = $totalPlanned;
+
+        // Statistiques générales filtrées (créer des requêtes indépendantes)
+        $stats = [
+            'total' => $statsQuery->count(),
+            'planned' => $totalPlanned,
+            'maintained' => $totalMaintained,
+            'to_maintain' => $totalToMaintain,
+            'by_commune' => Infrastructure::query()
+                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
+                    return $q->where('commune', $user->commune->name);
+                })
+                ->when($user->isAgent(), function($q) use ($user) {
+                    return $q->where('nom_enqueteur', $user->name);
+                })
+                ->select('commune')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('commune')
+                ->groupBy('commune')
+                ->orderBy('count', 'desc')
+                ->get(),
+            'by_secteur' => Infrastructure::query()
+                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
+                    return $q->where('commune', $user->commune->name);
+                })
+                ->when($user->isAgent(), function($q) use ($user) {
+                    return $q->where('nom_enqueteur', $user->name);
+                })
+                ->select('secteur_domaine')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('secteur_domaine')
+                ->groupBy('secteur_domaine')
+                ->orderBy('count', 'desc')
+                ->get(),
+            'by_type' => Infrastructure::query()
+                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
+                    return $q->where('commune', $user->commune->name);
+                })
+                ->when($user->isAgent(), function($q) use ($user) {
+                    return $q->where('nom_enqueteur', $user->name);
+                })
+                ->select('type_infrastructure')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('type_infrastructure')
+                ->groupBy('type_infrastructure')
+                ->orderBy('count', 'desc')
+                ->get(),
+            'by_etat' => Infrastructure::query()
+                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
+                    return $q->where('commune', $user->commune->name);
+                })
+                ->when($user->isAgent(), function($q) use ($user) {
+                    return $q->where('nom_enqueteur', $user->name);
+                })
+                ->select('etat_fonctionnement')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('etat_fonctionnement')
+                ->groupBy('etat_fonctionnement')
+                ->orderBy('count', 'desc')
+                ->get(),
+            'by_niveau' => Infrastructure::query()
+                ->when($user->isCommuneAdmin() && $user->commune, function($q) use ($user) {
+                    return $q->where('commune', $user->commune->name);
+                })
+                ->when($user->isAgent(), function($q) use ($user) {
+                    return $q->where('nom_enqueteur', $user->name);
+                })
+                ->select('niveau_degradation')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('niveau_degradation')
+                ->groupBy('niveau_degradation')
+                ->orderBy('count', 'desc')
+                ->get(),
+        ];
+
+        return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats'));
+    }
+
+    public function import(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            Excel::import(new InfrastructuresImport, $request->file('file'));
+
+            return redirect()->route('infrastructures.index')->with('success', 'Importation réussie.');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+
+            $errorMessages = [];
+            foreach ($failures as $failure) {
+                $errorMessages[] = 'Ligne ' . $failure->row() . ': ' . implode(', ', $failure->errors());
+            }
+
+            return redirect()->back()->withErrors(['file' => $errorMessages])->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['file' => 'Erreur lors de l\'importation: ' . $e->getMessage()])->withInput();
+        }
+    }
+
+    public function create()
+    {
+        return view('infrastructures.create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => 'nullable|date',
+            'nom_enqueteur' => 'required|string|max:255',
+            'numero_telephone' => 'nullable|string|max:255',
+            'commune' => 'nullable|string|max:255',
+            'arrondissement' => 'nullable|array',
+            'arrondissement.*' => 'string|max:255',
+            'village' => 'nullable|string|max:255',
+            'hameau' => 'nullable|string|max:255',
+            'latitude' => 'nullable|string|max:255',
+            'longitude' => 'nullable|string|max:255',
+            'altitude' => 'nullable|string|max:255',
+            'precision' => 'nullable|string|max:255',
+            'secteur_domaine' => 'nullable|string|max:255',
+            'type_infrastructure' => 'nullable|string|max:255',
+            'nom_infrastructure' => 'nullable|string|max:255',
+            'annee_realisation' => 'nullable|string|max:255',
+            'bailleur' => 'nullable|string|max:255',
+            'type_materiaux' => 'nullable|string|max:255',
+            'etat_fonctionnement' => 'nullable|string|max:255',
+            'niveau_degradation' => 'nullable|string|max:255',
+            'mode_gestion' => 'nullable|string|max:255',
+            'mode_gestion_preciser' => 'nullable|string|max:255',
+            'defectuosites_relevees' => 'nullable|string',
+            'mesures_proposees' => 'nullable|string',
+            'observation_generale' => 'nullable|string',
+            'rehabilitation' => 'nullable|string|max:255',
+            'photo1' => 'nullable|image|max:10240',
+            'photo2' => 'nullable|image|max:10240',
+            'photo3' => 'nullable|image|max:10240',
+            'photo4' => 'nullable|image|max:10240',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|max:10240',
+            'photos_data' => 'nullable|string',
+            'existing_photos' => 'nullable|array',
+        ]);
+
+        $infrastructure = new Infrastructure();
+        $infrastructure->user_id = auth()->id();
+        $infrastructure->date = $validated['date'] ?? null;
+        $infrastructure->nom_enqueteur = $validated['nom_enqueteur'];
+        $infrastructure->numero_telephone = $validated['numero_telephone'] ?? null;
+        $infrastructure->commune = $validated['commune'] ?? null;
+        $infrastructure->arrondissement = json_encode($validated['arrondissement'] ?? []);
+        $infrastructure->village = $validated['village'] ?? null;
+        $infrastructure->hameau = $validated['hameau'] ?? null;
+        $infrastructure->latitude = $validated['latitude'] ?? null;
+        $infrastructure->longitude = $validated['longitude'] ?? null;
+        $infrastructure->altitude = $validated['altitude'] ?? null;
+        $infrastructure->precision = $validated['precision'] ?? null;
+        $infrastructure->secteur_domaine = $validated['secteur_domaine'] ?? null;
+        $infrastructure->type_infrastructure = $validated['type_infrastructure'] ?? null;
+        $infrastructure->nom_infrastructure = $validated['nom_infrastructure'] ?? null;
+        $infrastructure->annee_realisation = $validated['annee_realisation'] ?? null;
+        $infrastructure->bailleur = $validated['bailleur'] ?? null;
+        $infrastructure->type_materiaux = $validated['type_materiaux'] ?? null;
+        $infrastructure->etat_fonctionnement = $validated['etat_fonctionnement'] ?? null;
+        $infrastructure->niveau_degradation = $validated['niveau_degradation'] ?? null;
+        $infrastructure->mode_gestion = $validated['mode_gestion'] ?? null;
+        $infrastructure->mode_gestion_preciser = $validated['mode_gestion_preciser'] ?? null;
+        $infrastructure->defectuosites_relevees = $validated['defectuosites_relevees'] ?? null;
+        $infrastructure->mesures_proposees = $validated['mesures_proposees'] ?? null;
+        $infrastructure->observation_generale = $validated['observation_generale'] ?? null;
+        $infrastructure->rehabilitation = $validated['rehabilitation'] ?? null;
+
+        // Gérer les téléchargements de photos
+        for ($i = 1; $i <= 4; $i++) {
+            $photoField = 'photo' . $i;
+
+            // Handle photo deletion
+            $deleteField = 'delete_photo_' . $i;
+            if (!empty($validated[$deleteField]) && $infrastructure->$photoField) {
+                // Delete the existing photo file
+                \Storage::disk('public')->delete($infrastructure->$photoField);
+                $infrastructure->$photoField = null;
+                continue; // Skip further processing for this photo
+            }
+
+            if ($request->hasFile($photoField)) {
+                $file = $request->file($photoField);
+                $path = $file->store('photos', 'public');
+                $infrastructure->$photoField = $path;
+            }
+        }
+
+        // Handle photos_data base64 images from embedded camera
+        if (!empty($validated['photos_data'])) {
+            $photosData = json_decode($validated['photos_data'], true);
+            if (is_array($photosData)) {
+                $maxPhotos = 4;
+                $count = 0;
+                foreach ($photosData as $dataUrl) {
+                    if ($count >= $maxPhotos) break;
+                    // Extract base64 data
+                    if (preg_match('/^data:image\/(\w+);base64,/', $dataUrl, $type)) {
+                        $data = substr($dataUrl, strpos($dataUrl, ',') + 1);
+                        $type = strtolower($type[1]); // jpg, png, gif
+                        if (!in_array($type, ['jpg', 'jpeg', 'png', 'gif'])) {
+                            continue;
+                        }
+                        $data = base64_decode($data);
+                        if ($data === false) {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                    // Save file
+                    $fileName = 'photos/photo_' . uniqid() . '.' . $type;
+                    \Storage::disk('public')->put($fileName, $data);
+                    $photoField = 'photo' . ($count + 1);
+                    $infrastructure->$photoField = $fileName;
+                    $count++;
+                }
+            }
+        }
+
+        $infrastructure->save();
+        
+        // Log pour déboguer la sauvegarde
+        \Log::info('Infrastructure créée', [
+            'id' => $infrastructure->id,
+            'nom_enqueteur' => $infrastructure->nom_enqueteur,
+            'commune' => $infrastructure->commune,
+            'date' => $infrastructure->date
+        ]);
+
+        \Log::info('Infrastructure créée avec succès', [
+            'id' => $infrastructure->id,
+            'nom_enqueteur' => $infrastructure->nom_enqueteur,
+            'commune' => $infrastructure->commune,
+            'date' => $infrastructure->date,
+            'photos_count' => count(array_filter([$infrastructure->photo1, $infrastructure->photo2, $infrastructure->photo3, $infrastructure->photo4]))
+        ]);
+
+        return redirect()->route('infrastructures.index')->with('success', 'Infrastructure enregistrée avec succès.');
+    }
+
+    public function edit(Infrastructure $infrastructure)
+    {
+        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+            abort(403, 'Accès non autorisé à cette infrastructure.');
+        }
+        return view('infrastructures.edit', compact('infrastructure'));
+    }
+
+    public function update(Request $request, Infrastructure $infrastructure)
+    {
+        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+            abort(403, 'Accès non autorisé à cette infrastructure.');
+        }
+
+        $validated = $request->validate([
+            'date' => 'nullable|date',
+            'nom_enqueteur' => 'required|string|max:255',
+            'numero_telephone' => 'nullable|string|max:255',
+            'commune' => 'nullable|string|max:255',
+            'arrondissement' => 'nullable|array',
+            'arrondissement.*' => 'string|max:255',
+            'village' => 'nullable|string|max:255',
+            'hameau' => 'nullable|string|max:255',
+            'latitude' => 'nullable|string|max:255',
+            'longitude' => 'nullable|string|max:255',
+            'altitude' => 'nullable|string|max:255',
+            'precision' => 'nullable|string|max:255',
+            'secteur_domaine' => 'nullable|string|max:255',
+            'type_infrastructure' => 'nullable|string|max:255',
+            'nom_infrastructure' => 'nullable|string|max:255',
+            'annee_realisation' => 'nullable|string|max:255',
+            'bailleur' => 'nullable|string|max:255',
+            'type_materiaux' => 'nullable|string|max:255',
+            'etat_fonctionnement' => 'nullable|string|max:255',
+            'niveau_degradation' => 'nullable|string|max:255',
+            'mode_gestion' => 'nullable|string|max:255',
+            'mode_gestion_preciser' => 'nullable|string|max:255',
+            'defectuosites_relevees' => 'nullable|string',
+            'mesures_proposees' => 'nullable|string',
+            'observation_generale' => 'nullable|string',
+            'rehabilitation' => 'nullable|string|max:255',
+            'photo1' => 'nullable|image|max:10240',
+            'photo2' => 'nullable|image|max:10240',
+            'photo3' => 'nullable|image|max:10240',
+            'photo4' => 'nullable|image|max:10240',
+            'photos_data' => 'nullable|string',
+        ]);
+
+        // Mise à jour des champs de base
+        $infrastructure->date = $validated['date'] ?? null;
+        $infrastructure->nom_enqueteur = $validated['nom_enqueteur'];
+        $infrastructure->numero_telephone = $validated['numero_telephone'] ?? null;
+        $infrastructure->commune = $validated['commune'] ?? null;
+        $infrastructure->arrondissement = json_encode($validated['arrondissement'] ?? []);
+        $infrastructure->village = $validated['village'] ?? null;
+        $infrastructure->hameau = $validated['hameau'] ?? null;
+        $infrastructure->latitude = $validated['latitude'] ?? null;
+        $infrastructure->longitude = $validated['longitude'] ?? null;
+        $infrastructure->altitude = $validated['altitude'] ?? null;
+        $infrastructure->precision = $validated['precision'] ?? null;
+        $infrastructure->secteur_domaine = $validated['secteur_domaine'] ?? null;
+        $infrastructure->type_infrastructure = $validated['type_infrastructure'] ?? null;
+        $infrastructure->nom_infrastructure = $validated['nom_infrastructure'] ?? null;
+        $infrastructure->annee_realisation = $validated['annee_realisation'] ?? null;
+        $infrastructure->bailleur = $validated['bailleur'] ?? null;
+        $infrastructure->type_materiaux = $validated['type_materiaux'] ?? null;
+        $infrastructure->etat_fonctionnement = $validated['etat_fonctionnement'] ?? null;
+        $infrastructure->niveau_degradation = $validated['niveau_degradation'] ?? null;
+        $infrastructure->mode_gestion = $validated['mode_gestion'] ?? null;
+        $infrastructure->mode_gestion_preciser = $validated['mode_gestion_preciser'] ?? null;
+        $infrastructure->defectuosites_relevees = $validated['defectuosites_relevees'] ?? null;
+        $infrastructure->mesures_proposees = $validated['mesures_proposees'] ?? null;
+        $infrastructure->observation_generale = $validated['observation_generale'] ?? null;
+        $infrastructure->rehabilitation = $validated['rehabilitation'] ?? null;
+
+        // Gérer les téléchargements de photos
+        for ($i = 1; $i <= 4; $i++) {
+            $photoField = 'photo' . $i;
+            $deleteField = 'delete_photo_' . $i;
+
+            // Vérifier si la photo doit être supprimée
+            if (isset($validated[$deleteField]) && $validated[$deleteField] === '1') {
+                // Supprimer le fichier existant
+                if ($infrastructure->$photoField) {
+                    \Storage::disk('public')->delete($infrastructure->$photoField);
+                }
+                $infrastructure->$photoField = null;
+                continue;
+            }
+
+            // Gérer l'upload d'une nouvelle photo
+            if ($request->hasFile($photoField)) {
+                // Supprimer l'ancienne photo si elle existe
+                if ($infrastructure->$photoField) {
+                    \Storage::disk('public')->delete($infrastructure->$photoField);
+                }
+                
+                // Sauvegarder la nouvelle photo
+                $file = $request->file($photoField);
+                $path = $file->store('photos', 'public');
+                $infrastructure->$photoField = $path;
+                
+                // Debug: Log pour vérifier que la photo est bien sauvegardée
+                \Log::info("Photo $i uploaded: " . $path);
+            }
+        }
+
+        // Gérer les photos base64 de la caméra intégrée
+        if (!empty($validated['photos_data'])) {
+            $photosData = json_decode($validated['photos_data'], true);
+            if (is_array($photosData)) {
+                $maxPhotos = 4;
+                $count = 0;
+                foreach ($photosData as $dataUrl) {
+                    if ($count >= $maxPhotos) break;
+                    
+                    // Trouver le prochain slot disponible
+                    $photoField = null;
+                    for ($j = 1; $j <= 4; $j++) {
+                        if (!$infrastructure->{"photo$j"}) {
+                            $photoField = "photo$j";
+                            break;
+                        }
+                    }
+                    
+                    if (!$photoField) break; // Plus de slots disponibles
+                    
+                    // Extraire les données base64
+                    if (preg_match('/^data:image\/(\w+);base64,/', $dataUrl, $type)) {
+                        $data = substr($dataUrl, strpos($dataUrl, ',') + 1);
+                        $type = strtolower($type[1]); // jpg, png, gif
+                        if (!in_array($type, ['jpg', 'jpeg', 'png', 'gif'])) {
+                            continue;
+                        }
+                        $data = base64_decode($data);
+                        if ($data === false) {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                    
+                    // Sauvegarder le fichier
+                    $fileName = 'photos/photo_' . uniqid() . '.' . $type;
+                    \Storage::disk('public')->put($fileName, $data);
+                    $infrastructure->$photoField = $fileName;
+                    $count++;
+                    
+                    // Debug: Log pour vérifier que la photo base64 est bien sauvegardée
+                    \Log::info("Base64 photo uploaded: " . $fileName);
+                }
+            }
+        }
+
+        // Sauvegarder les modifications
+        $saved = $infrastructure->save();
+        
+        // Debug: Log pour vérifier que l'infrastructure est bien sauvegardée
+        \Log::info("Infrastructure updated: " . $infrastructure->id . " - Saved: " . ($saved ? 'Yes' : 'No'));
+        \Log::info("Photos after save: photo1=" . $infrastructure->photo1 . ", photo2=" . $infrastructure->photo2 . ", photo3=" . $infrastructure->photo3 . ", photo4=" . $infrastructure->photo4);
+
+        return redirect()->route('infrastructures.index')->with('success', 'Infrastructure mise à jour avec succès.');
+    }
+
+    public function destroy(Infrastructure $infrastructure)
+    {
+        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+            abort(403, 'Accès non autorisé à cette infrastructure.');
+        }
+        
+        $infrastructure->delete();
+        return redirect()->route('infrastructures.index')->with('success', 'Infrastructure supprimée avec succès.');
+    }
+
+
+    public function export(Request $request)
+    {
+        $format = $request->input('format', 'pdf');
+        $selectedIds = $request->input('selected_ids', []);
+        $year = $request->input('year');
+
+        $query = Infrastructure::query();
+        
+        // Si l'utilisateur n'est pas admin, limiter l'export à ses propres infrastructures
+        if (!auth()->user()->isSuperAdmin()) {
+            $query->where('user_id', auth()->id());
+            
+            // Si des IDs sont sélectionnés, vérifier qu'ils appartiennent bien à l'utilisateur
+            if (!empty($selectedIds)) {
+                $query->whereIn('id', $selectedIds)
+                      ->where('user_id', auth()->id());
+            }
+        }
+
+        // Apply filters
+        $filters = [];
+        
+        if (!empty($selectedIds)) {
+            $query->whereIn('id', $selectedIds);
+        }
+
+        // Year filter
+        if ($year) {
+            $query->where('annee_realisation', $year);
+            $filters['year'] = $year;
+        }
+
+        // Other filters from request
+        if ($request->filled('commune')) {
+            $query->where('commune', $request->commune);
+            $filters['commune'] = $request->commune;
+        }
+        if ($request->filled('secteur_domaine')) {
+            $query->where('secteur_domaine', $request->secteur_domaine);
+            $filters['secteur_domaine'] = $request->secteur_domaine;
+        }
+        if ($request->filled('type_infrastructure')) {
+            $query->where('type_infrastructure', $request->type_infrastructure);
+            $filters['type_infrastructure'] = $request->type_infrastructure;
+        }
+        if ($request->filled('etat_fonctionnement')) {
+            $query->where('etat_fonctionnement', $request->etat_fonctionnement);
+            $filters['etat_fonctionnement'] = $request->etat_fonctionnement;
+        }
+        if ($request->filled('niveau_degradation')) {
+            $query->where('niveau_degradation', $request->niveau_degradation);
+            $filters['niveau_degradation'] = $request->niveau_degradation;
+        }
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+            $filters['date_range'] = $request->start_date . ' - ' . $request->end_date;
+        }
+
+        $infrastructures = $query->get();
+
+        // Generate filename with filters
+        $filename = 'infrastructures';
+        if ($year) {
+            $filename .= '_' . $year;
+        }
+        if (!empty($filters['commune'])) {
+            $filename .= '_' . $filters['commune'];
+        }
+
+        if ($format === 'excel') {
+            return Excel::download(
+                new InfrastructuresExport($infrastructures, $year, $filters), 
+                $filename . '.xlsx'
+            );
+        } else {
+            $pdf = Pdf::loadView('infrastructures.export_pdf', compact('infrastructures', 'filters', 'year'));
+            return $pdf->download($filename . '.pdf');
+        }
+    }
+
+    public function show(Infrastructure $infrastructure)
+    {
+        if (!auth()->user()->isSuperAdmin() && $infrastructure->user_id !== auth()->id()) {
+            abort(403, 'Accès non autorisé à cette infrastructure.');
+        }
+        
+        return view('infrastructures.show', compact('infrastructure'));
+    }
+
+    /**
+     * Afficher le dashboard d'une commune (pour utilisateurs publics)
+     * Affiche les statistiques de la commune uniquement
+     */
+    public function showCommunePublic($commune)
+    {
+        $user = auth()->user();
+        
+        // Vérifier que c'est un utilisateur public
+        if (!$user->isPublicUser()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        // Requête de base filtrée par commune
+        $query = Infrastructure::where('commune', $commune->name);
+
+        // Requête pour les statistiques (communes publics ne voient que les stats)
+        $statsQuery = clone $query;
+
+        // Récupérer les données planifiées pour cette commune
+        $plannedInfrastructureIds = MairieAgentData::where('commune', $commune->name)
+            ->where('category', 'Planifiée')
+            ->pluck('infrastructure_id')
+            ->toArray();
+
+        $totalPlanned = count($plannedInfrastructureIds);
+
+        // Récupérer tous les données de base (listes déroulantes)
+        $communes = Infrastructure::where('commune', $commune->name)->select('commune')->distinct()->pluck('commune');
+        $arrondissements = Infrastructure::where('commune', $commune->name)->select('arrondissement')->distinct()->pluck('arrondissement');
+        $villages = Infrastructure::where('commune', $commune->name)->select('village')->distinct()->pluck('village');
+        $secteurs = Infrastructure::where('commune', $commune->name)->select('secteur_domaine')->distinct()->pluck('secteur_domaine');
+        $types = Infrastructure::where('commune', $commune->name)->select('type_infrastructure')->distinct()->pluck('type_infrastructure');
+        $annees = Infrastructure::where('commune', $commune->name)->select('annee_realisation')->distinct()->pluck('annee_realisation');
+        $etats = Infrastructure::where('commune', $commune->name)->select('etat_fonctionnement')->distinct()->pluck('etat_fonctionnement');
+        $niveaux = Infrastructure::where('commune', $commune->name)->select('niveau_degradation')->distinct()->pluck('niveau_degradation');
+
+        // Calculate priority scores for infrastructures
+        $priorityQuery = Infrastructure::where('commune', $commune->name);
+        
+        $infrastructuresWithPriority = $priorityQuery->select(
+            'id', 'commune', 'secteur_domaine', 'type_infrastructure', 
+            'etat_fonctionnement', 'niveau_degradation', 'rehabilitation'
+        )->selectRaw(
+            "CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END as note_fonctionnement,"
+            . "CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END as note_degradation,"
+            . "CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END as note_cout,"
+            . "((CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END * 0.40) + "
+            . "(CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END * 0.40) + "
+            . "(CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END * 0.20)) as score_priorite"
+        )->get();
+
+        // Count by priority levels
+        $priorityStats = [
+            'tres_urgent' => $infrastructuresWithPriority->where('score_priorite', '>=', 4.2)->count(),
+            'urgent' => $infrastructuresWithPriority->whereBetween('score_priorite', [3.0, 4.19])->count(),
+            'moyenne' => $infrastructuresWithPriority->whereBetween('score_priorite', [2.0, 2.99])->count(),
+            'faible' => $infrastructuresWithPriority->where('score_priorite', '<', 2.0)->count(),
+        ];
+
+        // Pour le moment, nous considérons que toutes les infrastructures planifiées sont à entretenir
+        $totalMaintained = 0; // À implémenter avec un champ statut dans une future migration
+        $totalToMaintain = $totalPlanned;
+
+        // Statistiques générales filtrées (créer des requêtes indépendantes)
+        $stats = [
+            'total' => $statsQuery->count(),
+            'planned' => $totalPlanned,
+            'maintained' => $totalMaintained,
+            'to_maintain' => $totalToMaintain,
+            'by_commune' => Infrastructure::where('commune', $commune->name)
+                ->select('commune')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('commune')
+                ->groupBy('commune')
+                ->orderBy('count', 'desc')
+                ->get(),
+            'by_secteur' => Infrastructure::where('commune', $commune->name)
+                ->select('secteur_domaine')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('secteur_domaine')
+                ->groupBy('secteur_domaine')
+                ->orderBy('count', 'desc')
+                ->get(),
+            'by_type' => Infrastructure::where('commune', $commune->name)
+                ->select('type_infrastructure')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('type_infrastructure')
+                ->groupBy('type_infrastructure')
+                ->orderBy('count', 'desc')
+                ->get(),
+            'by_etat' => Infrastructure::where('commune', $commune->name)
+                ->select('etat_fonctionnement')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('etat_fonctionnement')
+                ->groupBy('etat_fonctionnement')
+                ->orderBy('count', 'desc')
+                ->get(),
+            'by_niveau' => Infrastructure::where('commune', $commune->name)
+                ->select('niveau_degradation')
+                ->selectRaw('COUNT(*) as count')
+                ->whereNotNull('niveau_degradation')
+                ->groupBy('niveau_degradation')
+                ->orderBy('count', 'desc')
+                ->get(),
+        ];
+
+        // Les utilisateurs publics ne voient que les statistiques, pas les données
+        $infrastructures = collect();
+
+        return view('infrastructures.commune-public', compact(
+            'commune', 'infrastructures', 'communes', 'arrondissements', 'villages', 
+            'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 
+            'stats', 'priorityStats'
+        ));
+    }
+
+}

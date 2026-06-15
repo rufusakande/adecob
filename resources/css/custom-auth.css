@@ -1,0 +1,46 @@
+/* Custom styles for responsive login and register forms */
+
+body {
+    background-color: #f8f9fa;
+}
+
+form {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    color: #006600;
+    font-weight: 700;
+}
+
+.btn-primary {
+    background-color: #0b6623 !important; /* Navbar green */
+    border-color: #0b6623 !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background-color: #084d15 !important; /* Darker navbar green */
+    border-color: #084d15 !important;
+    color: white !important;
+}
+
+.btn-success {
+    background-color: #006600 !important;
+    border-color: #006600 !important;
+}
+
+.btn-success:hover {
+    background-color: #004d00 !important;
+    border-color: #004d00 !important;
+}
+
+@media (max-width: 576px) {
+    form {
+        padding: 1rem;
+        margin: 1rem;
+    }
+}
