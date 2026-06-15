@@ -15,116 +15,154 @@ class UserValidationController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('admin');
+        $this->middleware('admin.access');
     }
 
     public function index()
     {
-        $pendingUsers = User::where('is_approved', false)->latest()->get();
-        return view('admin.pending-registrations', compact('pendingUsers'));
+        $admin = auth()->user();
+
+        $query = User::with('commune')
+            ->where('is_approved', false)
+            ->whereNull('rejected_at')
+            ->where('role', '!=', 'super_admin');
+
+        // Un admin de commune ne voit que les agents de SA commune.
+        if ($admin->isCommuneAdmin()) {
+            $query->where('commune_id', $admin->commune_id)
+                  ->where('role', 'agent');
+        }
+
+        $pendingUsers = $query->latest()->get();
+
+        $rejectedUsers = (clone $query)->getQuery() ? null : null;
+        $rejectedQuery = User::with('commune')
+            ->whereNotNull('rejected_at')
+            ->where('role', '!=', 'super_admin');
+        if ($admin->isCommuneAdmin()) {
+            $rejectedQuery->where('commune_id', $admin->commune_id);
+        }
+        $rejectedUsers = $rejectedQuery->latest('rejected_at')->limit(20)->get();
+
+        return view('admin.pending-registrations', compact('pendingUsers', 'rejectedUsers'));
+    }
+
+    /**
+     * Vérifie qu'un admin de commune n'agit que sur les agents de sa propre commune.
+     */
+    protected function authorizeAction(User $user): void
+    {
+        $admin = auth()->user();
+        if ($admin->isSuperAdmin()) {
+            return;
+        }
+        if ($admin->isCommuneAdmin()) {
+            if ($user->role !== 'agent' || $user->commune_id !== $admin->commune_id) {
+                abort(403, 'Vous ne pouvez gérer que les agents de votre commune.');
+            }
+            return;
+        }
+        abort(403);
     }
 
     public function approve(User $user)
     {
+        $this->authorizeAction($user);
+
         try {
             DB::beginTransaction();
 
             $user->update([
                 'is_approved' => true,
-                'approved_at' => now()
+                'approved_at' => now(),
+                'rejected_at' => null,
             ]);
 
-            // Notifier l'utilisateur
             try {
                 $user->notify(new RegistrationStatus('approved'));
             } catch (\Exception $e) {
-                Log::warning('Erreur lors de l\'envoi de la notification à l\'utilisateur: ' . $e->getMessage());
+                Log::warning('Notification utilisateur échouée: ' . $e->getMessage());
             }
 
-            // Notifier les autres administrateurs
             try {
-                $otherAdmins = User::where('role', 'super_admin')
-                                  ->where('id', '!=', auth()->id())
-                                  ->get();
-                
+                $otherAdmins = User::where(function ($q) use ($user) {
+                        $q->where('role', 'super_admin')
+                          ->orWhere(function ($q2) use ($user) {
+                              $q2->where('role', 'commune_admin')
+                                 ->where('commune_id', $user->commune_id);
+                          });
+                    })
+                    ->where('id', '!=', auth()->id())
+                    ->get();
+
                 foreach ($otherAdmins as $admin) {
                     try {
                         $admin->notify(new RegistrationActionNotification($user, 'approved', auth()->user()));
                     } catch (\Exception $e) {
-                        Log::warning("Erreur lors de l'envoi de la notification à l'admin {$admin->email}: " . $e->getMessage());
-                        continue;
+                        Log::warning("Notification admin {$admin->email} échouée: " . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
-                Log::warning('Erreur lors de la notification des administrateurs: ' . $e->getMessage());
+                Log::warning('Notifications admins échouées: ' . $e->getMessage());
             }
 
             DB::commit();
-            return back()->with('success', 'Utilisateur approuvé avec succès');
+            return back()->with('success', "Le compte de {$user->prenom} {$user->name} a été approuvé.");
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur lors de l\'approbation: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
-            
-            // L'update a réussi mais pas les notifications
-            if ($user->is_approved) {
-                return back()->with('warning', 'Utilisateur approuvé mais des erreurs sont survenues lors de l\'envoi des notifications');
-            }
-            
-            return back()->with('error', 'Une erreur est survenue lors de l\'approbation');
+            Log::error('Erreur approbation: ' . $e->getMessage());
+            return back()->with('error', 'Une erreur est survenue lors de l\'approbation.');
         }
     }
 
     public function reject(User $user)
     {
+        $this->authorizeAction($user);
+
         try {
             DB::beginTransaction();
 
             $user->update([
                 'is_approved' => false,
-                'rejected_at' => now()
+                'rejected_at' => now(),
             ]);
 
-            // Notifier l'utilisateur
             try {
                 $user->notify(new RegistrationStatus('rejected'));
             } catch (\Exception $e) {
-                Log::warning('Erreur lors de l\'envoi de la notification à l\'utilisateur: ' . $e->getMessage());
+                Log::warning('Notification utilisateur échouée: ' . $e->getMessage());
             }
 
-            // Notifier les autres administrateurs
             try {
-                $otherAdmins = User::where('role', 'super_admin')
-                                  ->where('id', '!=', auth()->id())
-                                  ->get();
-                
+                $otherAdmins = User::where(function ($q) use ($user) {
+                        $q->where('role', 'super_admin')
+                          ->orWhere(function ($q2) use ($user) {
+                              $q2->where('role', 'commune_admin')
+                                 ->where('commune_id', $user->commune_id);
+                          });
+                    })
+                    ->where('id', '!=', auth()->id())
+                    ->get();
+
                 foreach ($otherAdmins as $admin) {
                     try {
                         $admin->notify(new RegistrationActionNotification($user, 'rejected', auth()->user()));
                     } catch (\Exception $e) {
-                        Log::warning("Erreur lors de l'envoi de la notification à l'admin {$admin->email}: " . $e->getMessage());
-                        continue;
+                        Log::warning("Notification admin {$admin->email} échouée: " . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
-                Log::warning('Erreur lors de la notification des administrateurs: ' . $e->getMessage());
+                Log::warning('Notifications admins échouées: ' . $e->getMessage());
             }
 
             DB::commit();
-            return back()->with('success', 'Utilisateur rejeté avec succès');
+            return back()->with('success', "Le compte de {$user->prenom} {$user->name} a été rejeté.");
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur lors du rejet: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
-            
-            // L'update a réussi mais pas les notifications
-            if (!$user->is_approved) {
-                return back()->with('warning', 'Utilisateur rejeté mais des erreurs sont survenues lors de l\'envoi des notifications');
-            }
-            
-            return back()->with('error', 'Une erreur est survenue lors du rejet');
+            Log::error('Erreur rejet: ' . $e->getMessage());
+            return back()->with('error', 'Une erreur est survenue lors du rejet.');
         }
     }
 }
