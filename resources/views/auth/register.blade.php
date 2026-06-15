@@ -576,7 +576,9 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordConfirmInput.addEventListener('input', validateForm);
     nameInput.addEventListener('input', validateForm);
     emailInput.addEventListener('input', validateForm);
-    userTypeInput.addEventListener('change', validateForm);
+    prenomInput.addEventListener('input', validateForm);
+    telephoneInput.addEventListener('input', validateForm);
+    communeInput.addEventListener('change', validateForm);
     termsInput.addEventListener('change', validateForm);
 
     // reCAPTCHA temporarily disabled
