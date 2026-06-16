@@ -137,11 +137,13 @@ class MairieAgentController extends Controller
 
     public function dashboard(Request $request)
     {
+        $this->ensureAuthorizedRole();
+
         $communes = ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
         $secteurs = ['EDUCATION', 'SANTE', 'AGRICULTURE/ELEVAGE', 'MARCHE', 'ADMINISTRATION', 'CULTURE, SPORT, LOISIRS & TOURISME', 'EAU POTABLE', 'ASSAINISSEMENT'];
 
         $user = auth()->user();
-        $query = MairieAgentData::query();
+        $query = MairieAgentData::query()->visibleTo($user);
 
         // Filtrage selon le rôle
         if ($user->isSuperAdmin()) {
