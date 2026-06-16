@@ -69,11 +69,29 @@ class MairieAgentData extends Model
             return $query;
         }
         if ($user->isCommuneAdmin()) {
+            $communeId = $user->commune?->id;
             $communeName = $user->commune?->name;
-            return $query->where('commune', $communeName ?? '___none___');
+            if (!$communeId && !$communeName) {
+                return $query->whereRaw('1 = 0');
+            }
+            return $query->where(function ($q) use ($communeId, $communeName) {
+                if ($communeId) {
+                    $q->orWhere('commune_id', $communeId);
+                }
+                if ($communeName) {
+                    $q->orWhere(function ($q2) use ($communeId, $communeName) {
+                        $q2->whereNull('commune_id')->where('commune', $communeName);
+                    });
+                }
+            });
         }
         if ($user->isAgent()) {
-            return $query->where('nom_enqueteur', $user->name);
+            return $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere(function ($q2) use ($user) {
+                      $q2->whereNull('user_id')->where('nom_enqueteur', $user->name);
+                  });
+            });
         }
         return $query->whereRaw('1 = 0');
     }
@@ -86,12 +104,28 @@ class MairieAgentData extends Model
         if (!$user) return false;
         if ($user->isSuperAdmin()) return true;
         if ($user->isCommuneAdmin()) {
-            return $user->commune && $this->commune === $user->commune->name;
+            if (!$user->commune) return false;
+            if ($this->commune_id && $this->commune_id === $user->commune->id) return true;
+            return $this->commune === $user->commune->name;
         }
         if ($user->isAgent()) {
+            if ($this->user_id) return $this->user_id === $user->id;
             return $this->nom_enqueteur === $user->name;
         }
         return false;
+    }
+
+    /**
+     * Relations
+     */
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
+
+    public function communeRelation()
+    {
+        return $this->belongsTo(\App\Models\Commune::class, 'commune_id');
     }
 
     /**
