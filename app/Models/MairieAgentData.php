@@ -13,6 +13,8 @@ class MairieAgentData extends Model
 
     protected $fillable = [
         'infrastructure_id',
+        'user_id',
+        'commune_id',
         'nom_enqueteur',
         'commune',
         'secteur',
