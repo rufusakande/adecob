@@ -76,10 +76,15 @@ class MairieAgentController extends Controller
 
     public function edit($id)
     {
+        $this->ensureAuthorizedRole();
+
         $communes = ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
         $secteurs = ['Education', 'Santé', 'Infrastructures', 'Agriculture', 'Transport'];
 
-        $infrastructureData = MairieAgentData::findOrFail($id)->toArray();
+        $record = MairieAgentData::findOrFail($id);
+        $this->authorizeManage($record);
+
+        $infrastructureData = $record->toArray();
         $isEdit = true;
 
         return view('mairie_agent.form', compact('communes', 'secteurs', 'infrastructureData', 'isEdit'));
@@ -87,19 +92,44 @@ class MairieAgentController extends Controller
 
     public function store(Request $request)
     {
+        $this->ensureAuthorizedRole();
+
         $validated = $this->validateData($request);
+        $user = auth()->user();
+
+        // Forcer le scoping commune / agent pour empêcher la falsification du payload
+        if ($user->isAgent()) {
+            $validated['nom_enqueteur'] = $user->name;
+            if ($user->commune) {
+                $validated['commune'] = $user->commune->name;
+            }
+        } elseif ($user->isCommuneAdmin() && $user->commune) {
+            $validated['commune'] = $user->commune->name;
+        }
 
         MairieAgentData::create($validated);
 
-        // Redirect to mairie agent dashboard route
         return redirect()->route('mairie-agent.dashboard')->with('success', 'Données enregistrées avec succès.');
     }
 
     public function update(Request $request, $id)
     {
-        $validated = $this->validateData($request);
+        $this->ensureAuthorizedRole();
 
         $mairieAgentData = MairieAgentData::findOrFail($id);
+        $this->authorizeManage($mairieAgentData);
+
+        $validated = $this->validateData($request);
+        $user = auth()->user();
+
+        // Empêcher un agent / commune admin de déplacer l'enregistrement hors de son périmètre
+        if ($user->isAgent()) {
+            $validated['nom_enqueteur'] = $mairieAgentData->nom_enqueteur;
+            $validated['commune'] = $mairieAgentData->commune;
+        } elseif ($user->isCommuneAdmin() && $user->commune) {
+            $validated['commune'] = $user->commune->name;
+        }
+
         $mairieAgentData->update($validated);
 
         return redirect()->route('mairie-agent.dashboard')->with('success', 'Données mises à jour avec succès.');
