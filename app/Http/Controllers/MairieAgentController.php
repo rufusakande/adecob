@@ -100,11 +100,24 @@ class MairieAgentController extends Controller
         // Forcer le scoping commune / agent pour empêcher la falsification du payload
         if ($user->isAgent()) {
             $validated['nom_enqueteur'] = $user->name;
+            $validated['user_id'] = $user->id;
             if ($user->commune) {
                 $validated['commune'] = $user->commune->name;
+                $validated['commune_id'] = $user->commune->id;
             }
         } elseif ($user->isCommuneAdmin() && $user->commune) {
             $validated['commune'] = $user->commune->name;
+            $validated['commune_id'] = $user->commune->id;
+            $validated['user_id'] = $user->id;
+        } else {
+            // Super admin : tente de résoudre commune_id depuis le nom de commune fourni
+            $validated['user_id'] = $validated['user_id'] ?? $user->id;
+            if (!empty($validated['commune'])) {
+                $commune = \App\Models\Commune::where('name', $validated['commune'])->first();
+                if ($commune) {
+                    $validated['commune_id'] = $commune->id;
+                }
+            }
         }
 
         MairieAgentData::create($validated);
