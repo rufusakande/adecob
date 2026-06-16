@@ -330,92 +330,93 @@ class MairieAgentController extends Controller
      */
     public function monitoringDashboard(Request $request)
     {
+        $this->ensureAuthorizedRole();
+
+        $user = auth()->user();
+
+        // Le monitoring global est réservé au super admin et au commune admin.
+        if (!$user->isSuperAdmin() && !$user->isCommuneAdmin()) {
+            abort(403, 'Accès au monitoring réservé aux administrateurs.');
+        }
+
         $communes = ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
         $secteurs = ['EDUCATION', 'SANTE', 'AGRICULTURE/ELEVAGE', 'MARCHE', 'ADMINISTRATION', 'CULTURE, SPORT, LOISIRS & TOURISME', 'EAU POTABLE', 'ASSAINISSEMENT'];
 
-        // Infrastructure statistics by commune
-        $infrastructuresByCommune = Infrastructure::selectRaw('commune, COUNT(*) as total')
-            ->whereNotNull('commune')
-            ->groupBy('commune')
-            ->orderBy('total', 'desc')
-            ->get();
+        // Closures de scoping
+        $scopeInfra = function ($q) use ($user) {
+            if ($user->isCommuneAdmin() && $user->commune) {
+                $q->where('commune', $user->commune->name);
+            }
+            return $q;
+        };
+        $scopeInfraAliased = function ($q) use ($user) {
+            if ($user->isCommuneAdmin() && $user->commune) {
+                $q->where('i.commune', $user->commune->name);
+            }
+            return $q;
+        };
+        $scopeMad = function ($q) use ($user) {
+            return $q->visibleTo($user);
+        };
 
-        // Infrastructure statistics by sector
-        $infrastructuresBySector = Infrastructure::selectRaw('secteur_domaine as secteur, COUNT(*) as total')
-            ->whereNotNull('secteur_domaine')
-            ->groupBy('secteur_domaine')
-            ->orderBy('total', 'desc')
-            ->get();
+        $infrastructuresByCommune = $scopeInfra(Infrastructure::query())
+            ->selectRaw('commune, COUNT(*) as total')
+            ->whereNotNull('commune')->groupBy('commune')->orderBy('total', 'desc')->get();
 
-        // Infrastructure statistics by type
-        $infrastructuresByType = Infrastructure::selectRaw('type_infrastructure as type, COUNT(*) as total')
-            ->whereNotNull('type_infrastructure')
-            ->groupBy('type_infrastructure')
-            ->orderBy('total', 'desc')
-            ->get();
+        $infrastructuresBySector = $scopeInfra(Infrastructure::query())
+            ->selectRaw('secteur_domaine as secteur, COUNT(*) as total')
+            ->whereNotNull('secteur_domaine')->groupBy('secteur_domaine')->orderBy('total', 'desc')->get();
 
-        // Infrastructure statistics by operating state
-        $infrastructuresByState = Infrastructure::selectRaw('etat_fonctionnement as etat, COUNT(*) as total')
-            ->whereNotNull('etat_fonctionnement')
-            ->groupBy('etat_fonctionnement')
-            ->orderBy('total', 'desc')
-            ->get();
+        $infrastructuresByType = $scopeInfra(Infrastructure::query())
+            ->selectRaw('type_infrastructure as type, COUNT(*) as total')
+            ->whereNotNull('type_infrastructure')->groupBy('type_infrastructure')->orderBy('total', 'desc')->get();
 
-        // Infrastructure statistics by degradation level
-        $infrastructuresByDegradation = Infrastructure::selectRaw('niveau_degradation as niveau, COUNT(*) as total')
-            ->whereNotNull('niveau_degradation')
-            ->groupBy('niveau_degradation')
-            ->orderBy('total', 'desc')
-            ->get();
+        $infrastructuresByState = $scopeInfra(Infrastructure::query())
+            ->selectRaw('etat_fonctionnement as etat, COUNT(*) as total')
+            ->whereNotNull('etat_fonctionnement')->groupBy('etat_fonctionnement')->orderBy('total', 'desc')->get();
 
-        // Maintenance tracking statistics
-        $maintenanceStats = MairieAgentData::selectRaw('maintenance_status, COUNT(*) as total, SUM(montant) as total_montant')
-            ->whereNotNull('maintenance_status')
-            ->groupBy('maintenance_status')
-            ->get();
+        $infrastructuresByDegradation = $scopeInfra(Infrastructure::query())
+            ->selectRaw('niveau_degradation as niveau, COUNT(*) as total')
+            ->whereNotNull('niveau_degradation')->groupBy('niveau_degradation')->orderBy('total', 'desc')->get();
 
-        // Planning statistics by year
+        $maintenanceStats = $scopeMad(MairieAgentData::query())
+            ->selectRaw('maintenance_status, COUNT(*) as total, SUM(montant) as total_montant')
+            ->whereNotNull('maintenance_status')->groupBy('maintenance_status')->get();
+
         $planningStats = [];
         $years = [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
         foreach ($years as $year) {
-            $count = MairieAgentData::where("periode_$year", true)->count();
+            $count = $scopeMad(MairieAgentData::query())->where("periode_$year", true)->count();
             if ($count > 0) {
                 $planningStats[] = [
                     'year' => $year,
                     'count' => $count,
-                    'montant' => MairieAgentData::where("periode_$year", true)->sum('montant')
+                    'montant' => $scopeMad(MairieAgentData::query())->where("periode_$year", true)->sum('montant')
                 ];
             }
         }
 
-        // Combined statistics by commune and sector
-        $combinedStats = Infrastructure::selectRaw('commune, secteur_domaine as secteur, COUNT(*) as total_infrastructures, SUM(CASE WHEN etat_fonctionnement = "Fonctionnel" THEN 1 ELSE 0 END) as functional, SUM(CASE WHEN etat_fonctionnement != "Fonctionnel" OR etat_fonctionnement IS NULL THEN 1 ELSE 0 END) as non_functional, SUM(CASE WHEN niveau_degradation IN ("Élevé", "Très élevé") THEN 1 ELSE 0 END) as high_degradation')
-            ->whereNotNull('commune')
-            ->whereNotNull('secteur_domaine')
+        $combinedStats = $scopeInfra(Infrastructure::query())
+            ->selectRaw('commune, secteur_domaine as secteur, COUNT(*) as total_infrastructures, SUM(CASE WHEN etat_fonctionnement = "Fonctionnel" THEN 1 ELSE 0 END) as functional, SUM(CASE WHEN etat_fonctionnement != "Fonctionnel" OR etat_fonctionnement IS NULL THEN 1 ELSE 0 END) as non_functional, SUM(CASE WHEN niveau_degradation IN ("Élevé", "Très élevé") THEN 1 ELSE 0 END) as high_degradation')
+            ->whereNotNull('commune')->whereNotNull('secteur_domaine')
             ->groupBy('commune', 'secteur_domaine')
-            ->orderBy('commune')
-            ->orderBy('secteur_domaine')
-            ->get();
+            ->orderBy('commune')->orderBy('secteur_domaine')->get();
 
-        // Maintenance vs Infrastructure correlation
-        $maintenanceCorrelation = DB::table('infrastructures as i')
-            ->leftJoin('mairie_agent_data as mad', 'i.id', '=', 'mad.infrastructure_id')
+        $maintenanceCorrelation = $scopeInfraAliased(DB::table('infrastructures as i')
+            ->leftJoin('mairie_agent_data as mad', 'i.id', '=', 'mad.infrastructure_id'))
             ->selectRaw('i.commune, i.secteur_domaine as secteur, COUNT(i.id) as total_infrastructures, COUNT(mad.id) as planned_maintenance, SUM(CASE WHEN mad.maintenance_status = "completed" THEN 1 ELSE 0 END) as completed_maintenance, SUM(CASE WHEN mad.maintenance_status IN ("to_maintain", "in_progress") THEN 1 ELSE 0 END) as pending_maintenance')
-            ->whereNotNull('i.commune')
-            ->whereNotNull('i.secteur_domaine')
+            ->whereNotNull('i.commune')->whereNotNull('i.secteur_domaine')
             ->groupBy('i.commune', 'i.secteur_domaine')
-            ->orderBy('i.commune')
-            ->get();
+            ->orderBy('i.commune')->get();
 
-        // Total summary statistics
         $totalStats = [
-            'total_infrastructures' => Infrastructure::count(),
-            'total_planned' => MairieAgentData::count(),
-            'total_maintenance_completed' => MairieAgentData::where('maintenance_status', 'completed')->count(),
-            'total_maintenance_pending' => MairieAgentData::whereIn('maintenance_status', ['to_maintain', 'in_progress'])->count(),
-            'total_budget' => MairieAgentData::sum('montant'),
-            'total_communes' => Infrastructure::distinct('commune')->whereNotNull('commune')->count(),
-            'total_sectors' => Infrastructure::distinct('secteur_domaine')->whereNotNull('secteur_domaine')->count(),
+            'total_infrastructures' => $scopeInfra(Infrastructure::query())->count(),
+            'total_planned' => $scopeMad(MairieAgentData::query())->count(),
+            'total_maintenance_completed' => $scopeMad(MairieAgentData::query())->where('maintenance_status', 'completed')->count(),
+            'total_maintenance_pending' => $scopeMad(MairieAgentData::query())->whereIn('maintenance_status', ['to_maintain', 'in_progress'])->count(),
+            'total_budget' => $scopeMad(MairieAgentData::query())->sum('montant'),
+            'total_communes' => $scopeInfra(Infrastructure::query())->distinct('commune')->whereNotNull('commune')->count('commune'),
+            'total_sectors' => $scopeInfra(Infrastructure::query())->distinct('secteur_domaine')->whereNotNull('secteur_domaine')->count('secteur_domaine'),
         ];
 
         return view('mairie_agent.monitoring_dashboard', compact(
