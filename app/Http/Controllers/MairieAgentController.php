@@ -9,8 +9,30 @@ use Illuminate\Support\Facades\DB;
 
 class MairieAgentController extends Controller
 {
+    /**
+     * Garde d'accès aux routes mairie-agent : super admin, commune admin, agent.
+     */
+    private function ensureAuthorizedRole(): void
+    {
+        $user = auth()->user();
+        if (!$user || !($user->isSuperAdmin() || $user->isCommuneAdmin() || $user->isAgent())) {
+            abort(403, 'Accès refusé : rôle non autorisé pour la planification.');
+        }
+    }
+
+    /**
+     * Vérifie qu'un enregistrement de planification est gérable par l'utilisateur.
+     */
+    private function authorizeManage(MairieAgentData $data): void
+    {
+        if (!$data->canBeManagedBy(auth()->user())) {
+            abort(403, 'Vous n\'avez pas la permission de gérer cette planification.');
+        }
+    }
+
     public function create($infrastructure_id = null)
     {
+        $this->ensureAuthorizedRole();
         $communes = ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
         $secteurs = ['EDUCATION', 'SANTE', 'AGRICULTURE/ELEVAGE', 'MARCHE', 'ADMINISTRATION', 'CULTURE, SPORT, LOISIRS & TOURISME', 'EAU POTABLE', 'ASSAINISSEMENT'];
 
