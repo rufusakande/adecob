@@ -76,13 +76,15 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     });
 });
 
-// Mairie Agent Routes
-Route::get('/mairie-agent/form/{infrastructure_id?}', [MairieAgentController::class, 'create'])->name('mairie-agent.form');
-Route::post('/mairie-agent/form', [MairieAgentController::class, 'store'])->name('mairie-agent.store');
-Route::put('/mairie-agent/form/{id}', [MairieAgentController::class, 'update'])->name('mairie-agent.update');
-Route::get('/mairie-agent/dashboard', [MairieAgentController::class, 'dashboard'])->name('mairie-agent.dashboard');
-Route::get('/mairie-agent/monitoring-dashboard', [MairieAgentController::class, 'monitoringDashboard'])->name('mairie-agent.monitoring-dashboard');
-Route::get('/mairie-agent/export-pdf', [MairieAgentController::class, 'exportPdf'])->name('mairie-agent.export-pdf');
+// Mairie Agent Routes (auth + approbation + rôles autorisés uniquement)
+Route::middleware(['auth', 'check.approval'])->group(function () {
+    Route::get('/mairie-agent/form/{infrastructure_id?}', [MairieAgentController::class, 'create'])->name('mairie-agent.form');
+    Route::post('/mairie-agent/form', [MairieAgentController::class, 'store'])->name('mairie-agent.store');
+    Route::put('/mairie-agent/form/{id}', [MairieAgentController::class, 'update'])->name('mairie-agent.update');
+    Route::get('/mairie-agent/dashboard', [MairieAgentController::class, 'dashboard'])->name('mairie-agent.dashboard');
+    Route::get('/mairie-agent/monitoring-dashboard', [MairieAgentController::class, 'monitoringDashboard'])->name('mairie-agent.monitoring-dashboard');
+    Route::get('/mairie-agent/export-pdf', [MairieAgentController::class, 'exportPdf'])->name('mairie-agent.export-pdf');
+});
 
 // Contact Routes
 Route::get('/contact', [ContactController::class, 'show'])->name('contact.form');
