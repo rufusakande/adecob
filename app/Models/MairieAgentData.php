@@ -53,6 +53,46 @@ class MairieAgentData extends Model
     ];
 
     /**
+     * Scope: ne retourne que les enregistrements visibles par l'utilisateur.
+     * - Super admin : tout
+     * - Commune admin : sa commune (par nom)
+     * - Agent : ses propres saisies (par nom_enqueteur)
+     */
+    public function scopeVisibleTo($query, $user)
+    {
+        if (!$user) {
+            return $query->whereRaw('1 = 0');
+        }
+        if ($user->isSuperAdmin()) {
+            return $query;
+        }
+        if ($user->isCommuneAdmin()) {
+            $communeName = $user->commune?->name;
+            return $query->where('commune', $communeName ?? '___none___');
+        }
+        if ($user->isAgent()) {
+            return $query->where('nom_enqueteur', $user->name);
+        }
+        return $query->whereRaw('1 = 0');
+    }
+
+    /**
+     * Autorisation de gestion (édition/suppression) d'un enregistrement.
+     */
+    public function canBeManagedBy($user): bool
+    {
+        if (!$user) return false;
+        if ($user->isSuperAdmin()) return true;
+        if ($user->isCommuneAdmin()) {
+            return $user->commune && $this->commune === $user->commune->name;
+        }
+        if ($user->isAgent()) {
+            return $this->nom_enqueteur === $user->name;
+        }
+        return false;
+    }
+
+    /**
      * Get all planning years for this record
      */
     public function getPlanningYearsAttribute()
