@@ -26,18 +26,22 @@ Route::get('/', [App\Http\Controllers\PublicController::class, 'landing'])->name
 Route::get('/infrastructures/public', [App\Http\Controllers\PublicController::class, 'infrastructures'])
     ->name('public.infrastructures');
 
-// Authentication Routes
+// Authentication Routes (avec rate-limit anti brute-force)
 Route::get('/register', [App\Http\Controllers\AuthController::class, 'showRegisterForm'])->name('register.form');
-Route::post('/register', [App\Http\Controllers\AuthController::class, 'register'])->name('register');
+Route::post('/register', [App\Http\Controllers\AuthController::class, 'register'])
+    ->middleware('throttle:register')->name('register');
 Route::get('/login', [App\Http\Controllers\AuthController::class, 'showLoginForm'])->name('login.form');
-Route::post('/login', [App\Http\Controllers\AuthController::class, 'login'])->name('login');
+Route::post('/login', [App\Http\Controllers\AuthController::class, 'login'])
+    ->middleware('throttle:login')->name('login');
 Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
 
-// Password Reset Routes
+// Password Reset Routes (rate-limit pour éviter l'énumération et le spam mail)
 Route::get('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'showForgotPasswordForm'])->name('password.request');
-Route::post('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'sendResetLink'])->name('password.email');
+Route::post('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'sendResetLink'])
+    ->middleware('throttle:password-reset')->name('password.email');
 Route::get('/reset-password/{token}', [App\Http\Controllers\PasswordResetController::class, 'showResetPasswordForm'])->name('password.reset');
-Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'resetPassword'])->name('password.update');
+Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'resetPassword'])
+    ->middleware('throttle:password-reset')->name('password.update');
 
 // Google OAuth Routes
 Route::get('/auth/google/redirect', [App\Http\Controllers\AuthController::class, 'redirectToGoogle'])->name('google.redirect');
@@ -87,8 +91,10 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
 });
 
 // Contact Routes
+// Contact Routes (rate-limit pour éviter le spam du formulaire public)
 Route::get('/contact', [ContactController::class, 'show'])->name('contact.form');
-Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
+Route::post('/contact', [ContactController::class, 'submit'])
+    ->middleware('throttle:contact')->name('contact.submit');
 
 // Routes pour la validation des inscriptions
 Route::get('/registration/pending', function () {
