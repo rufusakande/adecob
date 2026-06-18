@@ -111,7 +111,26 @@ class Handler extends ExceptionHandler
             return response()->view('errors.500', 
                 ['exception' => $e], 
                 Response::HTTP_INTERNAL_SERVER_ERROR
-            );
+        );
         });
+    }
+
+    /**
+     * Redirige les utilisateurs non authentifiés vers la page de connexion
+     * au lieu de renvoyer une erreur 500.
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Non authentifié',
+                'message' => 'Vous devez être connecté pour accéder à cette ressource.',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return redirect()
+            ->guest(route('login.form'))
+            ->with('message', 'Veuillez vous connecter pour accéder à cette page.');
     }
 }
