@@ -2,7 +2,9 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -77,6 +79,11 @@ class Handler extends ExceptionHandler
 
         // Gestion générale des exceptions
         $this->renderable(function (Throwable $e, $request) {
+            // Laisser Laravel gérer l'authentification (redirection vers login)
+            if ($e instanceof AuthenticationException) {
+                return null;
+            }
+
             // En production, enregistrer l'erreur
             if (app()->environment('production')) {
                 \Log::error('Exception non gérée', [
@@ -104,7 +111,26 @@ class Handler extends ExceptionHandler
             return response()->view('errors.500', 
                 ['exception' => $e], 
                 Response::HTTP_INTERNAL_SERVER_ERROR
-            );
+        );
         });
+    }
+
+    /**
+     * Redirige les utilisateurs non authentifiés vers la page de connexion
+     * au lieu de renvoyer une erreur 500.
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Non authentifié',
+                'message' => 'Vous devez être connecté pour accéder à cette ressource.',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return redirect()
+            ->guest(route('login.form'))
+            ->with('message', 'Veuillez vous connecter pour accéder à cette page.');
     }
 }
