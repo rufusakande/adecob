@@ -79,6 +79,11 @@ class Handler extends ExceptionHandler
 
         // Gestion générale des exceptions
         $this->renderable(function (Throwable $e, $request) {
+            // Laisser Laravel gérer l'authentification (redirection vers login)
+            if ($e instanceof AuthenticationException) {
+                return null;
+            }
+
             // En production, enregistrer l'erreur
             if (app()->environment('production')) {
                 \Log::error('Exception non gérée', [
