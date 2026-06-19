@@ -35,6 +35,15 @@ Route::post('/login', [App\Http\Controllers\AuthController::class, 'login'])
     ->middleware('throttle:login')->name('login');
 Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
 
+// MFA email pour comptes admin
+Route::middleware(['auth'])->group(function () {
+    Route::get('/mfa', [App\Http\Controllers\MfaController::class, 'show'])->name('mfa.show');
+    Route::post('/mfa/verify', [App\Http\Controllers\MfaController::class, 'verify'])
+        ->middleware('throttle:login')->name('mfa.verify');
+    Route::post('/mfa/resend', [App\Http\Controllers\MfaController::class, 'resend'])
+        ->middleware('throttle:password-reset')->name('mfa.resend');
+});
+
 // Password Reset Routes (rate-limit pour éviter l'énumération et le spam mail)
 Route::get('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'showForgotPasswordForm'])->name('password.request');
 Route::post('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'sendResetLink'])
@@ -102,14 +111,14 @@ Route::get('/registration/pending', function () {
 })->name('registration.pending');
 
 // Route d'approbation des inscriptions - accessible aux super admin et commune admin
-Route::middleware(['auth', 'admin.access'])->group(function () {
+Route::middleware(['auth', 'admin.access', 'mfa.verified'])->group(function () {
     Route::get('/admin/pending-registrations', [App\Http\Controllers\Admin\UserValidationController::class, 'index'])->name('admin.pending-registrations');
     Route::post('/admin/approve-user/{user}', [App\Http\Controllers\Admin\UserValidationController::class, 'approve'])->name('admin.approve-user');
     Route::post('/admin/reject-user/{user}', [App\Http\Controllers\Admin\UserValidationController::class, 'reject'])->name('admin.reject-user');
 });
 
 // Routes admin - réservées au super admin
-Route::middleware(['auth', 'super.admin'])->group(function () {
+Route::middleware(['auth', 'super.admin', 'mfa.verified'])->group(function () {
     // Tableau de bord Super Admin
     Route::get('/admin/dashboard', [App\Http\Controllers\Admin\SuperAdminDashboardController::class, 'index'])
         ->name('admin.dashboard');
@@ -127,7 +136,7 @@ Route::middleware(['auth', 'super.admin'])->group(function () {
 });
 
 // Routes pour les admins communes (gestion de leur propre commune)
-Route::middleware(['auth', 'commune.admin'])->prefix('dashboard')->group(function () {
+Route::middleware(['auth', 'commune.admin', 'mfa.verified'])->prefix('dashboard')->group(function () {
     Route::get('/commune/dashboard', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'dashboard'])->name('commune-admin.dashboard');
     Route::get('/commune/access-code', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'editAccessCode'])->name('commune-admin.access-code.edit');
     Route::post('/commune/access-code', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'updateAccessCode'])->name('commune-admin.access-code.update');
@@ -135,7 +144,7 @@ Route::middleware(['auth', 'commune.admin'])->prefix('dashboard')->group(functio
 });
 
 // Audit Logs Routes (super admin only)
-Route::middleware(['auth', 'super.admin'])->prefix('admin/audit')->group(function () {
+Route::middleware(['auth', 'super.admin', 'mfa.verified'])->prefix('admin/audit')->group(function () {
     Route::get('/', [App\Http\Controllers\AuditLogController::class, 'index'])->name('audit.index');
     Route::get('{auditLog}', [App\Http\Controllers\AuditLogController::class, 'show'])->name('audit.show');
     Route::get('user/{user}/history', [App\Http\Controllers\AuditLogController::class, 'userHistory'])->name('audit.user-history');

@@ -137,11 +137,10 @@ class AuthController extends Controller
      */
     protected function redirectAfterLogin(User $user)
     {
-        if ($user->isSuperAdmin()) {
-            return redirect()->intended(route('admin.dashboard'));
-        }
-        if ($user->isCommuneAdmin()) {
-            return redirect()->intended(route('commune-admin.dashboard'));
+        // Comptes admin : MFA mail obligatoire avant accès au dashboard.
+        if ($user->isSuperAdmin() || $user->isCommuneAdmin()) {
+            session()->forget(['mfa_verified_user_id', 'mfa_code_sent_at']);
+            return redirect()->route('mfa.show');
         }
         if ($user->isAgent()) {
             return redirect()->intended(route('mairie-agent.dashboard'));
