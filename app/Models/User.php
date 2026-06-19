@@ -52,6 +52,7 @@ class User extends Authenticatable
         'rejected_at' => 'datetime',
         'password' => 'hashed',
         'is_approved' => 'boolean',
+        'telephone' => 'encrypted',
     ];
 
     /**
