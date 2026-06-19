@@ -22,6 +22,10 @@ class Commune extends Model
         'access_code'
     ];
 
+    protected $casts = [
+        'access_code_plain' => 'encrypted',
+    ];
+
     /**
      * Relations
      */

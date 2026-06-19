@@ -51,6 +51,7 @@ class Infrastructure extends Model
         'arrondissement' => 'array',
         'photos' => 'array',
         'photo_count' => 'integer',
+        'numero_telephone' => 'encrypted',
     ];
 
     /**
