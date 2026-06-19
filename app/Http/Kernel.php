@@ -71,5 +71,6 @@ class Kernel extends HttpKernel
         'super.admin' => \App\Http\Middleware\CheckSuperAdmin::class,
         'admin.access' => \App\Http\Middleware\CheckAdminAccess::class,
         'commune.admin' => \App\Http\Middleware\CommuneAdminMiddleware::class,
+        'mfa.verified' => \App\Http\Middleware\MfaVerified::class,
     ];
 }
