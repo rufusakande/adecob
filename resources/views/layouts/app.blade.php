@@ -347,6 +347,15 @@
     <footer class="text-center">
         <div class="footer-text">
             &copy; {{ date('Y') }} <strong>ADECOB Infrastructure Plannification</strong>. Tous droits réservés.<br class="d-md-none">
+            <div class="mt-2">
+                <a href="{{ route('legal.pssi') }}" class="text-white-50 mx-2">PSSI</a>
+                <span class="text-white-50">·</span>
+                <a href="{{ route('legal.confidentialite') }}" class="text-white-50 mx-2">Politique de confidentialité</a>
+                <span class="text-white-50">·</span>
+                <a href="{{ route('legal.cgu') }}" class="text-white-50 mx-2">CGU</a>
+                <span class="text-white-50">·</span>
+                <a href="{{ route('legal.registre') }}" class="text-white-50 mx-2">Registre des traitements</a>
+            </div>
             <p class="mb-0 opacity-0">Développé par Rufus Akande, développeur web freelance <a href="https://rufusakande.github.io/rufus-akande">Rufus Akande</a></p>
         </div>
     </footer>
