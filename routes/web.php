@@ -26,6 +26,12 @@ Route::get('/', [App\Http\Controllers\PublicController::class, 'landing'])->name
 Route::get('/infrastructures/public', [App\Http\Controllers\PublicController::class, 'infrastructures'])
     ->name('public.infrastructures');
 
+// Documents légaux & conformité (Code du numérique du Bénin)
+Route::get('/pssi', [App\Http\Controllers\LegalController::class, 'pssi'])->name('legal.pssi');
+Route::get('/politique-confidentialite', [App\Http\Controllers\LegalController::class, 'confidentialite'])->name('legal.confidentialite');
+Route::get('/cgu', [App\Http\Controllers\LegalController::class, 'cgu'])->name('legal.cgu');
+Route::get('/registre-traitements', [App\Http\Controllers\LegalController::class, 'registreTraitements'])->name('legal.registre');
+
 // Authentication Routes (avec rate-limit anti brute-force)
 Route::get('/register', [App\Http\Controllers\AuthController::class, 'showRegisterForm'])->name('register.form');
 Route::post('/register', [App\Http\Controllers\AuthController::class, 'register'])
