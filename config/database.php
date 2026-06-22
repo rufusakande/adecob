@@ -58,8 +58,14 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Chiffrement en transit MySQL (TLS).
+            // Renseigner MYSQL_ATTR_SSL_CA (chemin vers le bundle CA) en production
+            // pour activer TLS et la vérification du certificat serveur.
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::MYSQL_ATTR_SSL_CERT => env('MYSQL_ATTR_SSL_CERT'),
+                PDO::MYSQL_ATTR_SSL_KEY => env('MYSQL_ATTR_SSL_KEY'),
+                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT', true),
             ]) : [],
         ],
 
