@@ -205,6 +205,20 @@ class InfrastructureController extends Controller
         $infrastructure->observation_generale = $validated['observation_generale'] ?? null;
         $infrastructure->rehabilitation = $validated['rehabilitation'] ?? null;
 
+        // ---- Workflow de validation ----
+        // Agent : soumission en attente de validation par un admin.
+        // Admin (commune / super) : validation directe car auto-approuvée.
+        if ($authUser->isAgent()) {
+            $infrastructure->status = Infrastructure::STATUS_PENDING;
+            $infrastructure->submitted_at = now();
+        } else {
+            $infrastructure->status = Infrastructure::STATUS_VALIDATED;
+            $infrastructure->validated_by = $authUser->id;
+            $infrastructure->validated_at = now();
+            $infrastructure->submitted_at = now();
+        }
+
+
         // Gérer les téléchargements de photos
         for ($i = 1; $i <= 4; $i++) {
             $photoField = 'photo' . $i;
