@@ -348,6 +348,15 @@ class InfrastructureController extends Controller
         $infrastructure->observation_generale = $validated['observation_generale'] ?? null;
         $infrastructure->rehabilitation = $validated['rehabilitation'] ?? null;
 
+        // Si un agent modifie une saisie rejetée, elle repasse en attente.
+        if ($authUser->isAgent() && $infrastructure->isRejected()) {
+            $infrastructure->status = Infrastructure::STATUS_PENDING;
+            $infrastructure->rejection_reason = null;
+            $infrastructure->submitted_at = now();
+        }
+
+
+
         // Gérer les téléchargements de photos
         for ($i = 1; $i <= 4; $i++) {
             $photoField = 'photo' . $i;
