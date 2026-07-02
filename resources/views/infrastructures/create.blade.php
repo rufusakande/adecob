@@ -163,7 +163,7 @@
                         <i class="fas fa-map-marker-alt text-success me-1"></i>
                         Latitude (x,y°)
                     </label>
-                    <input type="text" name="latitude" id="latitude" class="form-control" placeholder="Latitude">
+                    <input type="number" step="any" min="-90" max="90" name="latitude" id="latitude" class="form-control" placeholder="Latitude (-90 à 90)">
                 </div>
                 <!-- Longitude -->
                 <div class="col-12 col-md-6">
@@ -171,7 +171,7 @@
                         <i class="fas fa-map-marker-alt text-success me-1"></i>
                         Longitude (x,y°)
                     </label>
-                    <input type="text" name="longitude" id="longitude" class="form-control" placeholder="Longitude">
+                    <input type="number" step="any" min="-180" max="180" name="longitude" id="longitude" class="form-control" placeholder="Longitude (-180 à 180)">
                 </div>
                 <!-- Altitude -->
                 <div class="col-12 col-md-6">
@@ -179,7 +179,8 @@
                         <i class="fas fa-mountains text-success me-1"></i>
                         Altitude (m)
                     </label>
-                    <input type="text" name="altitude" id="altitude" class="form-control" placeholder="Altitude">
+                    <input type="number" step="any" min="-500" max="9000" name="altitude" id="altitude" class="form-control" placeholder="Altitude (m)">
+
                 </div>
                 <!-- Précision -->
                 <div class="col-12 col-md-6">
