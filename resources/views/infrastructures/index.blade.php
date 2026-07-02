@@ -532,6 +532,8 @@
                                 </div>
                             </td>
                             <td><strong>{{ $infra->id }}</strong></td>
+                            <td>@include('infrastructures.partials._status-badge', ['status' => $infra->status])</td>
+
                             <td>{{ $infra->nom_enqueteur ?? 'N/A' }}</td>
                             <td>{{ $infra->numero_telephone ?? 'N/A' }}</td>
                             <td>
