@@ -263,7 +263,7 @@
                             <i class="fas fa-calendar-alt text-success me-1"></i>
                             Année de réalisation
                         </label>
-                        <input type="text" name="annee_realisation" id="annee_realisation" class="form-control">
+                        <input type="number" min="1900" max="{{ date('Y')+1 }}" name="annee_realisation" id="annee_realisation" class="form-control" placeholder="Ex. {{ date('Y') }}">
                     </div>
                 </div>
                 <!-- Bailleur -->
