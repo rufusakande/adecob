@@ -164,44 +164,10 @@ class InfrastructureController extends Controller
         return view('infrastructures.create');
     }
 
-    public function store(Request $request)
+    public function store(InfrastructureRequest $request)
     {
-        $validated = $request->validate([
-            'date' => 'nullable|date',
-            'nom_enqueteur' => 'required|string|max:255',
-            'numero_telephone' => 'nullable|string|max:255',
-            'commune' => 'nullable|string|max:255',
-            'arrondissement' => 'nullable|array',
-            'arrondissement.*' => 'string|max:255',
-            'village' => 'nullable|string|max:255',
-            'hameau' => 'nullable|string|max:255',
-            'latitude' => 'nullable|string|max:255',
-            'longitude' => 'nullable|string|max:255',
-            'altitude' => 'nullable|string|max:255',
-            'precision' => 'nullable|string|max:255',
-            'secteur_domaine' => 'nullable|string|max:255',
-            'type_infrastructure' => 'nullable|string|max:255',
-            'nom_infrastructure' => 'nullable|string|max:255',
-            'annee_realisation' => 'nullable|string|max:255',
-            'bailleur' => 'nullable|string|max:255',
-            'type_materiaux' => 'nullable|string|max:255',
-            'etat_fonctionnement' => 'nullable|string|max:255',
-            'niveau_degradation' => 'nullable|string|max:255',
-            'mode_gestion' => 'nullable|string|max:255',
-            'mode_gestion_preciser' => 'nullable|string|max:255',
-            'defectuosites_relevees' => 'nullable|string',
-            'mesures_proposees' => 'nullable|string',
-            'observation_generale' => 'nullable|string',
-            'rehabilitation' => 'nullable|string|max:255',
-            'photo1' => 'nullable|image|max:10240',
-            'photo2' => 'nullable|image|max:10240',
-            'photo3' => 'nullable|image|max:10240',
-            'photo4' => 'nullable|image|max:10240',
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|max:10240',
-            'photos_data' => 'nullable|string',
-            'existing_photos' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
+
 
         $authUser = auth()->user();
         $infrastructure = new Infrastructure();
