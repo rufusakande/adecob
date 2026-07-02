@@ -1,137 +1,122 @@
 
-Note: la commande `/skill:redesign` cible une refonte **visuelle** (palette / typo / layout). Ta demande est une **refonte d'architecture des rôles et espaces** d'une app Laravel — je ne déclenche donc pas le skill redesign et je te propose plutôt un plan d'exécution structuré.
+# PR14 — Refonte complète du CRUD Infrastructures + workflow de validation
 
----
+## Objectifs
+1. Workflow de validation : agent soumet → admin (commune ou super) valide/rejette → statut "validé"
+2. Formulaire d'ajout premium, dynamique, avec validation stricte côté serveur et client
+3. Page de détails dédiée par infrastructure (accessible à l'auteur, à son commune_admin et au super_admin)
+4. Édition + suppression par l'agent auteur (uniquement si non validé, ou toujours pour admins)
+5. Design premium + UX fluide (stepper multi-étapes, autosave brouillon, feedback temps réel)
 
-## Phase 0 — Nettoyage & cohérence (rapide, avant la refonte)
+## 1. Base de données (migration)
+Nouvelle migration `2026_07_02_120000_add_validation_workflow_to_infrastructures.php` :
+- `status` ENUM('draft','pending','validated','rejected') défaut `pending`
+- `validated_by` (FK users, nullable)
+- `validated_at` (timestamp, nullable)
+- `rejection_reason` (text, nullable)
+- `submitted_at` (timestamp, nullable)
+- Index composé (`status`, `commune_id`)
 
-Objectif : aligner la base avant de toucher à l'architecture.
+Rétrocompatibilité : toutes les infrastructures existantes → `status = 'validated'`.
 
-1. **Unification du nom de la plateforme**
-   - Définir le nom officiel (ex. "ADECOB — Plateforme de gestion des infrastructures du Borgou").
-   - Remplacer toutes les variantes dans : `config/app.php` (`APP_NAME`), `.env.example`, `resources/views/layouts/app.blade.php`, `welcome.blade.php`, `home.blade.php`, emails (`resources/views/emails/*`), `contact.blade.php`, footer, balises `<title>` et meta.
-2. **Page Contact — données réelles**
-   - Remplacer adresse / téléphone / email fictifs par les vraies coordonnées ADECOB (à fournir).
-   - Vérifier `ContactController` + mail destinataire (`config/mail.php`, `App\Mail\ContactFormMail`).
-3. **Vérification de l'erreur 500 (déjà corrigée par toi)**
-   - Revue rapide de `app/Exceptions/Handler.php`, `ErrorHandlingMiddleware`, `errors/500.blade.php`, et des logs récents pour confirmer qu'aucune trace de la cause initiale ne subsiste.
+## 2. Modèle Infrastructure
+- Ajout scopes `pending()`, `validated()`, `rejected()`
+- Ajout relation `validator()` (User)
+- Ajout `canBeValidatedBy($user)` : super_admin OR commune_admin de la même commune
+- `canBeManagedBy` mis à jour : agent ne peut éditer/supprimer que si `status !== 'validated'` (une fois validé, seuls les admins peuvent modifier)
+- Statistiques publiques (`PublicController`, tableaux de bord commune/super) filtrent sur `status = 'validated'` uniquement
 
-Livrable : 1 PR "chore: nom plateforme + contact réel + check 500".
+## 3. Contrôleur InfrastructureController
+Refactor du `store`/`update` :
+- Validation renforcée (regex téléphone Bénin `/^(\+229|00229)?[0-9]{8,10}$/`, latitude/longitude numériques bornées, année 1900-année courante, whitelist enums)
+- Extraction d'un `FormRequest` : `App\Http\Requests\InfrastructureRequest`
+- Sur `store` par un agent : `status = 'pending'`, `submitted_at = now()`
+- Sur `store` par un admin : `status = 'validated'`, `validated_by = auth()->id()`
+- Nouveau `show(Infrastructure $infrastructure)` (déjà routé) : contrôle d'accès via `visibleTo`
+- Nouvelles actions : `validate()`, `reject(Request)`, `resubmit()` (agent renvoie après rejet)
+- `index` : ajouter un onglet/section "En attente de validation" pour les admins et un badge par ligne
 
----
-
-## Phase 1 — Refonte des rôles et espaces (le gros morceau)
-
-### 1.1 Matrice des rôles (source de vérité)
-
-| Rôle | Inscription | Validation par | Périmètre données | Actions |
-|---|---|---|---|---|
-| **public** | aucune | — | toutes communes, lecture stats publiques | voir page d'accueil + dashboard public (stats + filtres commune/type) |
-| **agent collecteur** (défaut à l'inscription) | oui (avec commune) | super admin OU admin de sa commune | sa commune (lecture) | CRUD **uniquement sur ses propres données** |
-| **admin commune** | non (promu depuis agent par super admin) | — | sa commune uniquement | CRUD sur toutes les données de sa commune + valider inscriptions de sa commune |
-| **super admin** | non (seed initial + nommé par un autre super admin) | — | toutes communes | tout + nommer admins commune + nommer super admins + valider toute inscription + vider BDD |
-
-Règles invariantes :
-- 1 utilisateur ↔ 1 commune.
-- 1 utilisateur ↔ 1 rôle effectif (super_admin | commune_admin | agent).
-- Plusieurs admins possibles pour la même commune.
-- Le rôle `public_user` est supprimé (le public ne s'inscrit plus).
-
-### 1.2 Page d'accueil publique (refonte)
-
-- `GET /` → nouvelle landing publique (présentation ADECOB + stats agrégées + CTA "S'inscrire" / "Se connecter").
-- `GET /infrastructures/public` → vue publique en lecture seule, filtrable par commune et par type, **sans données nominatives** ni actions.
-- Supprimer la redirection actuelle `/` → `register.form`.
-
-### 1.3 Inscription & validation
-
-- Formulaire d'inscription : `nom`, `prenom`, `telephone`, `email`, `commune_id` (select), `password`, `password_confirmation`, case CGU.
-- À l'inscription : `role = 'agent'`, `is_approved = false`, `commune_id` obligatoire.
-- Redirection systématique vers `/registration/pending` jusqu'à validation.
-- Notifications : email à tous les super admins + admins de la commune choisie.
-- Validation : super admin (toutes communes) ou admin commune (sa commune uniquement). Approbation = `is_approved=true`, `approved_at=now()`. Rejet = soft delete + notification.
-
-### 1.4 Espaces (3 layouts distincts)
-
+## 4. Nouvelles routes (protégées)
 ```
-/                          → landing publique
-/infrastructures/public    → vue publique
-/login, /register, ...     → auth
-
-/super-admin/...           → middleware: auth + super.admin
-/commune-admin/...         → middleware: auth + commune.admin
-/agent/...                 → middleware: auth + agent
+POST   /infrastructures/{infrastructure}/validate   → admin.access + mfa.verified
+POST   /infrastructures/{infrastructure}/reject     → admin.access + mfa.verified
+POST   /infrastructures/{infrastructure}/resubmit   → auteur uniquement
+GET    /infrastructures/pending                      → liste dédiée pour admins
 ```
 
-Chaque espace a **son propre layout Blade** (`layouts/super-admin.blade.php`, `layouts/commune-admin.blade.php`, `layouts/agent.blade.php`) avec sa nav latérale dédiée.
+## 5. Vues Blade
 
-**Espace super admin** : dashboard global (KPIs par commune), gestion utilisateurs (lister, approuver, rejeter, nommer admin commune, nommer super admin, désactiver), gestion communes (CRUD), toutes infrastructures (CRUD), audit logs, import/export, "vider BDD".
+### `infrastructures/create.blade.php` et `edit.blade.php` (refonte premium)
+Formulaire en **stepper 5 étapes** avec barre de progression :
+1. **Enquêteur & localisation** (nom, téléphone Bénin, date, commune (readonly si agent), arrondissement, village, hameau)
+2. **Géolocalisation** (bouton "Utiliser ma position", latitude/longitude/altitude/précision + preview carte Leaflet)
+3. **Infrastructure** (secteur, type, nom, année, bailleur, matériaux)
+4. **État & gestion** (état fonctionnement, niveau dégradation, mode gestion, défectuosités, mesures, observation, rehabilitation)
+5. **Photos** (4 emplacements, drag & drop + caméra intégrée, preview instantané, suppression)
 
-**Espace admin commune** : dashboard de sa commune, gestion utilisateurs de sa commune (approuver/rejeter agents), infrastructures de sa commune (CRUD complet), audit logs de sa commune, import/export limité à sa commune.
+Fonctionnalités UX :
+- Validation JavaScript en temps réel par étape (Zod-like via HTML5 + JS custom léger)
+- Sauvegarde brouillon localStorage (`infra_draft_{user_id}`) → restauré à l'ouverture
+- Champs conditionnels dynamiques (`mode_gestion_preciser` visible seulement si mode_gestion = "Autre")
+- Indicateur qualité (score de complétude en % en temps réel)
+- Design cards + shadows douces, palette existante commune, animations `transition-all`
 
-**Espace agent collecteur** : dashboard limité à ses propres collectes, ajouter infrastructure (forcément dans sa commune, `created_by = self`), modifier/supprimer **uniquement ses créations**, vue lecture seule des autres données de sa commune.
+### `infrastructures/show.blade.php` (nouveau ou refonte)
+Page détail premium :
+- Header avec badge statut (draft/pending/validated/rejected) + boutons contextuels (Modifier, Supprimer, Valider, Rejeter, Renvoyer)
+- Bloc infos regroupées par section (mêmes 5 blocs que le formulaire)
+- Galerie photos (lightbox)
+- Mini-carte Leaflet avec le marqueur
+- Historique de validation (qui, quand, motif si rejeté)
+- Lien vers `works` si présents
 
-### 1.5 Autorisations (Policies + Gates)
+### `infrastructures/index.blade.php`
+- Colonne statut avec badges colorés
+- Onglets : "Validées" | "En attente" (admins) | "Rejetées" (auteur + admins) | "Mes brouillons" (agents)
+- Bouton "Valider" / "Rejeter" (modal avec motif) sur les lignes en attente
 
-- Créer `InfrastructurePolicy`, `UserPolicy`, `CommunePolicy` avec règles `viewAny`, `view`, `create`, `update`, `delete` exprimant la matrice ci-dessus.
-- Remplacer les `if ($user->role === ...)` éparpillés par `$this->authorize(...)` dans les contrôleurs.
-- Helpers `User::scopeToVisibleInfrastructures()` pour centraliser le filtrage par commune/ownership.
+## 6. Sécurité
+- `InfrastructureRequest` : authorization via `canBeManagedBy` sur update, création restreinte aux rôles agent/commune_admin/super_admin
+- `validate`/`reject` : middleware `admin.access` + vérif commune scope pour commune_admin
+- Suppression : agent peut supprimer uniquement ses saisies non-validées ; admins toujours ; log audit via trait `Auditable`
+- Photos : validation MIME côté serveur, taille max 10 Mo, extension whitelist
+- CSRF déjà en place, on garde
+- Rate-limit `throttle:60,1` sur `store`/`update`
 
-### 1.6 Traçabilité (audit)
+## 7. Tests
+`tests/Feature/InfrastructureCrudTest.php` :
+- Agent crée → status pending
+- Agent voit ses propres infras uniquement
+- Admin voit toutes celles de sa commune
+- Admin valide → status validated
+- Admin rejette avec motif → agent peut renvoyer
+- Agent ne peut pas éditer une infra validée
+- Statistiques publiques ne comptent que les validées
 
-- Étendre `Auditable` trait à `Infrastructure`, `InfrastructureWork`, `MairieAgentData`, `User`, `Commune`.
-- Champs loggés : `user_id`, `action`, `model`, `model_id`, `changes (json)`, `ip`, `user_agent`, `created_at`.
-- Vue audit accessible : super admin (tout), admin commune (sa commune uniquement).
+## Fichiers créés
+- `database/migrations/2026_07_02_120000_add_validation_workflow_to_infrastructures.php`
+- `app/Http/Requests/InfrastructureRequest.php`
+- `resources/views/infrastructures/show.blade.php` (si absent, sinon refonte)
+- `resources/views/infrastructures/partials/_form-stepper.blade.php`
+- `resources/views/infrastructures/partials/_status-badge.blade.php`
+- `tests/Feature/InfrastructureCrudTest.php`
 
-### 1.7 Migrations DB
+## Fichiers modifiés
+- `app/Models/Infrastructure.php`
+- `app/Http/Controllers/InfrastructureController.php`
+- `app/Http/Controllers/PublicController.php` (filtrer validated)
+- `app/Http/Controllers/Admin/SuperAdminDashboardController.php` (badge en attente)
+- `app/Http/Controllers/Admin/CommuneAdminDashboardController.php` (badge en attente)
+- `resources/views/infrastructures/create.blade.php`
+- `resources/views/infrastructures/edit.blade.php`
+- `resources/views/infrastructures/index.blade.php`
+- `resources/views/layouts/partials/nav-authenticated.blade.php` (lien "À valider" + compteur)
+- `routes/web.php`
 
-- `users` : retirer `public_user` de l'enum `role` (data migration : aucun en prod normalement), s'assurer que `commune_id` est `NOT NULL` pour `agent` et `commune_admin`, ajouter `telephone`, `prenom` si absents, ajouter `rejected_at`.
-- `infrastructures` : confirmer `user_id` (créateur) + `commune_id` `NOT NULL`.
-- Supprimer/déprécier le système `access_code` des communes (mis en pause selon ta demande).
+## Notes UX / design
+- Palette existante (bleu institutionnel + accents) — on ne change pas l'identité, on renforce la hiérarchie visuelle.
+- Stepper responsive (accordéon sur mobile).
+- Feedback (toasts) après chaque action de validation/rejet.
+- Accessibilité : labels explicites, aria-invalid sur champs en erreur, focus trap dans les modaux.
 
-### 1.8 Redirections post-login
-
-`AuthController::login` redirige selon rôle :
-- super_admin → `/super-admin/dashboard`
-- commune_admin → `/commune-admin/dashboard`
-- agent → `/agent/dashboard`
-- non approuvé → `/registration/pending`
-
-### 1.9 Middleware
-
-- Garder `super.admin`, renommer/clarifier `commune.admin` (sa commune uniquement), créer `agent` middleware.
-- `check.approval` reste mais redirige vers `/registration/pending` au lieu du home.
-- Retirer `EnsureCommuneSelected` (la commune est désormais portée par l'utilisateur, plus de sélection runtime).
-
----
-
-## Détails techniques
-
-- **Stack** : Laravel 10+ (PHP, Blade, MySQL), Bootstrap actuel conservé.
-- **Tests** : feature tests par rôle dans `tests/Feature/Roles/` (super_admin, commune_admin, agent, public) couvrant accès et CRUD.
-- **Seeders** : `SuperAdminSeeder` (1 compte par défaut), `CommuneSeeder` (8 communes du Borgou), pas de fake data en prod (`--env=production` skip).
-- **Audit existant** : la table `audit_logs` a été créée puis droppée par les migrations 2026_04_04 — il faudra **recréer la table** avant d'activer la traçabilité étendue.
-
----
-
-## Ordre d'exécution proposé (PRs séparées, courtes, vérifiables)
-
-1. **PR1 — Nettoyage** : nom plateforme + contact réel + check 500.
-2. **PR2 — Migrations & modèle rôles** : enum role nettoyé, champs users, suppression access_code, recréation audit_logs.
-3. **PR3 — Landing publique + vue infrastructures publique**.
-4. **PR4 — Inscription refondue + workflow validation** (super admin + admin commune).
-5. **PR5 — Espace super admin** (layout + dashboard + gestion users/communes).
-6. **PR6 — Espace admin commune** (layout + dashboard + validation users de sa commune + CRUD scoped).
-7. **PR7 — Espace agent collecteur** (layout + dashboard + CRUD ownership-only).
-8. **PR8 — Policies + audit étendu + tests par rôle**.
-
----
-
-## Questions avant de coder
-
-1. **Compte super admin initial** : email/nom à seeder par défaut ? (sinon je mets `admin@adecob.bj` + mot de passe à changer au 1er login)
-2. **Coordonnées Contact réelles** : adresse / téléphone / email officiels ADECOB ?
-3. **Nom officiel exact de la plateforme** à figer partout ?
-4. **Périmètre public** : la page publique montre quoi exactement — uniquement compteurs agrégés, ou liste détaillée d'infrastructures (sans auteur) ?
-
-Dis-moi sur lesquels tu veux que je démarre (je suggère **PR1 + réponses aux 4 questions** en parallèle).
+Souhaites-tu que je démarre l'implémentation immédiatement, ou veux-tu ajuster un point (par ex. rendre la validation à double niveau, ou permettre à l'agent de supprimer même après validation) ?
