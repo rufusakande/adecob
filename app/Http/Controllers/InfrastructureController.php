@@ -460,6 +460,109 @@ class InfrastructureController extends Controller
         return redirect()->route('infrastructures.index')->with('success', 'Infrastructure supprimée avec succès.');
     }
 
+    /* =========================================================
+     |  Workflow de validation (admin commune + super admin)
+     |=========================================================*/
+
+    /**
+     * Liste des infrastructures en attente de validation
+     * (super_admin : toutes ; commune_admin : sa commune).
+     */
+    public function pendingIndex(Request $request)
+    {
+        $user = auth()->user();
+        abort_unless($user->isSuperAdmin() || $user->isCommuneAdmin(), 403);
+
+        $query = Infrastructure::query()
+            ->visibleTo($user)
+            ->whereIn('status', [Infrastructure::STATUS_PENDING, Infrastructure::STATUS_REJECTED])
+            ->with(['user', 'communeModel', 'validator'])
+            ->orderBy('submitted_at', 'desc');
+
+        $infrastructures = $query->paginate(20);
+
+        $counts = [
+            'pending'   => Infrastructure::query()->visibleTo($user)->pending()->count(),
+            'rejected'  => Infrastructure::query()->visibleTo($user)->rejected()->count(),
+            'validated' => Infrastructure::query()->visibleTo($user)->validated()->count(),
+        ];
+
+        return view('infrastructures.pending', compact('infrastructures', 'counts'));
+    }
+
+    /**
+     * Valider une infrastructure en attente.
+     */
+    public function validateInfrastructure(Infrastructure $infrastructure)
+    {
+        $user = auth()->user();
+        if (!$infrastructure->canBeValidatedBy($user)) {
+            abort(403, "Vous n'avez pas le droit de valider cette infrastructure.");
+        }
+
+        $infrastructure->status = Infrastructure::STATUS_VALIDATED;
+        $infrastructure->validated_by = $user->id;
+        $infrastructure->validated_at = now();
+        $infrastructure->rejection_reason = null;
+        $infrastructure->save();
+
+        Log::info('Infrastructure validée', [
+            'id' => $infrastructure->id, 'by' => $user->id,
+        ]);
+
+        return redirect()->back()->with('success', 'Infrastructure validée. Elle intègre à présent les données analysables.');
+    }
+
+    /**
+     * Rejeter une infrastructure avec motif obligatoire.
+     */
+    public function rejectInfrastructure(Request $request, Infrastructure $infrastructure)
+    {
+        $user = auth()->user();
+        if (!$infrastructure->canBeValidatedBy($user)) {
+            abort(403, "Vous n'avez pas le droit de rejeter cette infrastructure.");
+        }
+
+        $data = $request->validate([
+            'rejection_reason' => 'required|string|min:5|max:1000',
+        ]);
+
+        $infrastructure->status = Infrastructure::STATUS_REJECTED;
+        $infrastructure->validated_by = $user->id;
+        $infrastructure->validated_at = now();
+        $infrastructure->rejection_reason = $data['rejection_reason'];
+        $infrastructure->save();
+
+        Log::info('Infrastructure rejetée', [
+            'id' => $infrastructure->id, 'by' => $user->id,
+        ]);
+
+        return redirect()->back()->with('success', 'La saisie a été rejetée. L\'agent pourra la corriger et la resoumettre.');
+    }
+
+    /**
+     * L'agent renvoie une saisie précédemment rejetée après correction
+     * (sans passer par le formulaire d'édition complet).
+     */
+    public function resubmitInfrastructure(Infrastructure $infrastructure)
+    {
+        $user = auth()->user();
+        if (!$user->isAgent() || (int)$infrastructure->user_id !== (int)$user->id) {
+            abort(403);
+        }
+        if (!$infrastructure->isRejected()) {
+            return redirect()->back()->with('error', 'Seules les saisies rejetées peuvent être resoumises.');
+        }
+
+        $infrastructure->status = Infrastructure::STATUS_PENDING;
+        $infrastructure->submitted_at = now();
+        $infrastructure->rejection_reason = null;
+        $infrastructure->save();
+
+        return redirect()->route('infrastructures.show', $infrastructure)
+            ->with('success', 'Votre saisie a été renvoyée pour validation.');
+    }
+
 
     public function export(Request $request)
     {
