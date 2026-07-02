@@ -300,9 +300,10 @@ class InfrastructureController extends Controller
         return view('infrastructures.edit', compact('infrastructure'));
     }
 
-    public function update(Request $request, Infrastructure $infrastructure)
+    public function update(InfrastructureRequest $request, Infrastructure $infrastructure)
     {
         $authUser = auth()->user();
+
         if (!$infrastructure->canBeManagedBy($authUser)) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
