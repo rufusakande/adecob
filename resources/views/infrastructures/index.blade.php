@@ -491,6 +491,8 @@
                                 </div>
                             </th>
                             <th>ID</th>
+                            <th>Statut</th>
+
                             <th>Enquêteur</th>
                             <th>Téléphone</th>
                             <th>Date</th>
