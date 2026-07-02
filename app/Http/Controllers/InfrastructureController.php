@@ -13,9 +13,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\InfrastructureRequest;
 
 class InfrastructureController extends Controller
 {
+
 
     public function index(Request $request)
     {
@@ -162,44 +164,10 @@ class InfrastructureController extends Controller
         return view('infrastructures.create');
     }
 
-    public function store(Request $request)
+    public function store(InfrastructureRequest $request)
     {
-        $validated = $request->validate([
-            'date' => 'nullable|date',
-            'nom_enqueteur' => 'required|string|max:255',
-            'numero_telephone' => 'nullable|string|max:255',
-            'commune' => 'nullable|string|max:255',
-            'arrondissement' => 'nullable|array',
-            'arrondissement.*' => 'string|max:255',
-            'village' => 'nullable|string|max:255',
-            'hameau' => 'nullable|string|max:255',
-            'latitude' => 'nullable|string|max:255',
-            'longitude' => 'nullable|string|max:255',
-            'altitude' => 'nullable|string|max:255',
-            'precision' => 'nullable|string|max:255',
-            'secteur_domaine' => 'nullable|string|max:255',
-            'type_infrastructure' => 'nullable|string|max:255',
-            'nom_infrastructure' => 'nullable|string|max:255',
-            'annee_realisation' => 'nullable|string|max:255',
-            'bailleur' => 'nullable|string|max:255',
-            'type_materiaux' => 'nullable|string|max:255',
-            'etat_fonctionnement' => 'nullable|string|max:255',
-            'niveau_degradation' => 'nullable|string|max:255',
-            'mode_gestion' => 'nullable|string|max:255',
-            'mode_gestion_preciser' => 'nullable|string|max:255',
-            'defectuosites_relevees' => 'nullable|string',
-            'mesures_proposees' => 'nullable|string',
-            'observation_generale' => 'nullable|string',
-            'rehabilitation' => 'nullable|string|max:255',
-            'photo1' => 'nullable|image|max:10240',
-            'photo2' => 'nullable|image|max:10240',
-            'photo3' => 'nullable|image|max:10240',
-            'photo4' => 'nullable|image|max:10240',
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|max:10240',
-            'photos_data' => 'nullable|string',
-            'existing_photos' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
+
 
         $authUser = auth()->user();
         $infrastructure = new Infrastructure();
@@ -236,6 +204,20 @@ class InfrastructureController extends Controller
         $infrastructure->mesures_proposees = $validated['mesures_proposees'] ?? null;
         $infrastructure->observation_generale = $validated['observation_generale'] ?? null;
         $infrastructure->rehabilitation = $validated['rehabilitation'] ?? null;
+
+        // ---- Workflow de validation ----
+        // Agent : soumission en attente de validation par un admin.
+        // Admin (commune / super) : validation directe car auto-approuvée.
+        if ($authUser->isAgent()) {
+            $infrastructure->status = Infrastructure::STATUS_PENDING;
+            $infrastructure->submitted_at = now();
+        } else {
+            $infrastructure->status = Infrastructure::STATUS_VALIDATED;
+            $infrastructure->validated_by = $authUser->id;
+            $infrastructure->validated_at = now();
+            $infrastructure->submitted_at = now();
+        }
+
 
         // Gérer les téléchargements de photos
         for ($i = 1; $i <= 4; $i++) {
@@ -318,9 +300,10 @@ class InfrastructureController extends Controller
         return view('infrastructures.edit', compact('infrastructure'));
     }
 
-    public function update(Request $request, Infrastructure $infrastructure)
+    public function update(InfrastructureRequest $request, Infrastructure $infrastructure)
     {
         $authUser = auth()->user();
+
         if (!$infrastructure->canBeManagedBy($authUser)) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
@@ -329,39 +312,8 @@ class InfrastructureController extends Controller
             abort(403, 'Les agents ne peuvent modifier que leurs propres infrastructures.');
         }
 
-        $validated = $request->validate([
-            'date' => 'nullable|date',
-            'nom_enqueteur' => 'required|string|max:255',
-            'numero_telephone' => 'nullable|string|max:255',
-            'commune' => 'nullable|string|max:255',
-            'arrondissement' => 'nullable|array',
-            'arrondissement.*' => 'string|max:255',
-            'village' => 'nullable|string|max:255',
-            'hameau' => 'nullable|string|max:255',
-            'latitude' => 'nullable|string|max:255',
-            'longitude' => 'nullable|string|max:255',
-            'altitude' => 'nullable|string|max:255',
-            'precision' => 'nullable|string|max:255',
-            'secteur_domaine' => 'nullable|string|max:255',
-            'type_infrastructure' => 'nullable|string|max:255',
-            'nom_infrastructure' => 'nullable|string|max:255',
-            'annee_realisation' => 'nullable|string|max:255',
-            'bailleur' => 'nullable|string|max:255',
-            'type_materiaux' => 'nullable|string|max:255',
-            'etat_fonctionnement' => 'nullable|string|max:255',
-            'niveau_degradation' => 'nullable|string|max:255',
-            'mode_gestion' => 'nullable|string|max:255',
-            'mode_gestion_preciser' => 'nullable|string|max:255',
-            'defectuosites_relevees' => 'nullable|string',
-            'mesures_proposees' => 'nullable|string',
-            'observation_generale' => 'nullable|string',
-            'rehabilitation' => 'nullable|string|max:255',
-            'photo1' => 'nullable|image|max:10240',
-            'photo2' => 'nullable|image|max:10240',
-            'photo3' => 'nullable|image|max:10240',
-            'photo4' => 'nullable|image|max:10240',
-            'photos_data' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
+
 
         // Mise à jour des champs de base
         $infrastructure->date = $validated['date'] ?? null;
@@ -395,6 +347,15 @@ class InfrastructureController extends Controller
         $infrastructure->mesures_proposees = $validated['mesures_proposees'] ?? null;
         $infrastructure->observation_generale = $validated['observation_generale'] ?? null;
         $infrastructure->rehabilitation = $validated['rehabilitation'] ?? null;
+
+        // Si un agent modifie une saisie rejetée, elle repasse en attente.
+        if ($authUser->isAgent() && $infrastructure->isRejected()) {
+            $infrastructure->status = Infrastructure::STATUS_PENDING;
+            $infrastructure->rejection_reason = null;
+            $infrastructure->submitted_at = now();
+        }
+
+
 
         // Gérer les téléchargements de photos
         for ($i = 1; $i <= 4; $i++) {
@@ -497,6 +458,109 @@ class InfrastructureController extends Controller
 
         $infrastructure->delete();
         return redirect()->route('infrastructures.index')->with('success', 'Infrastructure supprimée avec succès.');
+    }
+
+    /* =========================================================
+     |  Workflow de validation (admin commune + super admin)
+     |=========================================================*/
+
+    /**
+     * Liste des infrastructures en attente de validation
+     * (super_admin : toutes ; commune_admin : sa commune).
+     */
+    public function pendingIndex(Request $request)
+    {
+        $user = auth()->user();
+        abort_unless($user->isSuperAdmin() || $user->isCommuneAdmin(), 403);
+
+        $query = Infrastructure::query()
+            ->visibleTo($user)
+            ->whereIn('status', [Infrastructure::STATUS_PENDING, Infrastructure::STATUS_REJECTED])
+            ->with(['user', 'communeModel', 'validator'])
+            ->orderBy('submitted_at', 'desc');
+
+        $infrastructures = $query->paginate(20);
+
+        $counts = [
+            'pending'   => Infrastructure::query()->visibleTo($user)->pending()->count(),
+            'rejected'  => Infrastructure::query()->visibleTo($user)->rejected()->count(),
+            'validated' => Infrastructure::query()->visibleTo($user)->validated()->count(),
+        ];
+
+        return view('infrastructures.pending', compact('infrastructures', 'counts'));
+    }
+
+    /**
+     * Valider une infrastructure en attente.
+     */
+    public function validateInfrastructure(Infrastructure $infrastructure)
+    {
+        $user = auth()->user();
+        if (!$infrastructure->canBeValidatedBy($user)) {
+            abort(403, "Vous n'avez pas le droit de valider cette infrastructure.");
+        }
+
+        $infrastructure->status = Infrastructure::STATUS_VALIDATED;
+        $infrastructure->validated_by = $user->id;
+        $infrastructure->validated_at = now();
+        $infrastructure->rejection_reason = null;
+        $infrastructure->save();
+
+        Log::info('Infrastructure validée', [
+            'id' => $infrastructure->id, 'by' => $user->id,
+        ]);
+
+        return redirect()->back()->with('success', 'Infrastructure validée. Elle intègre à présent les données analysables.');
+    }
+
+    /**
+     * Rejeter une infrastructure avec motif obligatoire.
+     */
+    public function rejectInfrastructure(Request $request, Infrastructure $infrastructure)
+    {
+        $user = auth()->user();
+        if (!$infrastructure->canBeValidatedBy($user)) {
+            abort(403, "Vous n'avez pas le droit de rejeter cette infrastructure.");
+        }
+
+        $data = $request->validate([
+            'rejection_reason' => 'required|string|min:5|max:1000',
+        ]);
+
+        $infrastructure->status = Infrastructure::STATUS_REJECTED;
+        $infrastructure->validated_by = $user->id;
+        $infrastructure->validated_at = now();
+        $infrastructure->rejection_reason = $data['rejection_reason'];
+        $infrastructure->save();
+
+        Log::info('Infrastructure rejetée', [
+            'id' => $infrastructure->id, 'by' => $user->id,
+        ]);
+
+        return redirect()->back()->with('success', 'La saisie a été rejetée. L\'agent pourra la corriger et la resoumettre.');
+    }
+
+    /**
+     * L'agent renvoie une saisie précédemment rejetée après correction
+     * (sans passer par le formulaire d'édition complet).
+     */
+    public function resubmitInfrastructure(Infrastructure $infrastructure)
+    {
+        $user = auth()->user();
+        if (!$user->isAgent() || (int)$infrastructure->user_id !== (int)$user->id) {
+            abort(403);
+        }
+        if (!$infrastructure->isRejected()) {
+            return redirect()->back()->with('error', 'Seules les saisies rejetées peuvent être resoumises.');
+        }
+
+        $infrastructure->status = Infrastructure::STATUS_PENDING;
+        $infrastructure->submitted_at = now();
+        $infrastructure->rejection_reason = null;
+        $infrastructure->save();
+
+        return redirect()->route('infrastructures.show', $infrastructure)
+            ->with('success', 'Votre saisie a été renvoyée pour validation.');
     }
 
 

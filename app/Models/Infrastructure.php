@@ -10,6 +10,11 @@ class Infrastructure extends Model
 {
     use HasFactory, Auditable;
 
+    const STATUS_DRAFT = 'draft';
+    const STATUS_PENDING = 'pending';
+    const STATUS_VALIDATED = 'validated';
+    const STATUS_REJECTED = 'rejected';
+
     protected $fillable = [
         'user_id',
         'commune_id',
@@ -44,6 +49,11 @@ class Infrastructure extends Model
         'photos',
         'photo_count',
         'rehabilitation',
+        'status',
+        'validated_by',
+        'validated_at',
+        'submitted_at',
+        'rejection_reason',
     ];
 
     protected $casts = [
@@ -52,42 +62,33 @@ class Infrastructure extends Model
         'photos' => 'array',
         'photo_count' => 'integer',
         'numero_telephone' => 'encrypted',
+        'validated_at' => 'datetime',
+        'submitted_at' => 'datetime',
     ];
 
-    /**
-     * Relations
-     */
-    public function works()
-    {
-        return $this->hasMany(InfrastructureWork::class)->orderBy('completion_date', 'desc');
-    }
+    /** Relations */
+    public function works() { return $this->hasMany(InfrastructureWork::class)->orderBy('completion_date', 'desc'); }
+    public function user() { return $this->belongsTo(User::class); }
+    public function communeModel() { return $this->belongsTo(Commune::class, 'commune_id'); }
+    public function validator() { return $this->belongsTo(User::class, 'validated_by'); }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    /** Accessors */
+    public function getLatestWorkAttribute() { return $this->works()->first(); }
+    public function getWorksCountAttribute() { return $this->works()->count(); }
 
-    public function communeModel()
-    {
-        return $this->belongsTo(Commune::class, 'commune_id');
-    }
+    /** Scopes de statut */
+    public function scopePending($q) { return $q->where('status', self::STATUS_PENDING); }
+    public function scopeValidated($q) { return $q->where('status', self::STATUS_VALIDATED); }
+    public function scopeRejected($q) { return $q->where('status', self::STATUS_REJECTED); }
 
-    /**
-     * Accessors
-     */
-    public function getLatestWorkAttribute()
-    {
-        return $this->works()->first();
-    }
-
-    public function getWorksCountAttribute()
-    {
-        return $this->works()->count();
-    }
+    /** Helpers statut */
+    public function isPending(): bool { return $this->status === self::STATUS_PENDING; }
+    public function isValidated(): bool { return $this->status === self::STATUS_VALIDATED; }
+    public function isRejected(): bool { return $this->status === self::STATUS_REJECTED; }
+    public function isDraft(): bool { return $this->status === self::STATUS_DRAFT; }
 
     /**
      * Scope: infrastructures visibles selon le rôle.
-     * super_admin: tout • commune_admin: sa commune • agent: ses saisies
      */
     public function scopeVisibleTo($query, $user)
     {
@@ -107,7 +108,9 @@ class Infrastructure extends Model
     }
 
     /**
-     * Peut être modifiée/supprimée par cet utilisateur ?
+     * Peut être modifiée / supprimée par cet utilisateur ?
+     * Agent : uniquement ses saisies non-validées (pending/rejected/draft).
+     * Une fois validée, seul un admin peut modifier.
      */
     public function canBeManagedBy($user): bool
     {
@@ -119,7 +122,27 @@ class Infrastructure extends Model
                 || ($this->commune === $user->commune->name);
         }
         if ($user->isAgent()) {
-            return (int)$this->user_id === (int)$user->id;
+            if ((int)$this->user_id !== (int)$user->id) return false;
+            return !$this->isValidated(); // pas de modif après validation
+        }
+        return false;
+    }
+
+    /** Peut être supprimée par cet utilisateur (règle plus stricte que edit) */
+    public function canBeDeletedBy($user): bool
+    {
+        return $this->canBeManagedBy($user);
+    }
+
+    /** Peut être validée / rejetée par cet utilisateur ? */
+    public function canBeValidatedBy($user): bool
+    {
+        if (!$user) return false;
+        if (!$this->isPending() && !$this->isRejected()) return false;
+        if ($user->isSuperAdmin()) return true;
+        if ($user->isCommuneAdmin() && $user->commune) {
+            return ((int)$this->commune_id === (int)$user->commune_id)
+                || ($this->commune === $user->commune->name);
         }
         return false;
     }

@@ -1,12 +1,69 @@
 @extends('layouts.app')
+@section('title', 'Nouvelle infrastructure')
+@push('styles')
+<style>
+    .infra-stepper{ display:flex; justify-content:space-between; align-items:center; margin: 0 0 1.5rem;
+        background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:1rem 1.25rem; box-shadow:0 4px 16px -8px rgba(15,23,42,.1);}
+    .infra-stepper .st-item{ display:flex; align-items:center; gap:.6rem; color:#94a3b8; font-weight:500; flex:1; position:relative;}
+    .infra-stepper .st-item .st-num{ width:34px;height:34px; border-radius:50%; background:#e2e8f0; color:#64748b;
+        display:flex;align-items:center;justify-content:center; font-weight:700; transition:.2s;}
+    .infra-stepper .st-item.active{ color:#0b7a3b;}
+    .infra-stepper .st-item.active .st-num{ background:linear-gradient(135deg,#0b7a3b,#0e9a4a); color:#fff; box-shadow:0 4px 10px -4px rgba(11,122,59,.6);}
+    .infra-stepper .st-item.done .st-num{ background:#0e9a4a; color:#fff;}
+    .infra-stepper .st-sep{ flex:0 0 auto; width:40px; height:2px; background:#e2e8f0; margin:0 .25rem;}
+    .infra-workflow-banner{ background:linear-gradient(90deg,#fef3c7,#fde68a); color:#78350f;
+        border-left:4px solid #f59e0b; padding:.85rem 1rem; border-radius:10px; margin-bottom:1.25rem;}
+    .completion-bar{ height:8px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin:.5rem 0 1rem;}
+    .completion-bar > span{ display:block; height:100%; background:linear-gradient(90deg,#0b7a3b,#f2b81a); width:0%; transition:width .3s;}
+    input:invalid:not(:placeholder-shown), select:invalid { border-color:#ef4444; }
+    .form-hint{ font-size:.78rem; color:#64748b; margin-top:.2rem;}
+</style>
+@endpush
 @section('content')
 <div class="container">
     <div class="text-center mb-4">
         <img src="{{ asset('logo.jpg') }}" alt="Logo ADECOB" class="img-fluid" style="max-height: 100px;">
     </div>
     <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/ADECOB</h2>
-    <form action="{{ route('infrastructures.store') }}" method="POST" enctype="multipart/form-data" class="bg-white p-4 rounded shadow-sm" data-loader>
+
+    @if(auth()->user()->isAgent())
+        <div class="infra-workflow-banner d-flex align-items-start gap-2">
+            <i class="fas fa-info-circle mt-1"></i>
+            <div>
+                <strong>Workflow de validation :</strong> votre saisie sera transmise à l'administrateur de votre commune pour vérification.
+                Une fois validée, elle intègrera les données analysables. En cas de rejet, vous pourrez la corriger et la resoumettre.
+            </div>
+        </div>
+    @endif
+
+    {{-- Stepper visuel --}}
+    <div class="infra-stepper" id="infraStepper">
+        <div class="st-item active" data-step="1"><div class="st-num">1</div><span>Enquêteur & lieu</span></div>
+        <div class="st-sep"></div>
+        <div class="st-item" data-step="2"><div class="st-num">2</div><span>Infrastructure</span></div>
+        <div class="st-sep"></div>
+        <div class="st-item" data-step="3"><div class="st-num">3</div><span>État & photos</span></div>
+    </div>
+
+    {{-- Barre de complétude en temps réel --}}
+    <div class="d-flex justify-content-between align-items-center small text-muted">
+        <span><i class="fas fa-chart-line me-1"></i>Qualité de la saisie</span>
+        <span id="completionText">0 %</span>
+    </div>
+    <div class="completion-bar"><span id="completionBar"></span></div>
+
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <strong><i class="fas fa-exclamation-triangle me-1"></i>Corrigez les erreurs suivantes :</strong>
+            <ul class="mb-0 mt-2">
+                @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form action="{{ route('infrastructures.store') }}" method="POST" enctype="multipart/form-data" class="bg-white p-4 rounded shadow-sm" data-loader id="infraForm" novalidate>
         @csrf
+
         <!-- Étape 1 -->
         <div class="step" id="step-1">
             <h4 class="text-primary mb-4">
@@ -36,7 +93,12 @@
                         <i class="fas fa-phone text-success me-1"></i>
                         Numéro de téléphone
                     </label>
-                    <input type="text" name="numero_telephone" id="numero_telephone" class="form-control">
+                    <input type="tel" name="numero_telephone" id="numero_telephone" class="form-control"
+                           pattern="^(\+229|00229)?[\s\-]?[0-9]{8,10}$"
+                           placeholder="+229 XX XX XX XX"
+                           title="Format Bénin : +229 suivi de 8 à 10 chiffres">
+                    <div class="form-hint">Format attendu : +229 01 02 03 04 05</div>
+
                 </div>
             </div>
             <!-- Commune -->
@@ -101,7 +163,7 @@
                         <i class="fas fa-map-marker-alt text-success me-1"></i>
                         Latitude (x,y°)
                     </label>
-                    <input type="text" name="latitude" id="latitude" class="form-control" placeholder="Latitude">
+                    <input type="number" step="any" min="-90" max="90" name="latitude" id="latitude" class="form-control" placeholder="Latitude (-90 à 90)">
                 </div>
                 <!-- Longitude -->
                 <div class="col-12 col-md-6">
@@ -109,7 +171,7 @@
                         <i class="fas fa-map-marker-alt text-success me-1"></i>
                         Longitude (x,y°)
                     </label>
-                    <input type="text" name="longitude" id="longitude" class="form-control" placeholder="Longitude">
+                    <input type="number" step="any" min="-180" max="180" name="longitude" id="longitude" class="form-control" placeholder="Longitude (-180 à 180)">
                 </div>
                 <!-- Altitude -->
                 <div class="col-12 col-md-6">
@@ -117,7 +179,8 @@
                         <i class="fas fa-mountains text-success me-1"></i>
                         Altitude (m)
                     </label>
-                    <input type="text" name="altitude" id="altitude" class="form-control" placeholder="Altitude">
+                    <input type="number" step="any" min="-500" max="9000" name="altitude" id="altitude" class="form-control" placeholder="Altitude (m)">
+
                 </div>
                 <!-- Précision -->
                 <div class="col-12 col-md-6">
@@ -200,7 +263,7 @@
                             <i class="fas fa-calendar-alt text-success me-1"></i>
                             Année de réalisation
                         </label>
-                        <input type="text" name="annee_realisation" id="annee_realisation" class="form-control">
+                        <input type="number" min="1900" max="{{ date('Y')+1 }}" name="annee_realisation" id="annee_realisation" class="form-control" placeholder="Ex. {{ date('Y') }}">
                     </div>
                 </div>
                 <!-- Bailleur -->
@@ -501,17 +564,67 @@
         return currentArrondissements.includes(arr) ? 'checked' : '';
     }
 
+    function syncStepper(current) {
+        document.querySelectorAll('#infraStepper .st-item').forEach(el => {
+            const n = parseInt(el.dataset.step, 10);
+            el.classList.remove('active','done');
+            if (n < current) el.classList.add('done');
+            else if (n === current) el.classList.add('active');
+        });
+    }
+
     function nextStep(step) {
-        document.getElementById(`step-${step}`).style.display = 'none';
+        const cur = document.getElementById(`step-${step}`);
+        // Validation HTML5 de tous les champs requis de l'étape courante
+        const invalids = cur.querySelectorAll(':invalid');
+        if (invalids.length) {
+            invalids[0].reportValidity();
+            return;
+        }
+        cur.style.display = 'none';
         document.getElementById(`step-${step + 1}`).style.display = 'block';
+        syncStepper(step + 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function prevStep(step) {
         document.getElementById(`step-${step}`).style.display = 'none';
         document.getElementById(`step-${step - 1}`).style.display = 'block';
+        syncStepper(step - 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    // Indicateur de complétude en temps réel
+    (function(){
+        const form = document.getElementById('infraForm');
+        if (!form) return;
+        const bar = document.getElementById('completionBar');
+        const txt = document.getElementById('completionText');
+        const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
+        function update() {
+            let filled = 0, total = 0;
+            const seen = new Set();
+            fields.forEach(f => {
+                if (f.type === 'hidden' || f.name === '_token') return;
+                if (f.type === 'radio' || f.type === 'checkbox') {
+                    if (seen.has(f.name)) return;
+                    seen.add(f.name);
+                    total++;
+                    if (form.querySelector(`[name="${f.name}"]:checked`)) filled++;
+                    return;
+                }
+                total++;
+                if (f.value && f.value.trim() !== '') filled++;
+            });
+            const pct = total ? Math.round(filled/total*100) : 0;
+            bar.style.width = pct + '%';
+            txt.textContent = pct + ' %';
+        }
+        form.addEventListener('input', update);
+        form.addEventListener('change', update);
+        update();
+    })();
+
 
     // Fonctionnalités d'import de photos
     function previewUploadPhoto(input, photoNumber) {
