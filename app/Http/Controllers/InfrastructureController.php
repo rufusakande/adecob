@@ -13,9 +13,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\InfrastructureRequest;
 
 class InfrastructureController extends Controller
 {
+
 
     public function index(Request $request)
     {
