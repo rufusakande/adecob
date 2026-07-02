@@ -42,6 +42,18 @@
         </div>
         @if(!Auth::user()->isPublicUser())
         <div class="d-flex flex-wrap gap-2">
+            @if(Auth::user()->isSuperAdmin() || Auth::user()->isCommuneAdmin())
+                @php
+                    $__pendingCount = \App\Models\Infrastructure::query()
+                        ->visibleTo(Auth::user())->pending()->count();
+                @endphp
+                <a href="{{ route('infrastructures.pending') }}" class="btn btn-warning position-relative d-flex align-items-center gap-2">
+                    <i class="fas fa-hourglass-half"></i> À valider
+                    @if($__pendingCount > 0)
+                        <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">{{ $__pendingCount }}</span>
+                    @endif
+                </a>
+            @endif
             <button class="btn btn-danger d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="fas fa-file-import"></i> Importer
             </button>
@@ -51,6 +63,7 @@
         </div>
         @endif
     </div>
+
 
     <!-- Statistiques -->
     <div class="card shadow-sm mb-4 border-0">
