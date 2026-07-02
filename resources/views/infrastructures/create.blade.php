@@ -93,7 +93,12 @@
                         <i class="fas fa-phone text-success me-1"></i>
                         Numéro de téléphone
                     </label>
-                    <input type="text" name="numero_telephone" id="numero_telephone" class="form-control">
+                    <input type="tel" name="numero_telephone" id="numero_telephone" class="form-control"
+                           pattern="^(\+229|00229)?[\s\-]?[0-9]{8,10}$"
+                           placeholder="+229 XX XX XX XX"
+                           title="Format Bénin : +229 suivi de 8 à 10 chiffres">
+                    <div class="form-hint">Format attendu : +229 01 02 03 04 05</div>
+
                 </div>
             </div>
             <!-- Commune -->
