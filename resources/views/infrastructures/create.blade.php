@@ -564,17 +564,67 @@
         return currentArrondissements.includes(arr) ? 'checked' : '';
     }
 
+    function syncStepper(current) {
+        document.querySelectorAll('#infraStepper .st-item').forEach(el => {
+            const n = parseInt(el.dataset.step, 10);
+            el.classList.remove('active','done');
+            if (n < current) el.classList.add('done');
+            else if (n === current) el.classList.add('active');
+        });
+    }
+
     function nextStep(step) {
-        document.getElementById(`step-${step}`).style.display = 'none';
+        const cur = document.getElementById(`step-${step}`);
+        // Validation HTML5 de tous les champs requis de l'étape courante
+        const invalids = cur.querySelectorAll(':invalid');
+        if (invalids.length) {
+            invalids[0].reportValidity();
+            return;
+        }
+        cur.style.display = 'none';
         document.getElementById(`step-${step + 1}`).style.display = 'block';
+        syncStepper(step + 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function prevStep(step) {
         document.getElementById(`step-${step}`).style.display = 'none';
         document.getElementById(`step-${step - 1}`).style.display = 'block';
+        syncStepper(step - 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    // Indicateur de complétude en temps réel
+    (function(){
+        const form = document.getElementById('infraForm');
+        if (!form) return;
+        const bar = document.getElementById('completionBar');
+        const txt = document.getElementById('completionText');
+        const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
+        function update() {
+            let filled = 0, total = 0;
+            const seen = new Set();
+            fields.forEach(f => {
+                if (f.type === 'hidden' || f.name === '_token') return;
+                if (f.type === 'radio' || f.type === 'checkbox') {
+                    if (seen.has(f.name)) return;
+                    seen.add(f.name);
+                    total++;
+                    if (form.querySelector(`[name="${f.name}"]:checked`)) filled++;
+                    return;
+                }
+                total++;
+                if (f.value && f.value.trim() !== '') filled++;
+            });
+            const pct = total ? Math.round(filled/total*100) : 0;
+            bar.style.width = pct + '%';
+            txt.textContent = pct + ' %';
+        }
+        form.addEventListener('input', update);
+        form.addEventListener('change', update);
+        update();
+    })();
+
 
     // Fonctionnalités d'import de photos
     function previewUploadPhoto(input, photoNumber) {
