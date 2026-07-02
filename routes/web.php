@@ -77,12 +77,27 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     Route::get('/infrastructures', [App\Http\Controllers\InfrastructureController::class, 'index'])->name('infrastructures.index');
     Route::post('/infrastructures/import', [App\Http\Controllers\InfrastructureController::class, 'import'])->name('infrastructures.import');
     Route::get('/infrastructures/export', [App\Http\Controllers\InfrastructureController::class, 'export'])->name('infrastructures.export');
-    Route::delete('infrastructures/{id}', [InfrastructureController::class, 'destroy'])->name('infrastructures.destroy');
+
+    // Liste des saisies en attente / rejetées (admins uniquement — vérifié dans le contrôleur)
+    Route::get('/infrastructures/pending', [App\Http\Controllers\InfrastructureController::class, 'pendingIndex'])
+        ->middleware('admin.access')->name('infrastructures.pending');
+
+    Route::delete('infrastructures/{infrastructure}', [InfrastructureController::class, 'destroy'])->name('infrastructures.destroy');
     Route::get('/infrastructures/create', [App\Http\Controllers\InfrastructureController::class, 'create'])->name('infrastructures.create');
-    Route::post('/infrastructures', [App\Http\Controllers\InfrastructureController::class, 'store'])->name('infrastructures.store');
-    Route::get('infrastructures/{id}', [InfrastructureController::class, 'show'])->name('infrastructures.show');
+    Route::post('/infrastructures', [App\Http\Controllers\InfrastructureController::class, 'store'])
+        ->middleware('throttle:60,1')->name('infrastructures.store');
+    Route::get('infrastructures/{infrastructure}', [InfrastructureController::class, 'show'])->name('infrastructures.show');
     Route::get('/infrastructures/{infrastructure}/edit', [App\Http\Controllers\InfrastructureController::class, 'edit'])->name('infrastructures.edit');
-    Route::put('/infrastructures/{infrastructure}', [App\Http\Controllers\InfrastructureController::class, 'update'])->name('infrastructures.update');
+    Route::put('/infrastructures/{infrastructure}', [App\Http\Controllers\InfrastructureController::class, 'update'])
+        ->middleware('throttle:60,1')->name('infrastructures.update');
+
+    // Workflow de validation
+    Route::post('/infrastructures/{infrastructure}/validate', [App\Http\Controllers\InfrastructureController::class, 'validateInfrastructure'])
+        ->middleware('admin.access')->name('infrastructures.validate');
+    Route::post('/infrastructures/{infrastructure}/reject', [App\Http\Controllers\InfrastructureController::class, 'rejectInfrastructure'])
+        ->middleware('admin.access')->name('infrastructures.reject');
+    Route::post('/infrastructures/{infrastructure}/resubmit', [App\Http\Controllers\InfrastructureController::class, 'resubmitInfrastructure'])
+        ->name('infrastructures.resubmit');
 
     // Infrastructure work management routes
     Route::prefix('infrastructures/{infrastructure}')->group(function () {
@@ -91,6 +106,7 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
         Route::delete('works/{work}', [InfrastructureWorkController::class, 'destroy'])->name('infrastructures.works.destroy');
     });
 });
+
 
 // Mairie Agent Routes (auth + approbation + rôles autorisés uniquement)
 Route::middleware(['auth', 'check.approval'])->group(function () {
