@@ -8,21 +8,12 @@ use Illuminate\Http\Request;
 class CommuneController extends Controller
 {
     /**
-     * Afficher le formulaire de sélection de commune avec code d'accès
+     * Sélectionner et accéder à une commune
+     * Depuis la refonte du système (suppression de access_code),
+     * l'utilisateur choisit sa commune lors de l'inscription.
+     * Les admins et agents ne peuvent accéder qu'à leur commune assignée.
      */
-    public function select($communeId)
-    {
-        $commune = Commune::findOrFail($communeId);
-
-        return view('commune.select', [
-            'commune' => $commune
-        ]);
-    }
-
-    /**
-     * Vérifier le code d'accès à la commune
-     */
-    public function verifyCode(Request $request, $communeId)
+    public function selectCommune(Request $request, $communeId)
     {
         $commune = Commune::findOrFail($communeId);
         $user = auth()->user();
@@ -32,28 +23,33 @@ class CommuneController extends Controller
             return back()->with('error', 'Accès refusé à cette commune.');
         }
 
-        // Les utilisateurs publics sont redirigés vers le dashboard commune (sans code requis)
-        if ($user->isPublicUser()) {
-            return redirect()->route('commune.dashboard', $commune->id)
-                ->with('success', "Bienvenue dans la commune {$commune->name}");
-        }
-
-        // Pour les autres utilisateurs, le code d'accès est requis
-        $request->validate([
-            'access_code' => 'required|string'
-        ]);
-
-        // Vérifier le code d'accès
-        if ($commune->access_code && !$commune->verifyAccessCode($request->access_code)) {
-            return back()->with('error', 'Code d\'accès incorrect.');
-        }
-
-        // Stocker la commune sélectionnée en session (pour super_admin, commune_admin, agents)
+        // Stocker la commune sélectionnée en session
         session(['commune_id' => $commune->id]);
         session(['commune_name' => $commune->name]);
 
         return redirect()->route('infrastructures.index')
-            ->with('success', "Vous avez accès aux données de {$commune->name}");
+            ->with('success', "Bienvenue dans la commune {$commune->name}");
+    }
+
+    /**
+     * DÉPRÉCIÉE: Ancien système de code d'accès
+     * Remplacé par l'assignation de commune lors de l'inscription
+     */
+    public function verifyCode(Request $request, $communeId)
+    {
+        // Redirection vers la nouvelle logique
+        return $this->selectCommune($request, $communeId);
+    }
+
+    /**
+     * DÉPRÉCIÉE: Ancien formulaire de sélection avec code d'accès
+     * Remplacé par l'assignation de commune lors de l'inscription
+     */
+    public function select($communeId)
+    {
+        $commune = Commune::findOrFail($communeId);
+        // Redirection directe vers sélection
+        return $this->selectCommune(new Request(), $communeId);
     }
 
     /**
@@ -71,7 +67,7 @@ class CommuneController extends Controller
     }
 
     /**
-     * Quitter la sélection de commune
+     * Quitter la sélection de commune (session)
      */
     public function logout(Request $request)
     {
@@ -83,6 +79,12 @@ class CommuneController extends Controller
 
     /**
      * Vérifier si un utilisateur peut accéder à une commune
+     * 
+     * RÈGLES STRICTES :
+     * - Super admin : accès à toutes les communes
+     * - Commune admin : accès uniquement à sa commune assignée
+     * - Agent : accès uniquement à sa commune assignée
+     * - Public user : accès uniquement à sa commune assignée (en lecture seule)
      */
     private function canAccessCommune($user, $commune): bool
     {
@@ -91,21 +93,13 @@ class CommuneController extends Controller
             return true;
         }
 
-        // Commune admin a accès à sa propre commune
-        if ($user->isCommuneAdmin() && $user->commune_id === $commune->id) {
+        // Pour tous les autres utilisateurs : accès seulement à leur commune assignée
+        if ((int) $user->commune_id === (int) $commune->id) {
             return true;
         }
 
-        // Agent a accès si assigné à la commune (ou peut s'assigner)
-        if ($user->isAgent()) {
-            return true;
-        }
-
-        // Public user a accès partout pour voir statistiques
-        if ($user->isPublicUser()) {
-            return true;
-        }
-
+        // Accès refusé : utilisateur n'appartient pas à cette commune
         return false;
     }
+}
 }

@@ -31,7 +31,7 @@ class MfaController extends Controller
             $this->issueCode($user, $request);
         }
 
-        return view('auth.mfa', [
+        return view('auth.mfa-new', [
             'email' => $user->email,
         ]);
     }

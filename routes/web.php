@@ -110,7 +110,7 @@ Route::post('/contact', [ContactController::class, 'submit'])
 
 // Routes pour la validation des inscriptions
 Route::get('/registration/pending', function () {
-    return view('auth.pending');
+    return view('auth.pending-new');
 })->name('registration.pending');
 
 // Route d'approbation des inscriptions - accessible aux super admin et commune admin

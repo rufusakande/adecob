@@ -18,7 +18,7 @@ class AuthController extends Controller
     {
         $passwordCriteria = PasswordPolicy::getCriteria();
         $communes = \App\Models\Commune::orderBy('name')->get(['id', 'name']);
-        return view('auth.register', compact('passwordCriteria', 'communes'));
+        return view('auth.register-new', compact('passwordCriteria', 'communes'));
     }
 
     public function register(RegisterRequest $request)
@@ -82,7 +82,7 @@ class AuthController extends Controller
 
     public function showLoginForm()
     {
-        return view('auth.login');
+        return view('auth.login-new');
     }
 
     public function login(LoginRequest $request)

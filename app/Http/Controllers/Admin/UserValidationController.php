@@ -23,29 +23,39 @@ class UserValidationController extends Controller
     public function index()
     {
         $admin = auth()->user();
+        $status = request('status', 'pending');
 
-        $query = User::with('commune')
-            ->where('is_approved', false)
-            ->whereNull('rejected_at')
-            ->where('role', '!=', 'super_admin');
+        // Filtrer les utilisateurs en fonction du statut
+        $query = User::with('commune')->where('role', '!=', 'super_admin');
 
-        // Un admin de commune ne voit que les agents de SA commune.
+        // Un admin de commune ne voit que les utilisateurs de SA commune
         if ($admin->isCommuneAdmin()) {
-            $query->where('commune_id', $admin->commune_id)
-                  ->where('role', 'agent');
+            $query->where('commune_id', $admin->commune_id);
         }
 
-        $pendingUsers = $query->latest()->get();
-
-        $rejectedQuery = User::with('commune')
-            ->whereNotNull('rejected_at')
-            ->where('role', '!=', 'super_admin');
-        if ($admin->isCommuneAdmin()) {
-            $rejectedQuery->where('commune_id', $admin->commune_id);
+        // Appliquer le filtre de statut
+        if ($status === 'approved') {
+            $query->where('is_approved', true);
+        } elseif ($status === 'rejected') {
+            $query->whereNotNull('rejected_at');
+        } else {
+            // Par défaut : en attente
+            $query->where('is_approved', false)->whereNull('rejected_at');
         }
-        $rejectedUsers = $rejectedQuery->latest('rejected_at')->limit(20)->get();
 
-        return view('admin.pending-registrations', compact('pendingUsers', 'rejectedUsers'));
+        $users = $query->latest('created_at')->get();
+
+        // Calculer les statistiques
+        $countQuery = User::where('role', '!=', 'super_admin');
+        if ($admin->isCommuneAdmin()) {
+            $countQuery->where('commune_id', $admin->commune_id);
+        }
+
+        $pendingCount = (clone $countQuery)->where('is_approved', false)->whereNull('rejected_at')->count();
+        $approvedCount = (clone $countQuery)->where('is_approved', true)->count();
+        $totalUsers = (clone $countQuery)->count();
+
+        return view('admin.pending-registrations-new', compact('users', 'pendingCount', 'approvedCount', 'totalUsers', 'status'));
     }
 
     /**
