@@ -16,6 +16,8 @@ class UserValidationController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('admin.access');
+        // MFA obligatoire pour toute action d'approbation/rejet d'utilisateurs.
+        $this->middleware('mfa.verified');
     }
 
     public function index()
@@ -35,7 +37,6 @@ class UserValidationController extends Controller
 
         $pendingUsers = $query->latest()->get();
 
-        $rejectedUsers = (clone $query)->getQuery() ? null : null;
         $rejectedQuery = User::with('commune')
             ->whereNotNull('rejected_at')
             ->where('role', '!=', 'super_admin');
@@ -72,11 +73,11 @@ class UserValidationController extends Controller
         try {
             DB::beginTransaction();
 
-            $user->update([
-                'is_approved' => true,
-                'approved_at' => now(),
-                'rejected_at' => null,
-            ]);
+            // Affectation directe : ces champs sont hors $fillable (champs privilégiés).
+            $user->is_approved = true;
+            $user->approved_at = now();
+            $user->rejected_at = null;
+            $user->save();
 
             try {
                 $user->notify(new RegistrationStatus('approved'));
@@ -123,10 +124,10 @@ class UserValidationController extends Controller
         try {
             DB::beginTransaction();
 
-            $user->update([
-                'is_approved' => false,
-                'rejected_at' => now(),
-            ]);
+            // Affectation directe : ces champs sont hors $fillable (champs privilégiés).
+            $user->is_approved = false;
+            $user->rejected_at = now();
+            $user->save();
 
             try {
                 $user->notify(new RegistrationStatus('rejected'));

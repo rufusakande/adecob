@@ -14,7 +14,7 @@ class Kernel extends HttpKernel
      * @var array<int, class-string|string>
      */
     protected $middleware = [
-        // \App\Http\Middleware\TrustHosts::class,
+        \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
@@ -72,6 +72,7 @@ class Kernel extends HttpKernel
         'super.admin' => \App\Http\Middleware\CheckSuperAdmin::class,
         'admin.access' => \App\Http\Middleware\CheckAdminAccess::class,
         'commune.admin' => \App\Http\Middleware\CommuneAdminMiddleware::class,
-        'mfa.verified' => \App\Http\Middleware\MfaVerified::class,
+        'mfa.verified'        => \App\Http\Middleware\MfaVerified::class,
+        'ensure.commune'      => \App\Http\Middleware\EnsureCommuneSelected::class,
     ];
 }

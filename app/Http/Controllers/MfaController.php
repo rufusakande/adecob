@@ -65,11 +65,15 @@ class MfaController extends Controller
             'code' => ['required', 'string', 'digits:6'],
         ]);
 
-        $key = 'mfa-verify:' . $user->id;
-        if (RateLimiter::tooManyAttempts($key, 10)) {
+        // Double verrou : par utilisateur ET par IP pour contrer les attaques distribuées.
+        $keyUser = 'mfa-verify-user:' . $user->id;
+        $keyIp   = 'mfa-verify-ip:'   . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($keyUser, 10) || RateLimiter::tooManyAttempts($keyIp, 20)) {
             return back()->withErrors(['code' => 'Trop de tentatives. Réessayez plus tard.']);
         }
-        RateLimiter::hit($key, 600);
+        RateLimiter::hit($keyUser, 600);
+        RateLimiter::hit($keyIp,   600);
 
         $record = MfaCode::where('user_id', $user->id)
             ->whereNull('consumed_at')

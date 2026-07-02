@@ -14,7 +14,12 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable, Auditable;
 
     /**
-     * The attributes that are mass assignable.
+     * Champs accessibles via fill() / create() — données saisies par l'utilisateur lui-même.
+     *
+     * Les champs de privilège (role, is_approved, approved_at, rejected_at, commune_id)
+     * sont volontairement ABSENTS pour éviter toute escalade de privilèges par mass-assignment.
+     * Les contrôleurs admin doivent utiliser une affectation directe ($user->role = ...)
+     * ou forceFill() pour modifier ces champs.
      *
      * @var array<int, string>
      */
@@ -24,12 +29,14 @@ class User extends Authenticatable
         'email',
         'telephone',
         'password',
-        'role',
-        'commune_id',
-        'is_approved',
-        'approved_at',
-        'rejected_at',
     ];
+
+    /**
+     * Champs modifiables uniquement par les opérations admin (via affectation directe).
+     * Ne pas ajouter dans $fillable.
+     *
+     * role | commune_id | is_approved | approved_at | rejected_at
+     */
 
     /**
      * The attributes that should be hidden for serialization.

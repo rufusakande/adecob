@@ -65,11 +65,8 @@ Route::get('/auth/google/callback', [App\Http\Controllers\AuthController::class,
 // Home page - liste des communes (après connexion)
 Route::middleware(['auth', 'check.approval'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
-    
-    // Commune selection routes
-    Route::get('/commune/{commune}/select', [CommuneController::class, 'select'])->name('commune.select');
-    Route::post('/commune/{commune}/verify', [CommuneController::class, 'verifyCode'])->name('commune.verify');
-    Route::post('/commune/logout', [CommuneController::class, 'logout'])->name('commune.logout');
+
+    // Statistiques publiques d'une commune (sans code d'accès — supprimé)
     Route::get('/commune/{commune}/dashboard', [CommuneController::class, 'dashboard'])->name('commune.dashboard');
 });
 
@@ -134,19 +131,18 @@ Route::middleware(['auth', 'super.admin', 'mfa.verified'])->group(function () {
     Route::get('/admin/users/{user}/edit', [App\Http\Controllers\Admin\UserManagementController::class, 'edit'])->name('admin.users.edit');
     Route::put('/admin/users/{user}', [App\Http\Controllers\Admin\UserManagementController::class, 'update'])->name('admin.users.update');
     Route::put('/admin/users/{user}/toggle-admin', [App\Http\Controllers\Admin\UserManagementController::class, 'toggleAdmin'])->name('admin.users.toggle-admin');
-    
+
     // Routes pour la gestion des communes
     Route::resource('/admin/communes', CommuneAdminController::class, ['as' => 'admin']);
-    Route::post('/admin/communes/{commune}/set-access-code', [CommuneAdminController::class, 'setAccessCode'])->name('admin.communes.set-access-code');
+    // Plus de set-access-code — fonctionnalité supprimée
     Route::post('/admin/communes/{commune}/assign-admin', [CommuneAdminController::class, 'assignCommuneAdmin'])->name('admin.communes.assign-admin');
 });
 
 // Routes pour les admins communes (gestion de leur propre commune)
 Route::middleware(['auth', 'commune.admin', 'mfa.verified'])->prefix('dashboard')->group(function () {
     Route::get('/commune/dashboard', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'dashboard'])->name('commune-admin.dashboard');
-    Route::get('/commune/access-code', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'editAccessCode'])->name('commune-admin.access-code.edit');
-    Route::post('/commune/access-code', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'updateAccessCode'])->name('commune-admin.access-code.update');
     Route::get('/commune/details', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'details'])->name('commune-admin.details');
+    // commune-admin.access-code.edit supprimé (fonctionnalité retirée)
 });
 
 // Audit Logs Routes (super admin only)

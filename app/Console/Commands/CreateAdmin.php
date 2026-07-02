@@ -19,7 +19,7 @@ class CreateAdmin extends Command
 
         // Demander le mot de passe de manière sécurisée
         $password = $this->secret('Quel est le mot de passe pour le nouvel admin?');
-        
+
         $validator = Validator::make([
             'email' => $email,
             'name' => $name,
@@ -37,14 +37,16 @@ class CreateAdmin extends Command
             return 1;
         }
 
-        $user = User::create([
-            'name' => $name,
-            'email' => $email,
+        // Affectation directe pour les champs privilégiés (hors $fillable).
+        $user = new User([
+            'name'     => $name,
+            'email'    => $email,
             'password' => Hash::make($password),
-            'role' => 'super_admin',
-            'is_approved' => true,
-            'email_verified_at' => now(),
         ]);
+        $user->role               = 'super_admin';
+        $user->is_approved        = true;
+        $user->email_verified_at  = now();
+        $user->save();
 
         $this->info("Administrateur créé avec succès!");
         return 0;

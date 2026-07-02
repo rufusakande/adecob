@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
-use Illuminate\Support\Str;
+
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
 use App\Services\PasswordPolicy;
@@ -27,16 +27,19 @@ class AuthController extends Controller
             $validated = $request->validated();
 
             // Tout nouvel inscrit est un agent collecteur, en attente d'approbation.
-            $user = User::create([
-                'name'        => $validated['name'],
-                'prenom'      => $validated['prenom'],
-                'email'       => $validated['email'],
-                'telephone'   => $validated['telephone'],
-                'commune_id'  => $validated['commune_id'],
-                'password'    => Hash::make($validated['password']),
-                'role'        => 'agent',
-                'is_approved' => false,
+            // Les champs privilégiés (role, commune_id, is_approved) sont assignés
+            // directement (hors $fillable) pour éviter toute escalade par mass-assignment.
+            $user = new User([
+                'name'      => $validated['name'],
+                'prenom'    => $validated['prenom'],
+                'email'     => $validated['email'],
+                'telephone' => $validated['telephone'],
+                'password'  => Hash::make($validated['password']),
             ]);
+            $user->role       = 'agent';
+            $user->commune_id = $validated['commune_id'];
+            $user->is_approved = false;
+            $user->save();
 
             // Notifier super admins + admins de la commune choisie.
             try {
@@ -150,10 +153,13 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // Effacer explicitement les clés MFA avant invalidation de la session
+        // (s'assure que l'état MFA ne survit pas à un éventuel échec de invalidate()).
+        $request->session()->forget(['mfa_verified_user_id', 'mfa_code_sent_at']);
+
         Auth::logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');
@@ -170,7 +176,7 @@ class AuthController extends Controller
     /**
      * Obtain the user information from Google.
      */
-    public function handleGoogleCallback()
+    public function handleGoogleCallback(Request $request)
     {
         try {
             $googleUser = Socialite::driver('google')->user();
@@ -192,6 +198,8 @@ class AuthController extends Controller
         }
 
         Auth::login($user, true);
+        // Régénérer la session après login Google pour éviter la fixation de session.
+        $request->session()->regenerate();
         return $this->redirectAfterLogin($user);
     }
 }

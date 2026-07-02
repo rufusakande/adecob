@@ -14,16 +14,17 @@ class SuperAdminSeeder extends Seeder
      */
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'akanderufus51@gmail.com'],
-            [
-                'name'        => 'Akande Rufus',
-                'password'    => Hash::make('@Wxcvbn741@'),
-                'role'        => 'super_admin',
-                'is_approved' => true,
-                'commune_id'  => null,
-            ]
-        );
+        // Les champs privilégiés (role, is_approved, commune_id) sont hors $fillable.
+        // On passe par forceFill() pour les seeders CLI (contexte de confiance).
+        $user = User::firstOrNew(['email' => 'akanderufus51@gmail.com']);
+        $user->fill([
+            'name'     => 'Akande Rufus',
+            'password' => Hash::make('@Wxcvbn741@'),
+        ]);
+        $user->role        = 'super_admin';
+        $user->is_approved = true;
+        $user->commune_id  = null;
+        $user->save();
 
         $this->command->info('Super Admin (Akande Rufus) seeded / updated successfully.');
     }

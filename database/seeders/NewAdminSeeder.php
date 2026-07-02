@@ -10,13 +10,15 @@ class NewAdminSeeder extends Seeder
 {
     public function run()
     {
-        User::create([
-            'name' => 'Adecob Admin',
-            'email' => 'akanderufus51@gmail.com',
+        // Affectation directe pour les champs privilégiés (hors $fillable).
+        $user = new User([
+            'name'     => 'Adecob Admin',
+            'email'    => 'akanderufus51@gmail.com',
             'password' => Hash::make('admin123'),
-            'role' => 'super_admin',
-            'is_approved' => true,
-            'email_verified_at' => now(),
         ]);
+        $user->role               = 'super_admin';
+        $user->is_approved        = true;
+        $user->email_verified_at  = now();
+        $user->save();
     }
 }
