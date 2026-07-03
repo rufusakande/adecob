@@ -77,7 +77,7 @@
                         <i class="fas fa-calendar-alt text-success me-1"></i>
                         Date
                     </label>
-                    <input type="date" name="date" id="date" class="form-control" required>
+                    <input type="date" name="date" id="date" class="form-control" value="{{ date('Y-m-d') }}">
                 </div>
                 <!-- Nom enquêteur -->
                 <div class="col-12 col-md-4">
@@ -114,7 +114,7 @@
                     @foreach($communes as $commune)
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="commune" id="commune_{{ $loop->index }}" 
-                                   value="{{ $commune }}" required onclick="updateArrondissements()">
+                                   value="{{ $commune }}" onclick="updateArrondissements()">
                             <label class="form-check-label" for="commune_{{ $loop->index }}">{{ $commune }}</label>
                         </div>
                     @endforeach
@@ -302,9 +302,9 @@
                     <i class="fas fa-heartbeat text-success me-1"></i>
                     État de fonctionnement
                 </label>
-                <div class="d-flex gap-3">
+                <div class="d-flex flex-wrap gap-3">
                     @php
-                        $etats = ['Fonctionnel', 'Non fonctionnel'];
+                        $etats = ['Fonctionnel', 'Partiellement fonctionnel', 'Non fonctionnel', 'En construction'];
                     @endphp
                     @foreach($etats as $etat)
                         <div class="form-check">
@@ -323,7 +323,7 @@
                 </label>
                 <div class="d-flex flex-wrap gap-3">
                     @php
-                        $niveaux = ['Elevé', 'Moyen', 'Faible', 'Ne sait pas'];
+                        $niveaux = ['Faible', 'Moyen', 'Élevé', 'Aucun'];
                     @endphp
                     @foreach($niveaux as $niveau)
                         <div class="form-check">
@@ -384,11 +384,22 @@
             </div>
             <!-- Réhabilitation -->
             <div class="form-group mb-4">
-                <label for="rehabilitation" class="form-label">
+                <label class="form-label">
                     <i class="fas fa-hammer text-success me-1"></i>
                     Réhabilitation
                 </label>
-                <input type="text" name="rehabilitation" id="rehabilitation" class="form-control">
+                <div class="d-flex flex-wrap gap-3">
+                    @php
+                        $rehabs = ['Faible', 'Moyen', 'Élevé'];
+                    @endphp
+                    @foreach($rehabs as $rehab)
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="rehabilitation" id="rehab_{{ $loop->index }}" 
+                                   value="{{ $rehab }}">
+                            <label class="form-check-label" for="rehab_{{ $loop->index }}">{{ $rehab }}</label>
+                        </div>
+                    @endforeach
+                </div>
             </div>
             <!-- Photos Section -->
             <div class="form-group mb-4">

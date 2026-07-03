@@ -18,7 +18,7 @@ class InfrastructureRequest extends FormRequest
         $currentYear = (int) date('Y');
 
         return [
-            'date' => 'nullable|date|before_or_equal:today',
+            'date' => 'nullable|date',
             'nom_enqueteur' => ['required', 'string', 'min:2', 'max:120', 'regex:/^[\p{L}\p{M}\s\'\-\.]+$/u'],
             'numero_telephone' => ['nullable', 'string', 'regex:/^(\+229|00229)?[\s\-]?[0-9]{8,10}$/'],
             'commune' => 'nullable|string|max:120',
