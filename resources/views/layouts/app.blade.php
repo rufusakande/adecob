@@ -20,6 +20,8 @@
     <!-- Google Fonts - Poppins (optionnel pour plus d'élégance) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    @stack('styles')
+
     <style>
         /* Police moderne */
         body {
@@ -364,5 +366,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('resources/js/form-validation.js') }}"></script>
     <script src="{{ asset('js/auth-enhancements.js') }}"></script>
+    @stack('scripts')
 </body>
 </html>

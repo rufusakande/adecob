@@ -667,7 +667,8 @@ class InfrastructureController extends Controller
     {
         $this->authorizePlanning($infrastructure);
         $infrastructure->load('works');
-        return view('infrastructures.plan', compact('infrastructure'));
+        $existingPlannedWork = $infrastructure->works->where('status', 'planned')->sortByDesc('created_at')->first();
+        return view('infrastructures.plan', compact('infrastructure', 'existingPlannedWork'));
     }
 
     public function storePlan(Request $request, Infrastructure $infrastructure)
@@ -678,21 +679,31 @@ class InfrastructureController extends Controller
             'work_type'        => 'required|string|max:255',
             'description'      => 'required|string|min:5|max:5000',
             'completion_date'  => 'required|date|after_or_equal:today',
-            'cost'             => 'required|numeric|min:0|max:9999999999',
+            'cost'             => 'required|numeric|min:0|max:9999999999999',
             'provider_name'    => 'nullable|string|max:255',
             'provider_contact' => 'nullable|string|max:255',
             'observations'     => 'nullable|string|max:5000',
         ]);
         $validated['status'] = 'planned';
 
-        $infrastructure->works()->create($validated);
+        $existingPlan = $infrastructure->works()->where('status', 'planned')->latest('created_at')->first();
 
-        Log::info('Infrastructure planifiée', [
-            'id' => $infrastructure->id, 'by' => auth()->id(),
-        ]);
+        if ($existingPlan) {
+            $existingPlan->update($validated);
+            $message = "Planification mise à jour. L'infrastructure conserve sa planification existante.";
+            Log::info('Planification d\'infrastructure mise à jour', [
+                'id' => $infrastructure->id, 'work_id' => $existingPlan->id, 'by' => auth()->id(),
+            ]);
+        } else {
+            $infrastructure->works()->create($validated);
+            $message = "Planification enregistrée. L'infrastructure figure désormais dans la liste des infrastructures planifiées.";
+            Log::info('Infrastructure planifiée', [
+                'id' => $infrastructure->id, 'by' => auth()->id(),
+            ]);
+        }
 
         return redirect()->route('infrastructures.planned')
-            ->with('success', "Planification enregistrée. L'infrastructure figure désormais dans la liste des infrastructures planifiées.");
+            ->with('success', $message);
     }
 
     public function plannedIndex(Request $request)

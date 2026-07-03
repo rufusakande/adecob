@@ -39,7 +39,8 @@
     .status-strip.success{ background:#dcfce7; color:#14532d; border:1px solid #bbf7d0;}
     .btn-brand{ background:var(--brand); color:#fff; border:none;}
     .btn-brand:hover{ background:#095c2c; color:#fff;}
-    #map-mini{ height:260px; border-radius:12px; border:1px solid var(--line); }
+    #map-mini{ min-height:320px; border-radius:12px; border:1px solid var(--line); }
+    .map-caption{ font-size:.9rem; color:#64748b; margin-top:.75rem; }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 @endpush
@@ -102,8 +103,12 @@
             @endif
 
             @if(($u->isSuperAdmin() || $u->isCommuneAdmin()) && $infrastructure->isValidated())
+                @php
+                    $plannedCount = $infrastructure->works->where('status', 'planned')->count();
+                    $planLabel = $plannedCount ? 'Modifier la planification' : 'Planifier';
+                @endphp
                 <a href="{{ route('infrastructures.plan', $infrastructure) }}" class="btn btn-success">
-                    <i class="fas fa-calendar-plus me-1"></i> Planifier
+                    <i class="fas fa-calendar-plus me-1"></i> {{ $planLabel }}
                 </a>
             @endif
 
@@ -200,6 +205,7 @@
                     @endforeach
                     @if($infrastructure->latitude && $infrastructure->longitude)
                         <div id="map-mini" class="mt-3"></div>
+                        <div class="map-caption">Localisation GPS de l'infrastructure. Cliquez sur le marqueur pour afficher le nom.</div>
                     @endif
                 </div>
             </div>
@@ -317,6 +323,51 @@
                     @endif
                 </div>
             </div>
+
+            @php
+                $plannedWorks = $infrastructure->works->where('status', 'planned');
+            @endphp
+            @if($plannedWorks->count())
+                <div class="card field-card mb-4">
+                    <div class="card-header"><i class="fas fa-calendar-check me-2 text-success"></i>Planification en cours</div>
+                    <div class="card-body">
+                        <div class="field-row">
+                            <span class="field-label">Plan(s) actives</span>
+                            <span class="field-value">{{ $plannedWorks->count() }}</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Coût total</span>
+                            <span class="field-value">{{ number_format($plannedWorks->sum('cost'), 0, ',', ' ') }} FCFA</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Prochaine échéance</span>
+                            <span class="field-value">{{ optional($plannedWorks->sortBy('completion_date')->first())->completion_date?->format('d/m/Y') ?: '—' }}</span>
+                        </div>
+                        <div class="mt-3">
+                            @foreach($plannedWorks as $plan)
+                                <div class="mb-3 p-3 bg-light rounded">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <strong>{{ $plan->work_type }}</strong><br>
+                                            <small class="text-muted">{{ $plan->description }}</small>
+                                        </div>
+                                        <span class="badge bg-success">{{ $plan->completion_date->format('d/m/Y') }}</span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        Coût : {{ number_format($plan->cost, 0, ',', ' ') }} FCFA
+                                        @if($plan->provider_name)
+                                            — Prestataire : {{ $plan->provider_name }}{{ $plan->provider_contact ? ' (' . $plan->provider_contact . ')' : '' }}
+                                        @endif
+                                    </div>
+                                    @if($plan->observations)
+                                        <div class="mt-2"><strong>Observations :</strong> {{ $plan->observations }}</div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -354,11 +405,17 @@
         if (!isFinite(lat) || !isFinite(lng)) return;
         const map = L.map('map-mini').setView([lat, lng], 14);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19, attribution: '© OpenStreetMap'
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
         }).addTo(map);
-        L.marker([lat, lng]).addTo(map)
-         .bindPopup(@json($infrastructure->nom_infrastructure ?: 'Infrastructure'))
-         .openPopup();
+
+        const marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup(`
+            <div style="font-weight:700; margin-bottom:4px;">${@json($infrastructure->nom_infrastructure ?: 'Infrastructure')}</div>
+            <div style="font-size:.95rem; color:#475569;">
+                {{ $infrastructure->commune }}@if($infrastructure->village) — {{ $infrastructure->village }}@endif
+            </div>
+        `).openPopup();
     })();
 </script>
 @endpush

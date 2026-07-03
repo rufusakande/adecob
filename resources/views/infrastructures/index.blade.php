@@ -634,31 +634,46 @@
                                     $isAdmin = Auth::user()->isSuperAdmin() || Auth::user()->isCommuneAdmin();
                                     $hasPlan = $infra->works->where('status', 'planned')->count() > 0;
                                 @endphp
-                                <div class="d-flex flex-wrap gap-1">
-                                    <a href="{{ route('infrastructures.show', $infra->id) }}" class="btn btn-sm btn-info text-white" title="Voir les détails">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    @if($canManage)
-                                        <a href="{{ route('infrastructures.edit', $infra->id) }}" class="btn btn-sm btn-primary" title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    @endif
-                                    @if($isAdmin && $infra->isValidated())
-                                        <a href="{{ route('infrastructures.plan', $infra->id) }}"
-                                           class="btn btn-sm {{ $hasPlan ? 'btn-outline-success' : 'btn-success' }}"
-                                           title="{{ $hasPlan ? 'Ajouter une planification' : 'Planifier' }}">
-                                            <i class="fas fa-calendar-plus"></i>
-                                        </a>
-                                    @endif
-                                    @if($canManage)
-                                        <form action="{{ route('infrastructures.destroy', $infra->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endif
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Actions</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('infrastructures.show', $infra->id) }}">
+                                                <i class="fas fa-eye me-2"></i>Voir les détails
+                                            </a>
+                                        </li>
+                                        @if($canManage)
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('infrastructures.edit', $infra->id) }}">
+                                                    <i class="fas fa-edit me-2"></i>Modifier
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @if($isAdmin && $infra->isValidated())
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('infrastructures.plan', $infra->id) }}">
+                                                    <i class="fas fa-calendar-plus me-2"></i>{{ $hasPlan ? 'Modifier la planification' : 'Planifier' }}
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @if($canManage)
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <form action="{{ route('infrastructures.destroy', $infra->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression ?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="dropdown-item text-danger">
+                                                        <i class="fas fa-trash-alt me-2"></i>Supprimer
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        @endif
+                                    </ul>
                                 </div>
                             </td>
                         </tr>

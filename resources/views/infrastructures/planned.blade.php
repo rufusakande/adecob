@@ -64,9 +64,13 @@
                                 <td><strong>{{ number_format($totalCost, 0, ',', ' ') }}</strong></td>
                                 <td>{{ $next ? $next->completion_date->format('d/m/Y') : '—' }}</td>
                                 <td>
-                                    <div class="d-flex gap-1">
-                                        <a href="{{ route('infrastructures.show', $infra) }}" class="btn btn-sm btn-info text-white" title="Voir"><i class="fas fa-eye"></i></a>
-                                        <a href="{{ route('infrastructures.plan', $infra) }}" class="btn btn-sm btn-success" title="Ajouter une planification"><i class="fas fa-calendar-plus"></i></a>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <a href="{{ route('infrastructures.show', $infra) }}" class="btn btn-sm btn-info text-white" title="Voir les détails">
+                                            <i class="fas fa-eye me-1"></i> Voir
+                                        </a>
+                                        <a href="{{ route('infrastructures.plan', $infra) }}" class="btn btn-sm btn-success" title="Modifier la planification">
+                                            <i class="fas fa-calendar-plus me-1"></i> Modifier
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
