@@ -60,7 +60,7 @@ class InfrastructureController extends Controller
         $etats = Infrastructure::select('etat_fonctionnement')->distinct()->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement')->filter()->values();
         $niveaux = Infrastructure::select('niveau_degradation')->distinct()->orderBy('niveau_degradation')->pluck('niveau_degradation')->filter()->values();
 
-        $infrastructures = $query->paginate(15);
+        $infrastructures = $query->with(['works' => fn($q) => $q->where('status', 'planned')])->paginate(15);
 
         // Get list of infrastructure IDs that are planned (have mairie_agent_data)
         $plannedInfrastructureIds = MairieAgentData::whereNotNull('infrastructure_id')

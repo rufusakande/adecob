@@ -101,6 +101,12 @@
                 </form>
             @endif
 
+            @if(($u->isSuperAdmin() || $u->isCommuneAdmin()) && $infrastructure->isValidated())
+                <a href="{{ route('infrastructures.plan', $infrastructure) }}" class="btn btn-success">
+                    <i class="fas fa-calendar-plus me-1"></i> Planifier
+                </a>
+            @endif
+
             @if($canValidate)
                 <form method="POST" action="{{ route('infrastructures.validate', $infrastructure) }}" class="d-inline">
                     @csrf
