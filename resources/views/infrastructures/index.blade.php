@@ -46,11 +46,20 @@
                 @php
                     $__pendingCount = \App\Models\Infrastructure::query()
                         ->visibleTo(Auth::user())->pending()->count();
+                    $__plannedCount = \App\Models\Infrastructure::query()
+                        ->visibleTo(Auth::user())
+                        ->whereHas('works', fn($q) => $q->where('status', 'planned'))->count();
                 @endphp
                 <a href="{{ route('infrastructures.pending') }}" class="btn btn-warning position-relative d-flex align-items-center gap-2">
                     <i class="fas fa-hourglass-half"></i> À valider
                     @if($__pendingCount > 0)
                         <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">{{ $__pendingCount }}</span>
+                    @endif
+                </a>
+                <a href="{{ route('infrastructures.planned') }}" class="btn btn-info text-white position-relative d-flex align-items-center gap-2">
+                    <i class="fas fa-calendar-check"></i> Planifiées
+                    @if($__plannedCount > 0)
+                        <span class="badge bg-dark position-absolute top-0 start-100 translate-middle rounded-pill">{{ $__plannedCount }}</span>
                     @endif
                 </a>
             @endif
@@ -620,26 +629,36 @@
                                 </div>
                             </td>
                             <td>
+                                @php
+                                    $canManage = $infra->canBeManagedBy(Auth::user());
+                                    $isAdmin = Auth::user()->isSuperAdmin() || Auth::user()->isCommuneAdmin();
+                                    $hasPlan = $infra->works->where('status', 'planned')->count() > 0;
+                                @endphp
                                 <div class="d-flex flex-wrap gap-1">
-                                    <a href="{{ route('infrastructures.show', $infra->id) }}" class="btn btn-sm btn-info" title="Voir">
+                                    <a href="{{ route('infrastructures.show', $infra->id) }}" class="btn btn-sm btn-info text-white" title="Voir les détails">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('infrastructures.edit', $infra->id) }}" class="btn btn-sm btn-primary" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{{ $isPlanned ? '#' : route('mairie-agent.form', ['infrastructure_id' => $infra->id]) }}"
-                                       class="btn btn-sm {{ $isPlanned ? 'btn-secondary disabled' : 'btn-success' }}"
-                                       title="{{ $isPlanned ? 'Déjà planifié' : 'Planifier' }}"
-                                       {{ $isPlanned ? 'aria-disabled=true tabindex=-1' : '' }}>
-                                        <i class="fas fa-check-circle"></i>
-                                    </a>
-                                    <form action="{{ route('infrastructures.destroy', $infra->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($canManage)
+                                        <a href="{{ route('infrastructures.edit', $infra->id) }}" class="btn btn-sm btn-primary" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endif
+                                    @if($isAdmin && $infra->isValidated())
+                                        <a href="{{ route('infrastructures.plan', $infra->id) }}"
+                                           class="btn btn-sm {{ $hasPlan ? 'btn-outline-success' : 'btn-success' }}"
+                                           title="{{ $hasPlan ? 'Ajouter une planification' : 'Planifier' }}">
+                                            <i class="fas fa-calendar-plus"></i>
+                                        </a>
+                                    @endif
+                                    @if($canManage)
+                                        <form action="{{ route('infrastructures.destroy', $infra->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

@@ -99,6 +99,14 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     Route::post('/infrastructures/{infrastructure}/resubmit', [App\Http\Controllers\InfrastructureController::class, 'resubmitInfrastructure'])
         ->name('infrastructures.resubmit');
 
+    // Planification (admin commune + super admin)
+    Route::get('/infrastructures-planifiees', [App\Http\Controllers\InfrastructureController::class, 'plannedIndex'])
+        ->middleware('admin.access')->name('infrastructures.planned');
+    Route::get('/infrastructures/{infrastructure}/planifier', [App\Http\Controllers\InfrastructureController::class, 'planForm'])
+        ->middleware('admin.access')->name('infrastructures.plan');
+    Route::post('/infrastructures/{infrastructure}/planifier', [App\Http\Controllers\InfrastructureController::class, 'storePlan'])
+        ->middleware(['admin.access', 'throttle:60,1'])->name('infrastructures.plan.store');
+
     // Infrastructure work management routes
     Route::prefix('infrastructures/{infrastructure}')->group(function () {
         Route::post('works', [InfrastructureWorkController::class, 'store'])->name('infrastructures.works.store');

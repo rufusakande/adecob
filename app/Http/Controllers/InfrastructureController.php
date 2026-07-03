@@ -60,7 +60,7 @@ class InfrastructureController extends Controller
         $etats = Infrastructure::select('etat_fonctionnement')->distinct()->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement')->filter()->values();
         $niveaux = Infrastructure::select('niveau_degradation')->distinct()->orderBy('niveau_degradation')->pluck('niveau_degradation')->filter()->values();
 
-        $infrastructures = $query->paginate(15);
+        $infrastructures = $query->with(['works' => fn($q) => $q->where('status', 'planned')])->paginate(15);
 
         // Get list of infrastructure IDs that are planned (have mairie_agent_data)
         $plannedInfrastructureIds = MairieAgentData::whereNotNull('infrastructure_id')
@@ -636,11 +636,78 @@ class InfrastructureController extends Controller
 
     public function show(Infrastructure $infrastructure)
     {
-        if (!$infrastructure->canBeManagedBy(auth()->user())) {
+        $user = auth()->user();
+        $visible = Infrastructure::query()->visibleTo($user)->whereKey($infrastructure->id)->exists();
+        if (!$visible) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
-
+        $infrastructure->load('works');
         return view('infrastructures.show', compact('infrastructure'));
+    }
+
+    /* =========================================================
+     |  Planification (admin commune + super admin)
+     |=========================================================*/
+
+    protected function authorizePlanning(Infrastructure $infrastructure): void
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->isSuperAdmin() || $user->isCommuneAdmin()), 403,
+            'Seuls les administrateurs peuvent planifier une infrastructure.');
+        if ($user->isCommuneAdmin()) {
+            $sameCommune = ((int)$infrastructure->commune_id === (int)$user->commune_id)
+                || (optional($user->commune)->name === $infrastructure->commune);
+            abort_unless($sameCommune, 403, "Cette infrastructure n'appartient pas à votre commune.");
+        }
+        abort_unless($infrastructure->isValidated(), 422,
+            "L'infrastructure doit être validée avant d'être planifiée.");
+    }
+
+    public function planForm(Infrastructure $infrastructure)
+    {
+        $this->authorizePlanning($infrastructure);
+        $infrastructure->load('works');
+        return view('infrastructures.plan', compact('infrastructure'));
+    }
+
+    public function storePlan(Request $request, Infrastructure $infrastructure)
+    {
+        $this->authorizePlanning($infrastructure);
+
+        $validated = $request->validate([
+            'work_type'        => 'required|string|max:255',
+            'description'      => 'required|string|min:5|max:5000',
+            'completion_date'  => 'required|date|after_or_equal:today',
+            'cost'             => 'required|numeric|min:0|max:9999999999',
+            'provider_name'    => 'nullable|string|max:255',
+            'provider_contact' => 'nullable|string|max:255',
+            'observations'     => 'nullable|string|max:5000',
+        ]);
+        $validated['status'] = 'planned';
+
+        $infrastructure->works()->create($validated);
+
+        Log::info('Infrastructure planifiée', [
+            'id' => $infrastructure->id, 'by' => auth()->id(),
+        ]);
+
+        return redirect()->route('infrastructures.planned')
+            ->with('success', "Planification enregistrée. L'infrastructure figure désormais dans la liste des infrastructures planifiées.");
+    }
+
+    public function plannedIndex(Request $request)
+    {
+        $user = auth()->user();
+        abort_unless($user->isSuperAdmin() || $user->isCommuneAdmin(), 403);
+
+        $infrastructures = Infrastructure::query()
+            ->visibleTo($user)
+            ->whereHas('works', fn($q) => $q->where('status', 'planned'))
+            ->with(['works' => fn($q) => $q->where('status', 'planned')->orderBy('completion_date')])
+            ->orderByDesc('updated_at')
+            ->paginate(20);
+
+        return view('infrastructures.planned', compact('infrastructures'));
     }
 
     /**
