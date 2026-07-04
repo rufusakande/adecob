@@ -319,24 +319,35 @@
 
     <!-- Formulaire de recherche -->
     @if(!Auth::user()->isPublicUser())
-    <form method="GET" action="{{ route('infrastructures.index') }}" class="card shadow-sm mb-4 border-0">
+    <form method="GET" action="{{ route('infrastructures.index') }}" id="filtersForm" class="card shadow-sm mb-4 border-0">
         <div class="card-body p-4">
-            <h5 class="card-title mb-4 text-dark">
-                <i class="fas fa-filter me-2 text-success"></i> 
-                Filtres de Recherche
-            </h5>
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+                <h5 class="card-title mb-0 text-dark">
+                    <i class="fas fa-filter me-2 text-success"></i>
+                    Filtres de Recherche
+                    <span id="filtersLoader" class="ms-2 d-none">
+                        <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                        <small class="text-muted">Actualisation…</small>
+                    </span>
+                </h5>
+                <small class="text-muted"><i class="fas fa-bolt me-1 text-warning"></i>Filtrage automatique</small>
+            </div>
+
+            {{-- Conserve le filtre priorité choisi via les cadres --}}
+            <input type="hidden" name="priority" value="{{ request('priority') }}">
+
             <div class="row g-3">
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Date début</label>
-                    <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
+                    <input type="date" name="start_date" class="form-control auto-filter" value="{{ request('start_date') }}">
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Date fin</label>
-                    <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
+                    <input type="date" name="end_date" class="form-control auto-filter" value="{{ request('end_date') }}">
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Commune</label>
-                    <select name="commune" class="form-select">
+                    <select name="commune" class="form-select auto-filter">
                         <option value="">Toutes les communes</option>
                         @foreach($communes as $commune)
                             <option value="{{ $commune }}" {{ request('commune') == $commune ? 'selected' : '' }}>{{ $commune }}</option>
@@ -345,7 +356,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Arrondissement</label>
-                    <select name="arrondissement" class="form-select">
+                    <select name="arrondissement" class="form-select auto-filter">
                         <option value="">Tous les arrondissements</option>
                         @foreach($arrondissements as $arrondissement)
                             <option value="{{ $arrondissement }}" {{ request('arrondissement') == $arrondissement ? 'selected' : '' }}>{{ $arrondissement }}</option>
@@ -354,7 +365,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Village</label>
-                    <select name="village" class="form-select">
+                    <select name="village" class="form-select auto-filter">
                         <option value="">Tous les villages</option>
                         @foreach($villages as $village)
                             <option value="{{ $village }}" {{ request('village') == $village ? 'selected' : '' }}>{{ $village }}</option>
@@ -363,7 +374,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Secteur</label>
-                    <select name="secteur_domaine" class="form-select">
+                    <select name="secteur_domaine" class="form-select auto-filter">
                         <option value="">Tous les secteurs</option>
                         @foreach($secteurs as $secteur)
                             <option value="{{ $secteur }}" {{ request('secteur_domaine') == $secteur ? 'selected' : '' }}>{{ $secteur }}</option>
@@ -372,7 +383,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Type d'infrastructure</label>
-                    <select name="type_infrastructure" class="form-select">
+                    <select name="type_infrastructure" class="form-select auto-filter">
                         <option value="">Tous les types</option>
                         @foreach($types as $type)
                             <option value="{{ $type }}" {{ request('type_infrastructure') == $type ? 'selected' : '' }}>{{ $type }}</option>
@@ -381,7 +392,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Année</label>
-                    <select name="annee_realisation" class="form-select">
+                    <select name="annee_realisation" class="form-select auto-filter">
                         <option value="">Toutes les années</option>
                         @foreach($annees as $annee)
                             <option value="{{ $annee }}" {{ request('annee_realisation') == $annee ? 'selected' : '' }}>{{ $annee }}</option>
@@ -390,7 +401,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">État de fonctionnement</label>
-                    <select name="etat_fonctionnement" class="form-select">
+                    <select name="etat_fonctionnement" class="form-select auto-filter">
                         <option value="">Tous les états</option>
                         @foreach($etats as $etat)
                             <option value="{{ $etat }}" {{ request('etat_fonctionnement') == $etat ? 'selected' : '' }}>{{ $etat }}</option>
@@ -399,15 +410,25 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Niveau de dégradation</label>
-                    <select name="niveau_degradation" class="form-select">
+                    <select name="niveau_degradation" class="form-select auto-filter">
                         <option value="">Tous les niveaux</option>
                         @foreach($niveaux as $niveau)
                             <option value="{{ $niveau }}" {{ request('niveau_degradation') == $niveau ? 'selected' : '' }}>{{ $niveau }}</option>
                         @endforeach
                     </select>
                 </div>
+                <div class="col-md-6 col-lg-2">
+                    <label class="form-label text-muted">Niveau de priorité</label>
+                    <select id="priorityFilterSelect" class="form-select auto-filter">
+                        <option value="">Toutes les priorités</option>
+                        <option value="tres_urgent" {{ request('priority') === 'tres_urgent' ? 'selected' : '' }}>Très Urgent</option>
+                        <option value="urgent" {{ request('priority') === 'urgent' ? 'selected' : '' }}>Urgent</option>
+                        <option value="moyenne" {{ request('priority') === 'moyenne' ? 'selected' : '' }}>Moyenne</option>
+                        <option value="faible" {{ request('priority') === 'faible' ? 'selected' : '' }}>Faible</option>
+                    </select>
+                </div>
             </div>
-            
+
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="d-flex flex-wrap gap-2">
