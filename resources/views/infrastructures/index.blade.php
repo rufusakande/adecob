@@ -872,6 +872,32 @@
         position: relative;
         box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
+
+    /* Cadres de priorité cliquables */
+    .priority-card {
+        cursor: pointer;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        border: 2px solid transparent !important;
+    }
+    .priority-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.10) !important;
+    }
+    .priority-card-active {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.12) !important;
+        border-width: 2px !important;
+    }
+    .priority-card-active .display-6 {
+        font-weight: 700;
+    }
+
+    /* Animation d'apparition du tableau après filtrage */
+    .table-fade-in { animation: fadeInUp .35s ease both; }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
 </style>
 
 <!-- JavaScript -->
