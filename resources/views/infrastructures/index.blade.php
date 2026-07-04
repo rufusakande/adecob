@@ -907,7 +907,47 @@
         let checkboxes = document.querySelectorAll('input[name="selected_ids[]"]');
         checkboxes.forEach(cb => cb.checked = event.target.checked);
     });
-    
+
+    // === Filtrage dynamique : auto-submit à chaque changement ===
+    (function () {
+        const form = document.getElementById('filtersForm');
+        if (!form) return;
+        const loader = document.getElementById('filtersLoader');
+        const prioritySelect = document.getElementById('priorityFilterSelect');
+        const priorityHidden = form.querySelector('input[name="priority"]');
+
+        let debounce;
+        const submitForm = () => {
+            if (loader) loader.classList.remove('d-none');
+            // Retire les champs vides de l'URL pour rester propre
+            Array.from(form.elements).forEach(el => {
+                if (el.name && !el.value) el.disabled = true;
+            });
+            form.submit();
+        };
+
+        // Selects & dates -> soumission immédiate (avec petit debounce pour dates tapées)
+        form.querySelectorAll('.auto-filter').forEach(el => {
+            const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+            el.addEventListener(evt, () => {
+                clearTimeout(debounce);
+                debounce = setTimeout(submitForm, el.tagName === 'SELECT' ? 0 : 400);
+            });
+        });
+
+        // Le select "Niveau de priorité" alimente le champ caché priority
+        if (prioritySelect && priorityHidden) {
+            prioritySelect.addEventListener('change', () => {
+                priorityHidden.value = prioritySelect.value;
+                submitForm();
+            });
+        }
+
+        // Animation d'apparition
+        const tableWrap = document.querySelector('.table-responsive');
+        if (tableWrap) tableWrap.classList.add('table-fade-in');
+    })();
+
     // Masquer les messages après 5 secondes
     setTimeout(() => {
         const alerts = document.querySelectorAll('.alert');
