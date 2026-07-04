@@ -255,59 +255,60 @@
                 </div>
             </div>
 
-            <!-- Niveaux de priorité -->
+            <!-- Niveaux de priorité (cliquables pour filtrer) -->
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm">
                         <div class="card-body">
-                            <h6 class="text-muted mb-3">
-                                <i class="fas fa-exclamation-triangle me-2 text-danger"></i> 
-                                Niveaux de Priorité (selon formule de calcul)
-                            </h6>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                                <h6 class="text-muted mb-0">
+                                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+                                    Niveaux de Priorité — <span class="text-dark">cliquez sur un cadre pour filtrer</span>
+                                </h6>
+                                @if(!empty($priorityFilter))
+                                    @php
+                                        $clearParams = request()->except(['priority', 'page']);
+                                    @endphp
+                                    <a href="{{ route('infrastructures.index', $clearParams) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i> Effacer le filtre priorité
+                                    </a>
+                                @endif
+                            </div>
+
+                            @php
+                                $priorityCards = [
+                                    'tres_urgent' => ['label' => 'Très Urgent', 'sub' => '(Score ≥ 4.2)', 'color' => 'danger', 'count' => $priorityStats['tres_urgent'] ?? 0],
+                                    'urgent'      => ['label' => 'Urgent',      'sub' => '(Score 3.0-4.19)', 'color' => 'warning', 'count' => $priorityStats['urgent'] ?? 0],
+                                    'moyenne'     => ['label' => 'Moyenne',     'sub' => '(Score 2.0-2.99)', 'color' => 'info',    'count' => $priorityStats['moyenne'] ?? 0],
+                                    'faible'      => ['label' => 'Faible Priorité', 'sub' => '(Score < 2.0)', 'color' => 'secondary', 'count' => $priorityStats['faible'] ?? 0],
+                                ];
+                                $baseParams = request()->except(['priority', 'page']);
+                            @endphp
+
                             <div class="row g-4">
-                                <!-- Très Urgent -->
-                                <div class="col-md-6 col-lg-3">
-                                    <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-body text-center">
-                                            <div class="display-6 text-danger mb-2">{{ $priorityStats['tres_urgent'] ?? 0 }}</div>
-                                            <h6 class="text-danger mb-1">Très Urgent</h6>
-                                            <small class="text-muted">(Score ≥ 4.2)</small>
-                                        </div>
+                                @foreach($priorityCards as $key => $p)
+                                    @php
+                                        $isActive = ($priorityFilter ?? null) === $key;
+                                        $params = $isActive ? $baseParams : array_merge($baseParams, ['priority' => $key]);
+                                        $url = route('infrastructures.index', $params);
+                                    @endphp
+                                    <div class="col-md-6 col-lg-3">
+                                        <a href="{{ $url }}"
+                                           class="priority-card card border-0 shadow-sm h-100 text-decoration-none {{ $isActive ? 'priority-card-active border-'.$p['color'] : '' }}"
+                                           title="{{ $isActive ? 'Retirer ce filtre' : 'Filtrer par ' . $p['label'] }}">
+                                            <div class="card-body text-center position-relative">
+                                                @if($isActive)
+                                                    <span class="badge bg-{{ $p['color'] }} position-absolute top-0 end-0 m-2">
+                                                        <i class="fas fa-check"></i> Actif
+                                                    </span>
+                                                @endif
+                                                <div class="display-6 text-{{ $p['color'] }} mb-2">{{ $p['count'] }}</div>
+                                                <h6 class="text-{{ $p['color'] }} mb-1">{{ $p['label'] }}</h6>
+                                                <small class="text-muted">{{ $p['sub'] }}</small>
+                                            </div>
+                                        </a>
                                     </div>
-                                </div>
-                                
-                                <!-- Urgent -->
-                                <div class="col-md-6 col-lg-3">
-                                    <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-body text-center">
-                                            <div class="display-6 text-warning mb-2">{{ $priorityStats['urgent'] ?? 0 }}</div>
-                                            <h6 class="text-warning mb-1">Urgent</h6>
-                                            <small class="text-muted">(Score 3.0-4.19)</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Moyenne -->
-                                <div class="col-md-6 col-lg-3">
-                                    <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-body text-center">
-                                            <div class="display-6 text-info mb-2">{{ $priorityStats['moyenne'] ?? 0 }}</div>
-                                            <h6 class="text-info mb-1">Moyenne</h6>
-                                            <small class="text-muted">(Score 2.0-2.99)</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Faible -->
-                                <div class="col-md-6 col-lg-3">
-                                    <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-body text-center">
-                                            <div class="display-6 text-secondary mb-2">{{ $priorityStats['faible'] ?? 0 }}</div>
-                                            <h6 class="text-secondary mb-1">Faible Priorité</h6>
-                                            <small class="text-muted">(Score < 2.0)</small>
-                                        </div>
-                                    </div>
-                                </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -318,24 +319,35 @@
 
     <!-- Formulaire de recherche -->
     @if(!Auth::user()->isPublicUser())
-    <form method="GET" action="{{ route('infrastructures.index') }}" class="card shadow-sm mb-4 border-0">
+    <form method="GET" action="{{ route('infrastructures.index') }}" id="filtersForm" class="card shadow-sm mb-4 border-0">
         <div class="card-body p-4">
-            <h5 class="card-title mb-4 text-dark">
-                <i class="fas fa-filter me-2 text-success"></i> 
-                Filtres de Recherche
-            </h5>
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+                <h5 class="card-title mb-0 text-dark">
+                    <i class="fas fa-filter me-2 text-success"></i>
+                    Filtres de Recherche
+                    <span id="filtersLoader" class="ms-2 d-none">
+                        <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                        <small class="text-muted">Actualisation…</small>
+                    </span>
+                </h5>
+                <small class="text-muted"><i class="fas fa-bolt me-1 text-warning"></i>Filtrage automatique</small>
+            </div>
+
+            {{-- Conserve le filtre priorité choisi via les cadres --}}
+            <input type="hidden" name="priority" value="{{ request('priority') }}">
+
             <div class="row g-3">
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Date début</label>
-                    <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
+                    <input type="date" name="start_date" class="form-control auto-filter" value="{{ request('start_date') }}">
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Date fin</label>
-                    <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
+                    <input type="date" name="end_date" class="form-control auto-filter" value="{{ request('end_date') }}">
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Commune</label>
-                    <select name="commune" class="form-select">
+                    <select name="commune" class="form-select auto-filter">
                         <option value="">Toutes les communes</option>
                         @foreach($communes as $commune)
                             <option value="{{ $commune }}" {{ request('commune') == $commune ? 'selected' : '' }}>{{ $commune }}</option>
@@ -344,7 +356,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Arrondissement</label>
-                    <select name="arrondissement" class="form-select">
+                    <select name="arrondissement" class="form-select auto-filter">
                         <option value="">Tous les arrondissements</option>
                         @foreach($arrondissements as $arrondissement)
                             <option value="{{ $arrondissement }}" {{ request('arrondissement') == $arrondissement ? 'selected' : '' }}>{{ $arrondissement }}</option>
@@ -353,7 +365,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Village</label>
-                    <select name="village" class="form-select">
+                    <select name="village" class="form-select auto-filter">
                         <option value="">Tous les villages</option>
                         @foreach($villages as $village)
                             <option value="{{ $village }}" {{ request('village') == $village ? 'selected' : '' }}>{{ $village }}</option>
@@ -362,7 +374,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Secteur</label>
-                    <select name="secteur_domaine" class="form-select">
+                    <select name="secteur_domaine" class="form-select auto-filter">
                         <option value="">Tous les secteurs</option>
                         @foreach($secteurs as $secteur)
                             <option value="{{ $secteur }}" {{ request('secteur_domaine') == $secteur ? 'selected' : '' }}>{{ $secteur }}</option>
@@ -371,7 +383,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Type d'infrastructure</label>
-                    <select name="type_infrastructure" class="form-select">
+                    <select name="type_infrastructure" class="form-select auto-filter">
                         <option value="">Tous les types</option>
                         @foreach($types as $type)
                             <option value="{{ $type }}" {{ request('type_infrastructure') == $type ? 'selected' : '' }}>{{ $type }}</option>
@@ -380,7 +392,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Année</label>
-                    <select name="annee_realisation" class="form-select">
+                    <select name="annee_realisation" class="form-select auto-filter">
                         <option value="">Toutes les années</option>
                         @foreach($annees as $annee)
                             <option value="{{ $annee }}" {{ request('annee_realisation') == $annee ? 'selected' : '' }}>{{ $annee }}</option>
@@ -389,7 +401,7 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">État de fonctionnement</label>
-                    <select name="etat_fonctionnement" class="form-select">
+                    <select name="etat_fonctionnement" class="form-select auto-filter">
                         <option value="">Tous les états</option>
                         @foreach($etats as $etat)
                             <option value="{{ $etat }}" {{ request('etat_fonctionnement') == $etat ? 'selected' : '' }}>{{ $etat }}</option>
@@ -398,15 +410,25 @@
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <label class="form-label text-muted">Niveau de dégradation</label>
-                    <select name="niveau_degradation" class="form-select">
+                    <select name="niveau_degradation" class="form-select auto-filter">
                         <option value="">Tous les niveaux</option>
                         @foreach($niveaux as $niveau)
                             <option value="{{ $niveau }}" {{ request('niveau_degradation') == $niveau ? 'selected' : '' }}>{{ $niveau }}</option>
                         @endforeach
                     </select>
                 </div>
+                <div class="col-md-6 col-lg-2">
+                    <label class="form-label text-muted">Niveau de priorité</label>
+                    <select id="priorityFilterSelect" class="form-select auto-filter">
+                        <option value="">Toutes les priorités</option>
+                        <option value="tres_urgent" {{ request('priority') === 'tres_urgent' ? 'selected' : '' }}>Très Urgent</option>
+                        <option value="urgent" {{ request('priority') === 'urgent' ? 'selected' : '' }}>Urgent</option>
+                        <option value="moyenne" {{ request('priority') === 'moyenne' ? 'selected' : '' }}>Moyenne</option>
+                        <option value="faible" {{ request('priority') === 'faible' ? 'selected' : '' }}>Faible</option>
+                    </select>
+                </div>
             </div>
-            
+
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="d-flex flex-wrap gap-2">
@@ -850,6 +872,32 @@
         position: relative;
         box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
+
+    /* Cadres de priorité cliquables */
+    .priority-card {
+        cursor: pointer;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        border: 2px solid transparent !important;
+    }
+    .priority-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.10) !important;
+    }
+    .priority-card-active {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.12) !important;
+        border-width: 2px !important;
+    }
+    .priority-card-active .display-6 {
+        font-weight: 700;
+    }
+
+    /* Animation d'apparition du tableau après filtrage */
+    .table-fade-in { animation: fadeInUp .35s ease both; }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
 </style>
 
 <!-- JavaScript -->
@@ -859,7 +907,47 @@
         let checkboxes = document.querySelectorAll('input[name="selected_ids[]"]');
         checkboxes.forEach(cb => cb.checked = event.target.checked);
     });
-    
+
+    // === Filtrage dynamique : auto-submit à chaque changement ===
+    (function () {
+        const form = document.getElementById('filtersForm');
+        if (!form) return;
+        const loader = document.getElementById('filtersLoader');
+        const prioritySelect = document.getElementById('priorityFilterSelect');
+        const priorityHidden = form.querySelector('input[name="priority"]');
+
+        let debounce;
+        const submitForm = () => {
+            if (loader) loader.classList.remove('d-none');
+            // Retire les champs vides de l'URL pour rester propre
+            Array.from(form.elements).forEach(el => {
+                if (el.name && !el.value) el.disabled = true;
+            });
+            form.submit();
+        };
+
+        // Selects & dates -> soumission immédiate (avec petit debounce pour dates tapées)
+        form.querySelectorAll('.auto-filter').forEach(el => {
+            const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+            el.addEventListener(evt, () => {
+                clearTimeout(debounce);
+                debounce = setTimeout(submitForm, el.tagName === 'SELECT' ? 0 : 400);
+            });
+        });
+
+        // Le select "Niveau de priorité" alimente le champ caché priority
+        if (prioritySelect && priorityHidden) {
+            prioritySelect.addEventListener('change', () => {
+                priorityHidden.value = prioritySelect.value;
+                submitForm();
+            });
+        }
+
+        // Animation d'apparition
+        const tableWrap = document.querySelector('.table-responsive');
+        if (tableWrap) tableWrap.classList.add('table-fade-in');
+    })();
+
     // Masquer les messages après 5 secondes
     setTimeout(() => {
         const alerts = document.querySelectorAll('.alert');

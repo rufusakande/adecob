@@ -28,6 +28,11 @@ class InfrastructureController extends Controller
         $query      = Infrastructure::query()->visibleTo($user);
         $statsQuery = Infrastructure::query()->visibleTo($user);
 
+        // Expression SQL du score de priorité (réutilisable)
+        $scoreExpr = "(((CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END) * 0.40)"
+            . " + ((CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END) * 0.40)"
+            . " + ((CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END) * 0.20))";
+
         if ($request->filled('departement')) {
             $query->where('departement', $request->departement);
         }
@@ -48,6 +53,34 @@ class InfrastructureController extends Controller
         }
         if ($request->filled('type_infrastructure')) {
             $query->where('type_infrastructure', $request->type_infrastructure);
+        }
+        if ($request->filled('annee_realisation')) {
+            $query->where('annee_realisation', $request->annee_realisation);
+        }
+        if ($request->filled('etat_fonctionnement')) {
+            $query->where('etat_fonctionnement', $request->etat_fonctionnement);
+        }
+        if ($request->filled('niveau_degradation')) {
+            $query->where('niveau_degradation', $request->niveau_degradation);
+        }
+
+        // Filtre par niveau de priorité (cadres cliquables)
+        $priorityFilter = $request->input('priority');
+        if (in_array($priorityFilter, ['tres_urgent', 'urgent', 'moyenne', 'faible'], true)) {
+            switch ($priorityFilter) {
+                case 'tres_urgent':
+                    $query->whereRaw("$scoreExpr >= 4.2");
+                    break;
+                case 'urgent':
+                    $query->whereRaw("$scoreExpr >= 3.0 AND $scoreExpr < 4.2");
+                    break;
+                case 'moyenne':
+                    $query->whereRaw("$scoreExpr >= 2.0 AND $scoreExpr < 3.0");
+                    break;
+                case 'faible':
+                    $query->whereRaw("$scoreExpr < 2.0");
+                    break;
+            }
         }
 
         // Fetch distinct values for filters
@@ -128,7 +161,7 @@ class InfrastructureController extends Controller
                 ->orderBy('count', 'desc')->get(),
         ];
 
-        return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats'));
+        return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats', 'priorityFilter'));
     }
 
     public function import(Request $request)
