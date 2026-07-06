@@ -166,6 +166,10 @@ class InfrastructureController extends Controller
                 ->orderBy('count', 'desc')->get(),
         ];
 
+        if ($request->ajax() || $request->wantsJson() || $request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return view('infrastructures._dynamic', compact('infrastructures', 'plannedInfrastructureIds', 'priorityStats', 'priorityFilter'));
+        }
+
         return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats', 'priorityFilter'));
     }
 
