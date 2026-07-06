@@ -93,7 +93,12 @@ class InfrastructureController extends Controller
         $etats = Infrastructure::select('etat_fonctionnement')->distinct()->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement')->filter()->values();
         $niveaux = Infrastructure::select('niveau_degradation')->distinct()->orderBy('niveau_degradation')->pluck('niveau_degradation')->filter()->values();
 
-        $infrastructures = $query->with(['works' => fn($q) => $q->where('status', 'planned')])->paginate(15);
+        $infrastructures = $query
+            ->with(['works' => fn($q) => $q->where('status', 'planned')])
+            ->select('infrastructures.*')
+            ->selectRaw("$scoreExpr as score_priorite")
+            ->paginate(15)
+            ->withQueryString();
 
         // Get list of infrastructure IDs that are planned (have mairie_agent_data)
         $plannedInfrastructureIds = MairieAgentData::whereNotNull('infrastructure_id')
@@ -160,6 +165,10 @@ class InfrastructureController extends Controller
                 ->whereNotNull('niveau_degradation')->groupBy('niveau_degradation')
                 ->orderBy('count', 'desc')->get(),
         ];
+
+        if ($request->ajax() || $request->wantsJson() || $request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return view('infrastructures._dynamic', compact('infrastructures', 'plannedInfrastructureIds', 'priorityStats', 'priorityFilter'));
+        }
 
         return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats', 'priorityFilter'));
     }

@@ -255,67 +255,9 @@
                 </div>
             </div>
 
-            <!-- Niveaux de priorité (cliquables pour filtrer) -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-                                <h6 class="text-muted mb-0">
-                                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
-                                    Niveaux de Priorité — <span class="text-dark">cliquez sur un cadre pour filtrer</span>
-                                </h6>
-                                @if(!empty($priorityFilter))
-                                    @php
-                                        $clearParams = request()->except(['priority', 'page']);
-                                    @endphp
-                                    <a href="{{ route('infrastructures.index', $clearParams) }}" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-times me-1"></i> Effacer le filtre priorité
-                                    </a>
-                                @endif
-                            </div>
-
-                            @php
-                                $priorityCards = [
-                                    'tres_urgent' => ['label' => 'Très Urgent', 'sub' => '(Score ≥ 4.2)', 'color' => 'danger', 'count' => $priorityStats['tres_urgent'] ?? 0],
-                                    'urgent'      => ['label' => 'Urgent',      'sub' => '(Score 3.0-4.19)', 'color' => 'warning', 'count' => $priorityStats['urgent'] ?? 0],
-                                    'moyenne'     => ['label' => 'Moyenne',     'sub' => '(Score 2.0-2.99)', 'color' => 'info',    'count' => $priorityStats['moyenne'] ?? 0],
-                                    'faible'      => ['label' => 'Faible Priorité', 'sub' => '(Score < 2.0)', 'color' => 'secondary', 'count' => $priorityStats['faible'] ?? 0],
-                                ];
-                                $baseParams = request()->except(['priority', 'page']);
-                            @endphp
-
-                            <div class="row g-4">
-                                @foreach($priorityCards as $key => $p)
-                                    @php
-                                        $isActive = ($priorityFilter ?? null) === $key;
-                                        $params = $isActive ? $baseParams : array_merge($baseParams, ['priority' => $key]);
-                                        $url = route('infrastructures.index', $params);
-                                    @endphp
-                                    <div class="col-md-6 col-lg-3">
-                                        <a href="{{ $url }}"
-                                           class="priority-card card border-0 shadow-sm h-100 text-decoration-none {{ $isActive ? 'priority-card-active border-'.$p['color'] : '' }}"
-                                           title="{{ $isActive ? 'Retirer ce filtre' : 'Filtrer par ' . $p['label'] }}">
-                                            <div class="card-body text-center position-relative">
-                                                @if($isActive)
-                                                    <span class="badge bg-{{ $p['color'] }} position-absolute top-0 end-0 m-2">
-                                                        <i class="fas fa-check"></i> Actif
-                                                    </span>
-                                                @endif
-                                                <div class="display-6 text-{{ $p['color'] }} mb-2">{{ $p['count'] }}</div>
-                                                <h6 class="text-{{ $p['color'] }} mb-1">{{ $p['label'] }}</h6>
-                                                <small class="text-muted">{{ $p['sub'] }}</small>
-                                            </div>
-                                        </a>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
+
 
     <!-- Formulaire de recherche -->
     @if(!Auth::user()->isPublicUser())
@@ -509,217 +451,9 @@
     </div>
     @else
 
-    <!-- Tableau des données -->
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-striped align-middle mb-0">
-                    <thead class="table-dark">
-                        <tr>
-                            <th width="50">
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" id="select-all">
-                                </div>
-                            </th>
-                            <th>ID</th>
-                            <th>Statut</th>
-
-                            <th>Enquêteur</th>
-                            <th>Téléphone</th>
-                            <th>Date</th>
-                            <th>Localisation</th>
-                            <th>Secteur</th>
-                            <th>Infrastructure</th>
-                            <th>Caractéristiques</th>
-                            <th>État</th>
-                            <th>Photos</th>
-                            <th>Coordonnées</th>
-                            <th>Descriptions</th>
-                            <th width="140">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($infrastructures as $infra)
-                        @php
-                            $isPlanned = in_array($infra->id, $plannedInfrastructureIds ?? []);
-                            // Calculer la classe de priorité
-                            $priorityClass = '';
-                            if($infra->score_priorite >= 4.2) {
-                                $priorityClass = 'table-danger'; // Très Urgent - Rouge
-                            } elseif($infra->score_priorite >= 3.0) {
-                                $priorityClass = 'table-warning'; // Urgent - Jaune
-                            } elseif($infra->score_priorite >= 2.0) {
-                                $priorityClass = 'table-info'; // Moyenne - Bleu
-                            } elseif($infra->score_priorite > 0) {
-                                $priorityClass = 'table-secondary'; // Faible - Gris
-                            }
-                            // Combiner avec la classe planifiée si nécessaire
-                            $rowClass = $isPlanned ? 'table-success' : $priorityClass;
-                        @endphp
-                        <tr class="{{ $rowClass }}">
-                            <td>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="selected_ids[]" value="{{ $infra->id }}" form="exportForm">
-                                </div>
-                            </td>
-                            <td><strong>{{ $infra->id }}</strong></td>
-                            <td>@include('infrastructures.partials._status-badge', ['status' => $infra->status])</td>
-
-                            <td>{{ $infra->nom_enqueteur ?? 'N/A' }}</td>
-                            <td>{{ $infra->numero_telephone ?? 'N/A' }}</td>
-                            <td>
-                                {{
-                                    $infra->date instanceof \Illuminate\Support\Carbon
-                                        ? $infra->date->format('d/m/Y')
-                                        : (is_string($infra->date)
-                                            ? \Carbon\Carbon::parse($infra->date)->format('d/m/Y')
-                                            : 'N/A')
-                                }}
-                            </td>
-                            <td>
-                                <div class="small">
-                                    <strong class="text-dark">Commune:</strong> {{ $infra->commune ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Arrond.:</strong> {{ $infra->arrondissement ? implode(', ', json_decode($infra->arrondissement)) : 'N/A' }}<br>
-                                    <strong class="text-dark">Village:</strong> {{ $infra->village ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Hameau:</strong> {{ $infra->hameau ?? 'N/A' }}
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-warning text-dark">{{ $infra->secteur_domaine ?? 'N/A' }}</span>
-                            </td>
-                            <td>
-                                <div class="small">
-                                    <strong class="text-dark">Type:</strong> {{ $infra->type_infrastructure ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Nom:</strong> {{ $infra->nom_infrastructure ?? 'N/A' }}
-                                </div>
-                            </td>
-                            <td>
-                                <div class="small">
-                                    <strong class="text-dark">Année:</strong> {{ $infra->annee_realisation ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Bailleur:</strong> {{ $infra->bailleur ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Matériaux:</strong> {{ $infra->type_materiaux ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Gestion:</strong> {{ $infra->mode_gestion ?? 'N/A' }} {{ $infra->mode_gestion_preciser ? '('.$infra->mode_gestion_preciser.')' : '' }}
-                                </div>
-                            </td>
-                            <td>
-                                <div class="small">
-                                    <strong class="text-dark">Fonction:</strong> {{ $infra->etat_fonctionnement ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Dégradation:</strong> {{ $infra->niveau_degradation ?? 'N/A' }}
-                                </div>
-                            </td>
-                            <td>
-                                @php
-                                    $hasPhotos = false;
-                                    for($i = 1; $i <= 4; $i++) {
-                                        if($infra->{"photo$i"} && \Storage::disk('public')->exists($infra->{"photo$i"})) {
-                                            $hasPhotos = true;
-                                            break;
-                                        }
-                                    }
-                                @endphp
-                                @if($hasPhotos)
-                                    <div class="d-flex flex-wrap gap-1">
-                                        @for($i = 1; $i <= 4; $i++)
-                                            @if($infra->{"photo$i"} && \Storage::disk('public')->exists($infra->{"photo$i"}))
-                                                <a href="{{ \Storage::url($infra->{"photo$i"}) }}" target="_blank" class="d-block" title="Photo {{$i}}">
-                                                    <img src="{{ \Storage::url($infra->{"photo$i"}) }}" alt="Photo {{$i}}" class="rounded" style="width: 50px; height: 50px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                                </a>
-                                            @endif
-                                        @endfor
-                                    </div>
-                                @else
-                                    <div class="text-center text-muted">
-                                        <i class="fas fa-image" style="font-size: 24px;"></i>
-                                        <div class="small">Aucune photo</div>
-                                    </div>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="small">
-                                    <strong class="text-dark">Latitude:</strong> {{ $infra->latitude ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Longitude:</strong> {{ $infra->longitude ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Altitude:</strong> {{ $infra->altitude ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Précision:</strong> {{ $infra->precision ?? 'N/A' }}
-                                </div>
-                            </td>
-                            <td>
-                                <div class="small">
-                                    <strong class="text-dark">Défauts:</strong> {{ $infra->defectuosites_relevees ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Mesures:</strong> {{ $infra->mesures_proposees ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Observation:</strong> {{ $infra->observation_generale ?? 'N/A' }}<br>
-                                    <strong class="text-dark">Réhabilitation:</strong> {{ $infra->rehabilitation ?? 'N/A' }}
-                                </div>
-                            </td>
-                            <td>
-                                @php
-                                    $canManage = $infra->canBeManagedBy(Auth::user());
-                                    $isAdmin = Auth::user()->isSuperAdmin() || Auth::user()->isCommuneAdmin();
-                                    $hasPlan = $infra->works->where('status', 'planned')->count() > 0;
-                                @endphp
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <span class="visually-hidden">Actions</span>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('infrastructures.show', $infra->id) }}">
-                                                <i class="fas fa-eye me-2"></i>Voir les détails
-                                            </a>
-                                        </li>
-                                        @if($canManage)
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('infrastructures.edit', $infra->id) }}">
-                                                    <i class="fas fa-edit me-2"></i>Modifier
-                                                </a>
-                                            </li>
-                                        @endif
-                                        @if($isAdmin && $infra->isValidated())
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('infrastructures.plan', $infra->id) }}">
-                                                    <i class="fas fa-calendar-plus me-2"></i>{{ $hasPlan ? 'Modifier la planification' : 'Planifier' }}
-                                                </a>
-                                            </li>
-                                        @endif
-                                        @if($canManage)
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <form action="{{ route('infrastructures.destroy', $infra->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression ?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="dropdown-item text-danger">
-                                                        <i class="fas fa-trash-alt me-2"></i>Supprimer
-                                                    </button>
-                                                </form>
-                                            </li>
-                                        @endif
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="card-footer bg-white border-0">
-                <div class="row align-items-center">
-                    <div class="col-md-6 mb-2 mb-md-0">
-                        <small class="text-muted">
-                            Affichage de {{ $infrastructures->firstItem() ?? 0 }} à {{ $infrastructures->lastItem() ?? 0 }} sur {{ $infrastructures->total() }} entrées
-                        </small>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-md-end">
-                            {{ $infrastructures->links('pagination::bootstrap-5') }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- Zone dynamique (priorités + tableau) rechargée en AJAX -->
+    <div id="infra-dynamic">
+        @include('infrastructures._dynamic')
     </div>
 </div>
 @endif
@@ -900,52 +634,119 @@
     }
 </style>
 
-<!-- JavaScript -->
 <script>
-    // Sélection/désélection globale
-    document.getElementById('select-all').addEventListener('click', function(event) {
-        let checkboxes = document.querySelectorAll('input[name="selected_ids[]"]');
-        checkboxes.forEach(cb => cb.checked = event.target.checked);
+    // Sélection/désélection globale (délégué car #select-all est ré-injecté)
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.id === 'select-all') {
+            document.querySelectorAll('input[name="selected_ids[]"]').forEach(cb => cb.checked = e.target.checked);
+        }
     });
 
-    // === Filtrage dynamique : auto-submit à chaque changement ===
+    // === Rafraîchissement AJAX de la zone dynamique ===
     (function () {
         const form = document.getElementById('filtersForm');
-        if (!form) return;
+        const dynamicZone = document.getElementById('infra-dynamic');
         const loader = document.getElementById('filtersLoader');
-        const prioritySelect = document.getElementById('priorityFilterSelect');
-        const priorityHidden = form.querySelector('input[name="priority"]');
+        const baseUrl = form ? form.getAttribute('action') : "{{ route('infrastructures.index') }}";
+        let currentReq = 0;
 
-        let debounce;
-        const submitForm = () => {
+        function buildUrlFromForm(extraParams = {}) {
+            const params = new URLSearchParams();
+            if (form) {
+                new FormData(form).forEach((v, k) => {
+                    if (v !== '' && v !== null) params.set(k, v);
+                });
+            }
+            Object.entries(extraParams).forEach(([k, v]) => {
+                if (v === null || v === '') params.delete(k);
+                else params.set(k, v);
+            });
+            const qs = params.toString();
+            return baseUrl + (qs ? '?' + qs : '');
+        }
+
+        async function loadUrl(url, pushHistory = true) {
+            if (!dynamicZone) return;
+            const reqId = ++currentReq;
             if (loader) loader.classList.remove('d-none');
-            // Retire les champs vides de l'URL pour rester propre
-            Array.from(form.elements).forEach(el => {
-                if (el.name && !el.value) el.disabled = true;
-            });
-            form.submit();
-        };
+            dynamicZone.style.opacity = '0.55';
+            try {
+                const resp = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+                    credentials: 'same-origin',
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const html = await resp.text();
+                if (reqId !== currentReq) return; // requête obsolète
+                dynamicZone.innerHTML = html;
+                if (pushHistory) window.history.pushState({ url }, '', url);
+            } catch (err) {
+                console.error('Filtrage AJAX échoué :', err);
+                window.location.href = url;
+                return;
+            } finally {
+                if (reqId === currentReq) {
+                    dynamicZone.style.opacity = '1';
+                    if (loader) loader.classList.add('d-none');
+                }
+            }
+        }
 
-        // Selects & dates -> soumission immédiate (avec petit debounce pour dates tapées)
-        form.querySelectorAll('.auto-filter').forEach(el => {
-            const evt = el.tagName === 'SELECT' ? 'change' : 'input';
-            el.addEventListener(evt, () => {
-                clearTimeout(debounce);
-                debounce = setTimeout(submitForm, el.tagName === 'SELECT' ? 0 : 400);
+        // Filtres du formulaire -> soumission auto en AJAX
+        if (form) {
+            let debounce;
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                loadUrl(buildUrlFromForm());
             });
-        });
-
-        // Le select "Niveau de priorité" alimente le champ caché priority
-        if (prioritySelect && priorityHidden) {
-            prioritySelect.addEventListener('change', () => {
-                priorityHidden.value = prioritySelect.value;
-                submitForm();
+            form.querySelectorAll('.auto-filter').forEach(el => {
+                const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+                el.addEventListener(evt, () => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(() => loadUrl(buildUrlFromForm()),
+                        el.tagName === 'SELECT' ? 0 : 400);
+                });
             });
         }
 
-        // Animation d'apparition
-        const tableWrap = document.querySelector('.table-responsive');
-        if (tableWrap) tableWrap.classList.add('table-fade-in');
+        // Délégation : clic sur un cadre de priorité, "effacer priorité", ou pagination
+        if (dynamicZone) {
+            dynamicZone.addEventListener('click', (e) => {
+                const card = e.target.closest('.priority-card');
+                if (card) {
+                    e.preventDefault();
+                    const priority = card.getAttribute('data-priority');
+                    const isActive = card.classList.contains('priority-card-active');
+                    // Synchroniser le champ caché priority du formulaire
+                    if (form) {
+                        const hidden = form.querySelector('input[name="priority"]');
+                        if (hidden) hidden.value = isActive ? '' : priority;
+                    }
+                    loadUrl(buildUrlFromForm({ priority: isActive ? '' : priority }));
+                    return;
+                }
+                const clear = e.target.closest('.priority-clear');
+                if (clear) {
+                    e.preventDefault();
+                    if (form) {
+                        const hidden = form.querySelector('input[name="priority"]');
+                        if (hidden) hidden.value = '';
+                    }
+                    loadUrl(buildUrlFromForm({ priority: '' }));
+                    return;
+                }
+                const pageLink = e.target.closest('.pagination a');
+                if (pageLink && pageLink.href) {
+                    e.preventDefault();
+                    loadUrl(pageLink.href);
+                }
+            });
+        }
+
+        // Retour arrière navigateur
+        window.addEventListener('popstate', (e) => {
+            loadUrl(window.location.href, false);
+        });
     })();
 
     // Masquer les messages après 5 secondes
