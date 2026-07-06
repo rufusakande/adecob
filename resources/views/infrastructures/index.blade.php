@@ -634,52 +634,119 @@
     }
 </style>
 
-<!-- JavaScript -->
 <script>
-    // Sélection/désélection globale
-    document.getElementById('select-all').addEventListener('click', function(event) {
-        let checkboxes = document.querySelectorAll('input[name="selected_ids[]"]');
-        checkboxes.forEach(cb => cb.checked = event.target.checked);
+    // Sélection/désélection globale (délégué car #select-all est ré-injecté)
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.id === 'select-all') {
+            document.querySelectorAll('input[name="selected_ids[]"]').forEach(cb => cb.checked = e.target.checked);
+        }
     });
 
-    // === Filtrage dynamique : auto-submit à chaque changement ===
+    // === Rafraîchissement AJAX de la zone dynamique ===
     (function () {
         const form = document.getElementById('filtersForm');
-        if (!form) return;
+        const dynamicZone = document.getElementById('infra-dynamic');
         const loader = document.getElementById('filtersLoader');
-        const prioritySelect = document.getElementById('priorityFilterSelect');
-        const priorityHidden = form.querySelector('input[name="priority"]');
+        const baseUrl = form ? form.getAttribute('action') : "{{ route('infrastructures.index') }}";
+        let currentReq = 0;
 
-        let debounce;
-        const submitForm = () => {
+        function buildUrlFromForm(extraParams = {}) {
+            const params = new URLSearchParams();
+            if (form) {
+                new FormData(form).forEach((v, k) => {
+                    if (v !== '' && v !== null) params.set(k, v);
+                });
+            }
+            Object.entries(extraParams).forEach(([k, v]) => {
+                if (v === null || v === '') params.delete(k);
+                else params.set(k, v);
+            });
+            const qs = params.toString();
+            return baseUrl + (qs ? '?' + qs : '');
+        }
+
+        async function loadUrl(url, pushHistory = true) {
+            if (!dynamicZone) return;
+            const reqId = ++currentReq;
             if (loader) loader.classList.remove('d-none');
-            // Retire les champs vides de l'URL pour rester propre
-            Array.from(form.elements).forEach(el => {
-                if (el.name && !el.value) el.disabled = true;
-            });
-            form.submit();
-        };
+            dynamicZone.style.opacity = '0.55';
+            try {
+                const resp = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+                    credentials: 'same-origin',
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const html = await resp.text();
+                if (reqId !== currentReq) return; // requête obsolète
+                dynamicZone.innerHTML = html;
+                if (pushHistory) window.history.pushState({ url }, '', url);
+            } catch (err) {
+                console.error('Filtrage AJAX échoué :', err);
+                window.location.href = url;
+                return;
+            } finally {
+                if (reqId === currentReq) {
+                    dynamicZone.style.opacity = '1';
+                    if (loader) loader.classList.add('d-none');
+                }
+            }
+        }
 
-        // Selects & dates -> soumission immédiate (avec petit debounce pour dates tapées)
-        form.querySelectorAll('.auto-filter').forEach(el => {
-            const evt = el.tagName === 'SELECT' ? 'change' : 'input';
-            el.addEventListener(evt, () => {
-                clearTimeout(debounce);
-                debounce = setTimeout(submitForm, el.tagName === 'SELECT' ? 0 : 400);
+        // Filtres du formulaire -> soumission auto en AJAX
+        if (form) {
+            let debounce;
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                loadUrl(buildUrlFromForm());
             });
-        });
-
-        // Le select "Niveau de priorité" alimente le champ caché priority
-        if (prioritySelect && priorityHidden) {
-            prioritySelect.addEventListener('change', () => {
-                priorityHidden.value = prioritySelect.value;
-                submitForm();
+            form.querySelectorAll('.auto-filter').forEach(el => {
+                const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+                el.addEventListener(evt, () => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(() => loadUrl(buildUrlFromForm()),
+                        el.tagName === 'SELECT' ? 0 : 400);
+                });
             });
         }
 
-        // Animation d'apparition
-        const tableWrap = document.querySelector('.table-responsive');
-        if (tableWrap) tableWrap.classList.add('table-fade-in');
+        // Délégation : clic sur un cadre de priorité, "effacer priorité", ou pagination
+        if (dynamicZone) {
+            dynamicZone.addEventListener('click', (e) => {
+                const card = e.target.closest('.priority-card');
+                if (card) {
+                    e.preventDefault();
+                    const priority = card.getAttribute('data-priority');
+                    const isActive = card.classList.contains('priority-card-active');
+                    // Synchroniser le champ caché priority du formulaire
+                    if (form) {
+                        const hidden = form.querySelector('input[name="priority"]');
+                        if (hidden) hidden.value = isActive ? '' : priority;
+                    }
+                    loadUrl(buildUrlFromForm({ priority: isActive ? '' : priority }));
+                    return;
+                }
+                const clear = e.target.closest('.priority-clear');
+                if (clear) {
+                    e.preventDefault();
+                    if (form) {
+                        const hidden = form.querySelector('input[name="priority"]');
+                        if (hidden) hidden.value = '';
+                    }
+                    loadUrl(buildUrlFromForm({ priority: '' }));
+                    return;
+                }
+                const pageLink = e.target.closest('.pagination a');
+                if (pageLink && pageLink.href) {
+                    e.preventDefault();
+                    loadUrl(pageLink.href);
+                }
+            });
+        }
+
+        // Retour arrière navigateur
+        window.addEventListener('popstate', (e) => {
+            loadUrl(window.location.href, false);
+        });
     })();
 
     // Masquer les messages après 5 secondes
