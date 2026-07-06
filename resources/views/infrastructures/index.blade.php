@@ -255,67 +255,9 @@
                 </div>
             </div>
 
-            <!-- Niveaux de priorité (cliquables pour filtrer) -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-                                <h6 class="text-muted mb-0">
-                                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
-                                    Niveaux de Priorité — <span class="text-dark">cliquez sur un cadre pour filtrer</span>
-                                </h6>
-                                @if(!empty($priorityFilter))
-                                    @php
-                                        $clearParams = request()->except(['priority', 'page']);
-                                    @endphp
-                                    <a href="{{ route('infrastructures.index', $clearParams) }}" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-times me-1"></i> Effacer le filtre priorité
-                                    </a>
-                                @endif
-                            </div>
-
-                            @php
-                                $priorityCards = [
-                                    'tres_urgent' => ['label' => 'Très Urgent', 'sub' => '(Score ≥ 4.2)', 'color' => 'danger', 'count' => $priorityStats['tres_urgent'] ?? 0],
-                                    'urgent'      => ['label' => 'Urgent',      'sub' => '(Score 3.0-4.19)', 'color' => 'warning', 'count' => $priorityStats['urgent'] ?? 0],
-                                    'moyenne'     => ['label' => 'Moyenne',     'sub' => '(Score 2.0-2.99)', 'color' => 'info',    'count' => $priorityStats['moyenne'] ?? 0],
-                                    'faible'      => ['label' => 'Faible Priorité', 'sub' => '(Score < 2.0)', 'color' => 'secondary', 'count' => $priorityStats['faible'] ?? 0],
-                                ];
-                                $baseParams = request()->except(['priority', 'page']);
-                            @endphp
-
-                            <div class="row g-4">
-                                @foreach($priorityCards as $key => $p)
-                                    @php
-                                        $isActive = ($priorityFilter ?? null) === $key;
-                                        $params = $isActive ? $baseParams : array_merge($baseParams, ['priority' => $key]);
-                                        $url = route('infrastructures.index', $params);
-                                    @endphp
-                                    <div class="col-md-6 col-lg-3">
-                                        <a href="{{ $url }}"
-                                           class="priority-card card border-0 shadow-sm h-100 text-decoration-none {{ $isActive ? 'priority-card-active border-'.$p['color'] : '' }}"
-                                           title="{{ $isActive ? 'Retirer ce filtre' : 'Filtrer par ' . $p['label'] }}">
-                                            <div class="card-body text-center position-relative">
-                                                @if($isActive)
-                                                    <span class="badge bg-{{ $p['color'] }} position-absolute top-0 end-0 m-2">
-                                                        <i class="fas fa-check"></i> Actif
-                                                    </span>
-                                                @endif
-                                                <div class="display-6 text-{{ $p['color'] }} mb-2">{{ $p['count'] }}</div>
-                                                <h6 class="text-{{ $p['color'] }} mb-1">{{ $p['label'] }}</h6>
-                                                <small class="text-muted">{{ $p['sub'] }}</small>
-                                            </div>
-                                        </a>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
+
 
     <!-- Formulaire de recherche -->
     @if(!Auth::user()->isPublicUser())
