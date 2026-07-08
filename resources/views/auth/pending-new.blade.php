@@ -296,8 +296,8 @@
             <!-- Informations utilisateur -->
             <div class="contact-info">
                 <h4>📧 Votre compte</h4>
-                <p><strong>Email :</strong> {{ auth()->user()->email }}</p>
-                <p><strong>Commune :</strong> {{ auth()->user()->commune?->name ?? 'Non assignée' }}</p>
+                <p><strong>Email :</strong> {{ optional(auth()->user())->email ?? 'Non disponible' }}</p>
+                <p><strong>Commune :</strong> {{ optional(auth()->user())->commune?->name ?? 'Non assignée' }}</p>
                 <p><strong>Rôle :</strong> Agent Collecteur</p>
                 <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--color-gray-500);">
                     Vous recevrez un email de confirmation une fois votre compte validé.

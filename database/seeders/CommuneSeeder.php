@@ -15,10 +15,13 @@ class CommuneSeeder extends Seeder
     {
         $communes = [
             ['name' => 'Parakou', 'logo' => null],
-            ['name' => 'Cotonou', 'logo' => null],
-            ['name' => 'Porto-Novo', 'logo' => null],
-            ['name' => 'Abomey', 'logo' => null],
-            ['name' => 'Djougou', 'logo' => null],
+            ['name' => 'N\'Dali', 'logo' => null],
+            ['name' => 'Tchaourou', 'logo' => null],
+            ['name' => 'Bembereke', 'logo' => null],
+            ['name' => 'Nikki', 'logo' => null],
+            ['name' => 'Kalale', 'logo' => null],
+            ['name' => 'Perere', 'logo' => null],
+            ['name' => 'Sinende', 'logo' => null],
         ];
 
         foreach ($communes as $commune) {

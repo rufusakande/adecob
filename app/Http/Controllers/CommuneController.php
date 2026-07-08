@@ -102,4 +102,3 @@ class CommuneController extends Controller
         return false;
     }
 }
-}

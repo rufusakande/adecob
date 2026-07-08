@@ -131,7 +131,7 @@
 
         {{-- Colonne droite : formulaire de planification --}}
         <div class="col-lg-7">
-            <form method="POST" action="{{ route('infrastructures.plan.store', $infrastructure) }}" class="infra-card p-4" novalidate>
+            <form method="POST" action="{{ route('infrastructures.plan.store', $infrastructure) }}" class="infra-card p-4">
                 @csrf
                 <h5 class="mb-3"><i class="fas fa-pen-to-square text-success me-2"></i>{{ $existingPlannedWork ? 'Modifier la planification' : 'Nouvelle planification' }}</h5>
                 <p class="text-muted small">Renseignez le type d'intervention, la date prévue, le coût et les actions à effectuer. Ces informations aideront au suivi budgétaire de la commune.</p>
@@ -140,27 +140,31 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Type de travail <span class="text-danger">*</span></label>
-                        <select name="work_type" class="form-select" required>
+                        <select name="work_type" class="form-select @error('work_type') is-invalid @enderror" required>
                             <option value="">— Choisir —</option>
                             @foreach(['Entretien courant','Réhabilitation','Réparation urgente','Extension','Construction neuve','Nettoyage','Autre'] as $wt)
                                 <option value="{{ $wt }}" @selected(old('work_type', optional($existingPlannedWork)->work_type)=== $wt)>{{ $wt }}</option>
                             @endforeach
                         </select>
+                        @error('work_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Date prévue de réalisation <span class="text-danger">*</span></label>
-                        <input type="date" name="completion_date" class="form-control"
+                        <input type="date" name="completion_date" class="form-control @error('completion_date') is-invalid @enderror"
                                min="{{ now()->format('Y-m-d') }}"
                                value="{{ old('completion_date', optional($existingPlannedWork)->completion_date?->format('Y-m-d')) }}" required>
+                        @error('completion_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-12">
                         <label class="form-label">Actions à effectuer / description détaillée <span class="text-danger">*</span></label>
-                        <textarea name="description" rows="4" class="form-control" minlength="5" maxlength="5000" required
+                        <textarea name="description" rows="4" class="form-control @error('description') is-invalid @enderror" minlength="5" maxlength="5000" required
                                   placeholder="Ex. : remplacement de la pompe manuelle, curage du puits, pose d'une nouvelle margelle…">{{ old('description', optional($existingPlannedWork)->description) }}</textarea>
+                        <div class="form-text">Minimum 5 caractères.</div>
+                        @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
 
-                <div class="form-section-title">Budget & prestataire</div>
+                <div class="form-section-title">Budget & acteurs</div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Coût estimé (FCFA) <span class="text-danger">*</span></label>
@@ -169,13 +173,9 @@
                             <span class="input-group-text">FCFA</span>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Prestataire pressenti</label>
-                        <input type="text" name="provider_name" class="form-control" maxlength="255" value="{{ old('provider_name', optional($existingPlannedWork)->provider_name) }}">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Contact prestataire</label>
-                        <input type="text" name="provider_contact" class="form-control" maxlength="255" value="{{ old('provider_contact', optional($existingPlannedWork)->provider_contact) }}">
+                    <div class="col-12">
+                        <label class="form-label">Acteurs impliqués</label>
+                        <textarea name="provider_name" rows="3" class="form-control" maxlength="255" placeholder="Ex. : Mairie, ONG, artisans locaux, comité de gestion…">{{ old('provider_name', optional($existingPlannedWork)->provider_name) }}</textarea>
                     </div>
                 </div>
 

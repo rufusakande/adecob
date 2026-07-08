@@ -82,6 +82,20 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     Route::get('/infrastructures/pending', [App\Http\Controllers\InfrastructureController::class, 'pendingIndex'])
         ->middleware('admin.access')->name('infrastructures.pending');
 
+    // Page des infrastructures planifiées (admins : super admin + commune admin)
+    Route::get('/infrastructures-planifiees', [App\Http\Controllers\InfrastructureController::class, 'plannedIndex'])
+        ->middleware('admin.access')->name('infrastructures.planned');
+
+    // Planification single-infrastructure: formulaire et enregistrement
+    Route::get('/infrastructures/{infrastructure}/plan', [App\Http\Controllers\InfrastructureController::class, 'planForm'])
+        ->middleware('admin.access')->name('infrastructures.plan');
+    Route::post('/infrastructures/{infrastructure}/plan', [App\Http\Controllers\InfrastructureController::class, 'storePlan'])
+        ->middleware('admin.access')->name('infrastructures.plan.store');
+
+    // Marquer une infrastructure planifiée comme réhabilitée
+    Route::post('/infrastructures/{infrastructure}/mark-rehabilitated', [App\Http\Controllers\InfrastructureController::class, 'markAsRehabilitated'])
+        ->middleware('admin.access')->name('infrastructures.mark-rehabilitated');
+
     Route::delete('infrastructures/{infrastructure}', [InfrastructureController::class, 'destroy'])->name('infrastructures.destroy');
     Route::get('/infrastructures/create', [App\Http\Controllers\InfrastructureController::class, 'create'])->name('infrastructures.create');
     Route::post('/infrastructures', [App\Http\Controllers\InfrastructureController::class, 'store'])
@@ -98,14 +112,6 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
         ->middleware('admin.access')->name('infrastructures.reject');
     Route::post('/infrastructures/{infrastructure}/resubmit', [App\Http\Controllers\InfrastructureController::class, 'resubmitInfrastructure'])
         ->name('infrastructures.resubmit');
-
-    // Planification (admin commune + super admin)
-    Route::get('/infrastructures-planifiees', [App\Http\Controllers\InfrastructureController::class, 'plannedIndex'])
-        ->middleware('admin.access')->name('infrastructures.planned');
-    Route::get('/infrastructures/{infrastructure}/planifier', [App\Http\Controllers\InfrastructureController::class, 'planForm'])
-        ->middleware('admin.access')->name('infrastructures.plan');
-    Route::post('/infrastructures/{infrastructure}/planifier', [App\Http\Controllers\InfrastructureController::class, 'storePlan'])
-        ->middleware(['admin.access', 'throttle:60,1'])->name('infrastructures.plan.store');
 
     // Infrastructure work management routes
     Route::prefix('infrastructures/{infrastructure}')->group(function () {

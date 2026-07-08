@@ -54,6 +54,8 @@ class Infrastructure extends Model
         'validated_at',
         'submitted_at',
         'rejection_reason',
+        'exported_at',
+        'export_count',
     ];
 
     protected $casts = [
@@ -64,6 +66,8 @@ class Infrastructure extends Model
         'numero_telephone' => 'encrypted',
         'validated_at' => 'datetime',
         'submitted_at' => 'datetime',
+        'exported_at' => 'datetime',
+        'export_count' => 'integer',
     ];
 
     /** Relations */
@@ -145,5 +149,18 @@ class Infrastructure extends Model
                 || ($this->commune === $user->commune->name);
         }
         return false;
+    }
+
+    /** Export helpers */
+    public function isExported(): bool
+    {
+        return !empty($this->exported_at);
+    }
+
+    public function incrementExportCount(): void
+    {
+        $this->export_count = ($this->export_count ?? 0) + 1;
+        $this->exported_at = now();
+        $this->save();
     }
 }

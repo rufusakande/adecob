@@ -1,3 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Export Infrastructures</title>
+    <style>
+        body { font-family: DejaVu Sans, Arial, sans-serif; font-size:12px }
+        table { width:100%; border-collapse: collapse; }
+        th, td { border:1px solid #ccc; padding:6px; }
+        th { background:#f5f5f5; }
+    </style>
+</head>
+<body>
+    <h3>Export d'infrastructures</h3>
+    @if(!empty($filters))
+        <p>Filtres appliqués: {{ implode(', ', array_map(fn($v,$k) => "$k=$v", $filters, array_keys($filters))) }}</p>
+    @endif
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Commune</th>
+                <th>Type</th>
+                <th>Etat</th>
+                <th>Année</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($infrastructures as $i)
+                <tr>
+                    <td>{{ $i->id }}</td>
+                    <td>{{ $i->nom_infrastructure }}</td>
+                    <td>{{ $i->commune }}</td>
+                    <td>{{ $i->type_infrastructure }}</td>
+                    <td>{{ $i->etat_fonctionnement }}</td>
+                    <td>{{ $i->annee_realisation }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</body>
+</html>
 <!DOCTYPE html>
 <html>
 <head>

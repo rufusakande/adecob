@@ -48,10 +48,20 @@
     </div>
 
     <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <div>
+                <strong class="text-muted">Liste des saisies</strong>
+                <div class="small text-muted">Affichage compact — parfait pour le tri rapide</div>
+            </div>
+            <div>
+                <a href="{{ route('infrastructures.index') }}" class="btn btn-sm btn-outline-secondary">Retour</a>
+            </div>
+        </div>
         <div class="table-responsive">
-            <table class="table align-middle mb-0">
+            <table class="table table-sm table-hover table-striped align-middle mb-0">
                 <thead class="table-light">
                     <tr>
+                        <th style="width:72px">Photo</th>
                         <th>Statut</th>
                         <th>Infrastructure</th>
                         <th>Commune</th>
@@ -63,12 +73,28 @@
                 <tbody>
                     @forelse($infrastructures as $infra)
                         <tr>
-                            <td>@include('infrastructures.partials._status-badge', ['status' => $infra->status])</td>
                             <td>
-                                <div class="fw-semibold">{{ $infra->nom_infrastructure ?: '—' }}</div>
-                                <div class="text-muted small">{{ $infra->secteur_domaine }} · {{ $infra->type_infrastructure }}</div>
+                                @php
+                                    $thumb = null;
+                                    for ($i = 1; $i <= 4; $i++) {
+                                        if ($infra->{"photo$i"} && \Storage::disk('public')->exists($infra->{"photo$i"})) {
+                                            $thumb = asset('storage/' . ltrim($infra->{"photo$i"}, '/'));
+                                            break;
+                                        }
+                                    }
+                                @endphp
+                                @if($thumb)
+                                    <img src="{{ $thumb }}" alt="miniature" class="img-fluid rounded" style="width:64px;height:48px;object-fit:cover">
+                                @else
+                                    <div class="bg-light text-center text-muted rounded" style="width:64px;height:48px;line-height:48px">—</div>
+                                @endif
                             </td>
-                            <td>{{ $infra->commune }}</td>
+                            <td class="w-min">@include('infrastructures.partials._status-badge', ['status' => $infra->status])</td>
+                            <td>
+                                <div class="fw-semibold">{{ Str::limit($infra->nom_infrastructure ?: '—', 40) }}</div>
+                                <div class="text-muted small">{{ Str::limit($infra->secteur_domaine, 30) }} · {{ Str::limit($infra->type_infrastructure, 30) }}</div>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ Str::limit($infra->commune ?: '—', 18) }}</span></td>
                             <td>{{ optional($infra->user)->name ?: '—' }}</td>
                             <td>{{ optional($infra->submitted_at)->format('d/m/Y H:i') }}</td>
                             <td class="text-end">
@@ -78,7 +104,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-5">Aucune saisie en attente. Bravo !</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-5">Aucune saisie en attente. Bravo !</td></tr>
                     @endforelse
                 </tbody>
             </table>

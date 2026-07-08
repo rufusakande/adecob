@@ -2,59 +2,88 @@
 
 namespace App\Exports;
 
-use App\Models\Infrastructure;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Illuminate\Database\Eloquent\Builder;
+use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class InfrastructuresExport implements FromCollection, WithHeadings, WithTitle
+class InfrastructuresExport implements FromQuery, WithMapping, WithHeadings, WithTitle, WithChunkReading
 {
-    protected $infrastructures;
+    protected Builder $query;
     protected $year;
     protected $filters;
 
-    public function __construct($infrastructures, $year = null, $filters = [])
+    public function __construct(Builder $query, $year = null, $filters = [])
     {
-        $this->infrastructures = $infrastructures;
+        $this->query = $query;
         $this->year = $year;
         $this->filters = $filters;
     }
 
-    /**
-     * @return \Illuminate\Support\Collection
-     */
-    public function collection()
+    public function query()
     {
-        return $this->infrastructures->map(function ($infra) {
-            return [
-                'id' => $infra->id,
-                'date' => $infra->date,
-                'nom_enqueteur' => $infra->nom_enqueteur,
-                'numero_telephone' => $infra->numero_telephone,
-                'commune' => $infra->commune,
-                'arrondissement' => is_array($infra->arrondissement) ? implode(', ', $infra->arrondissement) : $infra->arrondissement,
-                'village' => $infra->village,
-                'hameau' => $infra->hameau,
-                'secteur_domaine' => $infra->secteur_domaine,
-                'type_infrastructure' => $infra->type_infrastructure,
-                'nom_infrastructure' => $infra->nom_infrastructure,
-                'annee_realisation' => $infra->annee_realisation,
-                'bailleur' => $infra->bailleur,
-                'type_materiaux' => $infra->type_materiaux,
-                'etat_fonctionnement' => $infra->etat_fonctionnement,
-                'niveau_degradation' => $infra->niveau_degradation,
-                'mode_gestion' => $infra->mode_gestion,
-                'mode_gestion_preciser' => $infra->mode_gestion_preciser,
-                'defectuosites_relevees' => $infra->defectuosites_relevees,
-                'mesures_proposees' => $infra->mesures_proposees,
-                'observation_generale' => $infra->observation_generale,
-                'rehabilitation' => $infra->rehabilitation,
-                'latitude' => $infra->latitude,
-                'longitude' => $infra->longitude,
-                'altitude' => $infra->altitude,
-                'precision' => $infra->precision,
-            ];
-        });
+        return $this->query->select([
+            'id',
+            'date',
+            'nom_enqueteur',
+            'numero_telephone',
+            'commune',
+            'arrondissement',
+            'village',
+            'hameau',
+            'secteur_domaine',
+            'type_infrastructure',
+            'nom_infrastructure',
+            'annee_realisation',
+            'bailleur',
+            'type_materiaux',
+            'etat_fonctionnement',
+            'niveau_degradation',
+            'mode_gestion',
+            'mode_gestion_preciser',
+            'defectuosites_relevees',
+            'mesures_proposees',
+            'observation_generale',
+            'rehabilitation',
+            'latitude',
+            'longitude',
+            'altitude',
+            'precision',
+        ])->orderBy('id');
+    }
+
+    public function map($infra): array
+    {
+        return [
+            $infra->id,
+            $infra->date,
+            $infra->nom_enqueteur,
+            $infra->numero_telephone,
+            $infra->commune,
+            is_array($infra->arrondissement) ? implode(', ', $infra->arrondissement) : $infra->arrondissement,
+            $infra->village,
+            $infra->hameau,
+            $infra->secteur_domaine,
+            $infra->type_infrastructure,
+            $infra->nom_infrastructure,
+            $infra->annee_realisation,
+            $infra->bailleur,
+            $infra->type_materiaux,
+            $infra->etat_fonctionnement,
+            $infra->niveau_degradation,
+            $infra->mode_gestion,
+            $infra->mode_gestion_preciser,
+            $infra->defectuosites_relevees,
+            $infra->mesures_proposees,
+            $infra->observation_generale,
+            $infra->rehabilitation,
+            $infra->latitude,
+            $infra->longitude,
+            $infra->altitude,
+            $infra->precision,
+        ];
     }
 
     public function headings(): array
@@ -99,5 +128,10 @@ class InfrastructuresExport implements FromCollection, WithHeadings, WithTitle
             $title .= '_' . $this->filters['commune'];
         }
         return $title;
+    }
+
+    public function chunkSize(): int
+    {
+        return 1000;
     }
 }

@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SuperAdminSeeder::class,
             CommuneSeeder::class,
+            InfrastructuresSeeder::class,
             MairieAgentDataSeeder::class,
         ]);
     }

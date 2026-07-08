@@ -40,6 +40,8 @@ class AuthController extends Controller
             $user->commune_id = $validated['commune_id'];
             $user->is_approved = false;
             $user->save();
+            Auth::login($user);
+            $request->session()->regenerate();
 
             // Notifier super admins + admins de la commune choisie.
             try {

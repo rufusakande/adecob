@@ -32,6 +32,9 @@
         <a class="nav-link" href="{{ url('/infrastructures') }}"><i class="bi bi-list-ul"></i> Infrastructures</a>
     </li>
     <li class="nav-item">
+        <a class="nav-link" href="{{ route('infrastructures.planned') }}"><i class="bi bi-calendar-check"></i> Infrastructures planifiées</a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" href="{{ route('mairie-agent.dashboard') }}"><i class="bi bi-bullseye"></i> Planification</a>
     </li>
     <li class="nav-item">

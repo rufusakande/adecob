@@ -6,6 +6,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
@@ -75,6 +76,22 @@ class Handler extends ExceptionHandler
                 ['exception' => $e], 
                 $e->getStatusCode()
             );
+        });
+
+        // Gestion des erreurs de validation pour les requêtes web
+        $this->renderable(function (ValidationException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Les données envoyées sont invalides.',
+                    'errors' => $e->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            return redirect()->back()
+                ->withInput($request->input())
+                ->withErrors($e->errors())
+                ->with('error', 'Merci de corriger les informations du formulaire.');
         });
 
         // Gestion générale des exceptions

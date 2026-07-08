@@ -66,21 +66,21 @@
                                 <input class="form-check-input" type="checkbox" id="select-all">
                             </div>
                         </th>
-                        <th>ID</th>
-                        <th>Priorité</th>
-                        <th>Statut</th>
-                        <th>Enquêteur</th>
-                        <th>Téléphone</th>
-                        <th>Date</th>
-                        <th>Localisation</th>
-                        <th>Secteur</th>
-                        <th>Infrastructure</th>
-                        <th>Caractéristiques</th>
-                        <th>État</th>
-                        <th>Photos</th>
-                        <th>Coordonnées</th>
-                        <th>Descriptions</th>
-                        <th width="140">Actions</th>
+                        <th width="60">ID</th>
+                        <th width="130">Priorité</th>
+                        <th width="120">Statut</th>
+                        <th width="150">Enquêteur</th>
+                        <th width="120">Téléphone</th>
+                        <th width="110">Date</th>
+                        <th width="220">Localisation</th>
+                        <th width="140">Secteur</th>
+                        <th width="170">Infrastructure</th>
+                        <th width="220">Caractéristiques</th>
+                        <th width="140">État</th>
+                        <th width="130">Photos</th>
+                        <th width="180">Coordonnées</th>
+                        <th width="200">Descriptions</th>
+                        <th width="320">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,124 +124,123 @@
                             }}
                         </td>
                         <td>
-                            <div class="small">
-                                <strong class="text-dark">Commune:</strong> {{ $infra->commune ?? 'N/A' }}<br>
-                                <strong class="text-dark">Arrond.:</strong>
-                                @php $arr = is_array($infra->arrondissement) ? $infra->arrondissement : (json_decode($infra->arrondissement, true) ?: []); @endphp
-                                {{ !empty($arr) ? implode(', ', $arr) : 'N/A' }}<br>
-                                <strong class="text-dark">Village:</strong> {{ $infra->village ?? 'N/A' }}<br>
-                                <strong class="text-dark">Hameau:</strong> {{ $infra->hameau ?? 'N/A' }}
+                            @php
+                                // Ensure $arr is always an array. The raw value may be:
+                                // - an array already
+                                // - a JSON array string (e.g. '["A","B"]')
+                                // - a JSON string (e.g. '"A,B"') or a plain comma-separated string
+                                $raw = $infra->arrondissement;
+                                if (is_array($raw)) {
+                                    $arr = $raw;
+                                } else {
+                                    $decoded = null;
+                                    if (is_string($raw) && $raw !== '') {
+                                        $decoded = json_decode($raw, true);
+                                    }
+
+                                    if (is_array($decoded)) {
+                                        $arr = $decoded;
+                                    } elseif (is_string($decoded)) {
+                                        // json_decode returned a simple string (e.g. "A,B")
+                                        $arr = array_filter(array_map('trim', explode(',', $decoded)), fn($v) => $v !== '');
+                                    } elseif (is_string($raw) && trim($raw) !== '') {
+                                        // Fallback: treat raw as comma-separated
+                                        $arr = array_filter(array_map('trim', explode(',', $raw)), fn($v) => $v !== '');
+                                    } else {
+                                        $arr = [];
+                                    }
+                                }
+
+                                $arrText = !empty($arr) ? implode(', ', $arr) : 'N/A';
+                            @endphp
+                            <div class="small table-cell-truncate" title="Commune: {{ $infra->commune ?? 'N/A' }} | Arrond.: {{ $arrText }} | Village: {{ $infra->village ?? 'N/A' }} | Hameau: {{ $infra->hameau ?? 'N/A' }}">
+                                <strong class="text-dark">Commune:</strong> {{ Str::limit($infra->commune ?? 'N/A', 14) }}<br>
+                                <strong class="text-dark">Arrond.:</strong> {{ Str::limit($arrText, 20) }}<br>
+                                <strong class="text-dark">Village:</strong> {{ Str::limit($infra->village ?? 'N/A', 14) }}<br>
+                                <strong class="text-dark">Hameau:</strong> {{ Str::limit($infra->hameau ?? 'N/A', 14) }}
                             </div>
                         </td>
                         <td><span class="badge bg-warning text-dark">{{ $infra->secteur_domaine ?? 'N/A' }}</span></td>
                         <td>
-                            <div class="small">
-                                <strong class="text-dark">Type:</strong> {{ $infra->type_infrastructure ?? 'N/A' }}<br>
-                                <strong class="text-dark">Nom:</strong> {{ $infra->nom_infrastructure ?? 'N/A' }}
+                            <div class="small table-cell-truncate" title="Type: {{ $infra->type_infrastructure ?? 'N/A' }} | Nom: {{ $infra->nom_infrastructure ?? 'N/A' }}">
+                                <strong class="text-dark">Type:</strong> {{ Str::limit($infra->type_infrastructure ?? 'N/A', 18) }}<br>
+                                <strong class="text-dark">Nom:</strong> {{ Str::limit($infra->nom_infrastructure ?? 'N/A', 18) }}
                             </div>
                         </td>
                         <td>
-                            <div class="small">
-                                <strong class="text-dark">Année:</strong> {{ $infra->annee_realisation ?? 'N/A' }}<br>
-                                <strong class="text-dark">Bailleur:</strong> {{ $infra->bailleur ?? 'N/A' }}<br>
-                                <strong class="text-dark">Matériaux:</strong> {{ $infra->type_materiaux ?? 'N/A' }}<br>
-                                <strong class="text-dark">Gestion:</strong> {{ $infra->mode_gestion ?? 'N/A' }} {{ $infra->mode_gestion_preciser ? '('.$infra->mode_gestion_preciser.')' : '' }}
+                            <div class="small table-cell-truncate" title="Année: {{ $infra->annee_realisation ?? 'N/A' }} | Bailleur: {{ $infra->bailleur ?? 'N/A' }} | Matériaux: {{ $infra->type_materiaux ?? 'N/A' }} | Gestion: {{ $infra->mode_gestion ?? 'N/A' }} {{ $infra->mode_gestion_preciser ? '('.$infra->mode_gestion_preciser.')' : '' }}">
+                                <strong class="text-dark">Année:</strong> {{ Str::limit($infra->annee_realisation ?? 'N/A', 10) }}<br>
+                                <strong class="text-dark">Bailleur:</strong> {{ Str::limit($infra->bailleur ?? 'N/A', 14) }}<br>
+                                <strong class="text-dark">Matériaux:</strong> {{ Str::limit($infra->type_materiaux ?? 'N/A' , 14) }}<br>
+                                <strong class="text-dark">Gestion:</strong> {{ Str::limit($infra->mode_gestion ?? 'N/A', 14) }} {{ $infra->mode_gestion_preciser ? '('.Str::limit($infra->mode_gestion_preciser, 10).')' : '' }}
                             </div>
                         </td>
                         <td>
-                            <div class="small">
-                                <strong class="text-dark">Fonction:</strong> {{ $infra->etat_fonctionnement ?? 'N/A' }}<br>
-                                <strong class="text-dark">Dégradation:</strong> {{ $infra->niveau_degradation ?? 'N/A' }}
+                            <div class="small table-cell-truncate" title="Fonction: {{ $infra->etat_fonctionnement ?? 'N/A' }} | Dégradation: {{ $infra->niveau_degradation ?? 'N/A' }}">
+                                <strong class="text-dark">Fonction:</strong> {{ Str::limit($infra->etat_fonctionnement ?? 'N/A', 16) }}<br>
+                                <strong class="text-dark">Dégradation:</strong> {{ Str::limit($infra->niveau_degradation ?? 'N/A', 16) }}
                             </div>
                         </td>
                         <td>
                             @php
-                                $hasPhotos = false;
-                                for($i = 1; $i <= 4; $i++) {
-                                    if($infra->{"photo$i"} && \Storage::disk('public')->exists($infra->{"photo$i"})) {
-                                        $hasPhotos = true; break;
+                                $photoCount = 0;
+                                for ($i = 1; $i <= 4; $i++) {
+                                    if ($infra->{"photo$i"} && \Storage::disk('public')->exists($infra->{"photo$i"})) {
+                                        $photoCount++;
                                     }
                                 }
                             @endphp
-                            @if($hasPhotos)
-                                <div class="d-flex flex-wrap gap-1">
-                                    @for($i = 1; $i <= 4; $i++)
-                                        @if($infra->{"photo$i"} && \Storage::disk('public')->exists($infra->{"photo$i"}))
-                                            <a href="{{ \Storage::url($infra->{"photo$i"}) }}" target="_blank" title="Photo {{$i}}">
-                                                <img src="{{ \Storage::url($infra->{"photo$i"}) }}" alt="Photo {{$i}}" class="rounded" style="width: 50px; height: 50px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                            </a>
-                                        @endif
-                                    @endfor
-                                </div>
+                            @if($photoCount > 0)
+                                <span class="badge bg-primary">{{ $photoCount }} photo{{ $photoCount > 1 ? 's' : '' }}</span>
                             @else
-                                <div class="text-center text-muted">
-                                    <i class="fas fa-image" style="font-size: 24px;"></i>
-                                    <div class="small">Aucune photo</div>
-                                </div>
+                                <span class="text-muted">0 photo</span>
                             @endif
                         </td>
                         <td>
-                            <div class="small">
-                                <strong class="text-dark">Latitude:</strong> {{ $infra->latitude ?? 'N/A' }}<br>
-                                <strong class="text-dark">Longitude:</strong> {{ $infra->longitude ?? 'N/A' }}<br>
-                                <strong class="text-dark">Altitude:</strong> {{ $infra->altitude ?? 'N/A' }}<br>
-                                <strong class="text-dark">Précision:</strong> {{ $infra->precision ?? 'N/A' }}
+                            <div class="small table-cell-truncate" title="Latitude: {{ $infra->latitude ?? 'N/A' }} | Longitude: {{ $infra->longitude ?? 'N/A' }} | Altitude: {{ $infra->altitude ?? 'N/A' }} | Précision: {{ $infra->precision ?? 'N/A' }}">
+                                <strong class="text-dark">Latitude:</strong> {{ Str::limit($infra->latitude ?? 'N/A', 12) }}<br>
+                                <strong class="text-dark">Longitude:</strong> {{ Str::limit($infra->longitude ?? 'N/A', 12) }}<br>
+                                <strong class="text-dark">Altitude:</strong> {{ Str::limit($infra->altitude ?? 'N/A', 12) }}<br>
+                                <strong class="text-dark">Précision:</strong> {{ Str::limit($infra->precision ?? 'N/A', 10) }}
                             </div>
                         </td>
                         <td>
-                            <div class="small">
-                                <strong class="text-dark">Défauts:</strong> {{ $infra->defectuosites_relevees ?? 'N/A' }}<br>
-                                <strong class="text-dark">Mesures:</strong> {{ $infra->mesures_proposees ?? 'N/A' }}<br>
-                                <strong class="text-dark">Observation:</strong> {{ $infra->observation_generale ?? 'N/A' }}<br>
-                                <strong class="text-dark">Réhabilitation:</strong> {{ $infra->rehabilitation ?? 'N/A' }}
+                            <div class="small table-cell-truncate" title="Défauts: {{ $infra->defectuosites_relevees ?? 'N/A' }} | Mesures: {{ $infra->mesures_proposees ?? 'N/A' }} | Observation: {{ $infra->observation_generale ?? 'N/A' }} | Réhabilitation: {{ $infra->rehabilitation ?? 'N/A' }}">
+                                <strong class="text-dark">Défauts:</strong> {{ Str::limit($infra->defectuosites_relevees ?? 'N/A', 18) }}<br>
+                                <strong class="text-dark">Mesures:</strong> {{ Str::limit($infra->mesures_proposees ?? 'N/A', 18) }}<br>
+                                <strong class="text-dark">Observation:</strong> {{ Str::limit($infra->observation_generale ?? 'N/A', 18) }}<br>
+                                <strong class="text-dark">Réhabilitation:</strong> {{ Str::limit($infra->rehabilitation ?? 'N/A', 18) }}
                             </div>
                         </td>
-                        <td>
+                        <td class="text-nowrap" style="min-width: 260px;">
                             @php
                                 $canManage = $infra->canBeManagedBy(Auth::user());
                                 $isAdmin = Auth::user()->isSuperAdmin() || Auth::user()->isCommuneAdmin();
                                 $hasPlan = $infra->works->where('status', 'planned')->count() > 0;
                             @endphp
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-outline-secondary">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <span class="visually-hidden">Actions</span>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('infrastructures.show', $infra->id) }}">
-                                            <i class="fas fa-eye me-2"></i>Voir les détails
-                                        </a>
-                                    </li>
-                                    @if($canManage)
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('infrastructures.edit', $infra->id) }}">
-                                                <i class="fas fa-edit me-2"></i>Modifier
-                                            </a>
-                                        </li>
-                                    @endif
-                                    @if($isAdmin && $infra->isValidated())
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('infrastructures.plan', $infra->id) }}">
-                                                <i class="fas fa-calendar-plus me-2"></i>{{ $hasPlan ? 'Modifier la planification' : 'Planifier' }}
-                                            </a>
-                                        </li>
-                                    @endif
-                                    @if($canManage)
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <form action="{{ route('infrastructures.destroy', $infra->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression ?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="dropdown-item text-danger">
-                                                    <i class="fas fa-trash-alt me-2"></i>Supprimer
-                                                </button>
-                                            </form>
-                                        </li>
-                                    @endif
-                                </ul>
+                            <div class="d-flex flex-wrap gap-1">
+                                <a href="{{ route('infrastructures.show', $infra->id) }}" class="btn btn-sm btn-outline-primary text-nowrap" title="Voir les détails">
+                                    <i class="fas fa-eye me-1"></i>Voir
+                                </a>
+                                @if($canManage)
+                                    <a href="{{ route('infrastructures.edit', $infra->id) }}" class="btn btn-sm btn-outline-secondary text-nowrap" title="Modifier">
+                                        <i class="fas fa-edit me-1"></i>Modifier
+                                    </a>
+                                @endif
+                                @if($isAdmin && $infra->isValidated())
+                                    <a href="{{ route('infrastructures.plan', $infra->id) }}" class="btn btn-sm btn-outline-success text-nowrap" title="Planifier">
+                                        <i class="fas fa-calendar-plus me-1"></i>{{ $hasPlan ? 'Modifier' : 'Planifier' }}
+                                    </a>
+                                @endif
+                                @if($canManage)
+                                    <form action="{{ route('infrastructures.destroy', $infra->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression ?');" class="m-0">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap" title="Supprimer">
+                                            <i class="fas fa-trash-alt me-1"></i>Supprimer
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

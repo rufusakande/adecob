@@ -18,7 +18,10 @@
     .infra-hero::after{
         content:""; position:absolute; right:-40px; top:-40px; width:220px;height:220px;
         background:radial-gradient(circle at center, rgba(255,255,255,.18), transparent 70%);
+        pointer-events: none;
+        z-index: 0;
     }
+    .infra-hero > * { position: relative; z-index: 1; }
     .infra-hero h1{ font-weight:700; letter-spacing:-.01em; }
     .field-card { background:var(--surface); border:1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
     .field-card .card-header{
@@ -48,10 +51,38 @@
 @section('content')
 @php
     $u = auth()->user();
-    $arr = is_array($infrastructure->arrondissement) ? $infrastructure->arrondissement : (json_decode($infrastructure->arrondissement, true) ?: []);
+    // Normalize `arrondissement` to an array. It may be stored as:
+    // - an array
+    // - a JSON array string (e.g. '["A","B"]')
+    // - a JSON-encoded simple string or a CSV string
+    $raw = $infrastructure->arrondissement;
+    if (is_array($raw)) {
+        $arr = $raw;
+    } else {
+        $decoded = null;
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+        }
+
+        if (is_array($decoded)) {
+            $arr = $decoded;
+        } elseif (is_string($decoded)) {
+            $arr = array_filter(array_map('trim', explode(',', $decoded)), 'strlen');
+        } elseif (is_string($raw) && trim($raw) !== '') {
+            $arr = array_filter(array_map('trim', explode(',', $raw)), 'strlen');
+        } else {
+            $arr = [];
+        }
+    }
     $canManage = $infrastructure->canBeManagedBy($u);
+    $canDelete = $infrastructure->canBeDeletedBy($u);
     $canValidate = $infrastructure->canBeValidatedBy($u);
+    $canPlan = ($u->isSuperAdmin() || $u->isCommuneAdmin()) && $infrastructure->isValidated();
     $isOwner = (int)$infrastructure->user_id === (int)$u->id;
+    $canResubmit = $isOwner && $u->isAgent() && $infrastructure->isRejected();
+    $backUrl = url()->previous() !== url()->current() ? url()->previous() : route('infrastructures.index');
+    $plannedCount = $infrastructure->works->where('status', 'planned')->count();
+    $planLabel = $plannedCount ? 'Modifier la planification' : 'Planifier';
 @endphp
 <div class="container-fluid px-3 px-md-4 py-4">
 
@@ -87,7 +118,7 @@
             </div>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('infrastructures.index') }}" class="btn btn-light">
+            <a href="{{ $backUrl }}" class="btn btn-light">
                 <i class="fas fa-arrow-left me-1"></i> Retour
             </a>
 
@@ -95,6 +126,9 @@
                 <a href="{{ route('infrastructures.edit', $infrastructure) }}" class="btn btn-warning">
                     <i class="fas fa-pen me-1"></i> Modifier
                 </a>
+            @endif
+
+            @if($canDelete)
                 <form method="POST" action="{{ route('infrastructures.destroy', $infrastructure) }}"
                       onsubmit="return confirm('Supprimer définitivement cette infrastructure ?');" class="d-inline">
                     @csrf @method('DELETE')
@@ -102,11 +136,7 @@
                 </form>
             @endif
 
-            @if(($u->isSuperAdmin() || $u->isCommuneAdmin()) && $infrastructure->isValidated())
-                @php
-                    $plannedCount = $infrastructure->works->where('status', 'planned')->count();
-                    $planLabel = $plannedCount ? 'Modifier la planification' : 'Planifier';
-                @endphp
+            @if($canPlan)
                 <a href="{{ route('infrastructures.plan', $infrastructure) }}" class="btn btn-success">
                     <i class="fas fa-calendar-plus me-1"></i> {{ $planLabel }}
                 </a>
@@ -122,7 +152,7 @@
                 </button>
             @endif
 
-            @if($isOwner && $u->isAgent() && $infrastructure->isRejected())
+            @if($canResubmit)
                 <form method="POST" action="{{ route('infrastructures.resubmit', $infrastructure) }}" class="d-inline">
                     @csrf
                     <button class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> Renvoyer pour validation</button>
@@ -133,23 +163,6 @@
 
     {{-- Bandeau contextuel selon le statut --}}
     @if($infrastructure->isPending())
-        <div class="status-strip warning">
-            <i class="fas fa-hourglass-half me-2"></i>
-            Cette saisie est <strong>en attente de validation</strong> par un administrateur
-            @if($infrastructure->submitted_at) depuis le {{ $infrastructure->submitted_at->format('d/m/Y H:i') }}@endif.
-            Elle ne sera prise en compte dans l'analyse qu'après validation.
-        </div>
-    @elseif($infrastructure->isRejected())
-        <div class="status-strip danger">
-            <i class="fas fa-times-circle me-2"></i>
-            <strong>Saisie rejetée</strong>
-            @if($infrastructure->validator) par {{ $infrastructure->validator->name }}@endif
-            @if($infrastructure->validated_at) le {{ $infrastructure->validated_at->format('d/m/Y H:i') }}@endif.
-            @if($infrastructure->rejection_reason)
-                <div class="mt-1"><strong>Motif :</strong> {{ $infrastructure->rejection_reason }}</div>
-            @endif
-        </div>
-    @elseif($infrastructure->isValidated())
         <div class="status-strip success">
             <i class="fas fa-check-circle me-2"></i>
             Saisie <strong>validée</strong>
@@ -271,21 +284,28 @@
             <div class="card field-card mb-4">
                 <div class="card-header"><i class="fas fa-camera me-2 text-success"></i>Photos</div>
                 <div class="card-body">
-                    @php $hasPhoto = false; @endphp
-                    <div class="row g-2">
-                        @for ($i = 1; $i <= 4; $i++)
-                            @php $pf = 'photo'.$i; @endphp
-                            @if($infrastructure->$pf)
-                                @php $hasPhoto = true; @endphp
-                                <div class="col-6">
-                                    <a href="{{ asset('storage/'.$infrastructure->$pf) }}" target="_blank">
-                                        <img src="{{ asset('storage/'.$infrastructure->$pf) }}" class="photo-thumb" alt="Photo {{ $i }}">
+                    @php
+                        $photos = [];
+                        for ($i = 1; $i <= 4; $i++) {
+                            $pf = 'photo'.$i;
+                            if ($infrastructure->$pf && \Storage::disk('public')->exists($infrastructure->$pf)) {
+                                $photos[] = $infrastructure->$pf;
+                            }
+                        }
+                    @endphp
+
+                    @if(count($photos) > 0)
+                        <div class="row g-3">
+                            @foreach($photos as $index => $photoPath)
+                                <div class="col-12 col-sm-6">
+                                    <a href="{{ \Storage::url($photoPath) }}" target="_blank" class="d-block shadow-sm rounded overflow-hidden">
+                                        <img src="{{ \Storage::url($photoPath) }}" class="photo-thumb" alt="Photo {{ $index + 1 }}">
+                                        <div class="mt-2 small text-center text-muted">Photo {{ $index + 1 }} / {{ count($photos) }}</div>
                                     </a>
                                 </div>
-                            @endif
-                        @endfor
-                    </div>
-                    @if(!$hasPhoto)
+                            @endforeach
+                        </div>
+                    @else
                         <p class="text-muted fst-italic mb-0">Aucune photo jointe.</p>
                     @endif
                 </div>

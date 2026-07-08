@@ -519,7 +519,48 @@
     .table td {
         vertical-align: middle;
     }
-    
+
+    .table-responsive {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
+    .table-responsive .table {
+        table-layout: fixed;
+        min-width: 1600px;
+        width: 100%;
+    }
+
+    .dropdown-menu {
+        z-index: 2100 !important;
+    }
+
+    .table th,
+    .table td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .table-cell-truncate {
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-height: 7.5rem;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .table-responsive td:nth-child(8),
+    .table-responsive td:nth-child(10),
+    .table-responsive td:nth-child(11),
+    .table-responsive td:nth-child(12),
+    .table-responsive td:nth-child(14),
+    .table-responsive td:nth-child(15) {
+        min-width: 180px;
+    }
+
     .form-control, .form-select {
         border-color: #dee2e6;
         border-radius: 8px;
