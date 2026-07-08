@@ -838,26 +838,213 @@
         }
     }
 
-    document.getElementById('get-location')?.addEventListener('click', () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
-                document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
-                document.getElementById('altitude').value = position.coords.altitude ? position.coords.altitude.toFixed(2) : '';
-                document.getElementById('precision').value = position.coords.accuracy.toFixed(2);
-                alert('Coordonnées GPS obtenues avec succès !');
-            }, error => {
-                console.error('Erreur géolocalisation:', error);
-                alert('Impossible d\'obtenir les coordonnées GPS: ' + error.message);
-            }, {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            });
-        } else {
-            alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+    /* =========================================================
+     * Géolocalisation + carte interactive (Leaflet)
+     * ========================================================= */
+    (function initGeoModule(){
+        const BENIN_CENTER = [9.3077, 2.3158];
+        const latEl = document.getElementById('latitude');
+        const lngEl = document.getElementById('longitude');
+        const altEl = document.getElementById('altitude');
+        const accEl = document.getElementById('precision');
+        const statusEl = document.getElementById('geo-status');
+        const accBadge = document.getElementById('geo-accuracy-indicator');
+        const btn = document.getElementById('get-location');
+        const btnLabel = document.getElementById('geo-btn-label');
+        const watchBtn = document.getElementById('geo-watch');
+        const watchLabel = document.getElementById('geo-watch-label');
+        const clearBtn = document.getElementById('geo-clear');
+        const mapEl = document.getElementById('geo-map');
+
+        let map, marker, accuracyCircle, watchId = null;
+
+        function ensureLeaflet(cb){
+            if (window.L) return cb();
+            const s = document.createElement('script');
+            s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+            s.crossOrigin = '';
+            s.onload = cb;
+            document.head.appendChild(s);
         }
-    });
+
+        function showStatus(kind, html){
+            statusEl.style.display = 'flex';
+            statusEl.className = 'geo-status ' + kind;
+            statusEl.innerHTML = html;
+        }
+        function accuracyClass(acc){
+            if (acc == null) return null;
+            if (acc <= 10) return {c:'excellent', t:'Excellente précision'};
+            if (acc <= 30) return {c:'good', t:'Bonne précision'};
+            if (acc <= 100) return {c:'medium', t:'Précision moyenne'};
+            return {c:'poor', t:'Faible précision'};
+        }
+        function renderAccuracyBadge(acc){
+            const info = accuracyClass(acc);
+            if (!info){ accBadge.innerHTML = ''; return; }
+            accBadge.innerHTML = `<span class="geo-accuracy-badge ${info.c} mt-1">
+                <i class="fas fa-circle-dot"></i> ${info.t} (±${Math.round(acc)} m)
+            </span>`;
+        }
+
+        function setFields(lat, lng, alt, acc){
+            latEl.value = Number(lat).toFixed(6);
+            lngEl.value = Number(lng).toFixed(6);
+            if (alt !== undefined && alt !== null && !isNaN(alt)) altEl.value = Number(alt).toFixed(2);
+            if (acc !== undefined && acc !== null && !isNaN(acc)) {
+                accEl.value = Number(acc).toFixed(2);
+                renderAccuracyBadge(acc);
+            }
+        }
+
+        function initMap(){
+            ensureLeaflet(() => {
+                if (map) return;
+                const startLat = parseFloat(latEl.value);
+                const startLng = parseFloat(lngEl.value);
+                const hasStart = !isNaN(startLat) && !isNaN(startLng);
+                map = L.map(mapEl, { zoomControl: true }).setView(
+                    hasStart ? [startLat, startLng] : BENIN_CENTER,
+                    hasStart ? 16 : 7
+                );
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+
+                if (hasStart) placeMarker(startLat, startLng);
+
+                map.on('click', (e) => {
+                    placeMarker(e.latlng.lat, e.latlng.lng);
+                    setFields(e.latlng.lat, e.latlng.lng);
+                    showStatus('info', '<i class="fas fa-hand-pointer"></i> Position ajustée manuellement sur la carte.');
+                });
+
+                setTimeout(() => map.invalidateSize(), 200);
+            });
+        }
+
+        function placeMarker(lat, lng, acc){
+            if (!map) return;
+            if (!marker){
+                marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                marker.on('dragend', () => {
+                    const p = marker.getLatLng();
+                    setFields(p.lat, p.lng);
+                    map.panTo(p);
+                    showStatus('info', '<i class="fas fa-arrows-up-down-left-right"></i> Repère déplacé : coordonnées mises à jour.');
+                });
+            } else {
+                marker.setLatLng([lat, lng]);
+            }
+            if (accuracyCircle) { map.removeLayer(accuracyCircle); accuracyCircle = null; }
+            if (acc && acc > 0){
+                accuracyCircle = L.circle([lat, lng], {
+                    radius: acc, color:'#0b7a3b', fillColor:'#10b981', fillOpacity:.12, weight:1
+                }).addTo(map);
+            }
+            map.setView([lat, lng], Math.max(map.getZoom(), 16));
+        }
+
+        function locateOnce(){
+            if (!navigator.geolocation){
+                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> Géolocalisation non supportée par ce navigateur.');
+                return;
+            }
+            btn.disabled = true;
+            btnLabel.innerHTML = 'Localisation en cours...';
+            btn.classList.add('geo-pulse');
+            showStatus('info', '<i class="fas fa-spinner fa-spin"></i> Recherche de votre position...');
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude, longitude, altitude, accuracy } = pos.coords;
+                setFields(latitude, longitude, altitude, accuracy);
+                initMap();
+                const apply = () => placeMarker(latitude, longitude, accuracy);
+                if (map) apply(); else ensureLeaflet(() => { initMap(); setTimeout(apply, 250); });
+                showStatus('ok', `<i class="fas fa-circle-check"></i> Position obtenue (±${Math.round(accuracy)} m).`);
+                btn.disabled = false;
+                btn.classList.remove('geo-pulse');
+                btnLabel.innerHTML = 'Mettre à jour ma position';
+            }, err => {
+                btn.disabled = false;
+                btn.classList.remove('geo-pulse');
+                btnLabel.innerHTML = 'Utiliser ma position actuelle';
+                const msg = err.code === 1
+                    ? 'Autorisation refusée. Activez la localisation dans votre navigateur, puis réessayez.'
+                    : err.code === 2 ? 'Position indisponible. Vérifiez le GPS ou la connexion.'
+                    : err.code === 3 ? 'Délai dépassé. Réessayez à l\'extérieur pour un meilleur signal.'
+                    : err.message;
+                showStatus('err', `<i class="fas fa-circle-exclamation"></i> ${msg}`);
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        }
+
+        function toggleWatch(){
+            if (watchId !== null){
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                watchLabel.textContent = 'Suivi haute précision';
+                watchBtn.classList.remove('geo-pulse');
+                showStatus('ok', '<i class="fas fa-stop"></i> Suivi arrêté.');
+                return;
+            }
+            if (!navigator.geolocation){
+                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> Géolocalisation non supportée.');
+                return;
+            }
+            initMap();
+            watchLabel.textContent = 'Arrêter le suivi';
+            watchBtn.classList.add('geo-pulse');
+            showStatus('info', '<i class="fas fa-satellite fa-beat"></i> Suivi actif : les coordonnées s\'affinent automatiquement.');
+            watchId = navigator.geolocation.watchPosition(pos => {
+                const { latitude, longitude, altitude, accuracy } = pos.coords;
+                setFields(latitude, longitude, altitude, accuracy);
+                placeMarker(latitude, longitude, accuracy);
+                if (accuracy <= 10){
+                    showStatus('ok', `<i class="fas fa-bullseye"></i> Position optimale atteinte (±${Math.round(accuracy)} m). Suivi arrêté.`);
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                    watchLabel.textContent = 'Suivi haute précision';
+                    watchBtn.classList.remove('geo-pulse');
+                }
+            }, err => {
+                showStatus('err', `<i class="fas fa-circle-exclamation"></i> ${err.message}`);
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                watchLabel.textContent = 'Suivi haute précision';
+                watchBtn.classList.remove('geo-pulse');
+            }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+        }
+
+        function clearAll(){
+            latEl.value = ''; lngEl.value = ''; altEl.value = ''; accEl.value = '';
+            accBadge.innerHTML = '';
+            if (marker && map){ map.removeLayer(marker); marker = null; }
+            if (accuracyCircle && map){ map.removeLayer(accuracyCircle); accuracyCircle = null; }
+            if (map) map.setView(BENIN_CENTER, 7);
+            showStatus('info', '<i class="fas fa-eraser"></i> Coordonnées effacées.');
+        }
+
+        // Sync manuel : si l'utilisateur édite lat/lng à la main, on déplace le repère.
+        function syncFromInputs(){
+            const la = parseFloat(latEl.value), ln = parseFloat(lngEl.value);
+            if (isNaN(la) || isNaN(ln)) return;
+            initMap();
+            const apply = () => placeMarker(la, ln);
+            if (map) apply(); else ensureLeaflet(() => { initMap(); setTimeout(apply, 250); });
+        }
+        [latEl, lngEl].forEach(i => i.addEventListener('change', syncFromInputs));
+
+        btn?.addEventListener('click', locateOnce);
+        watchBtn?.addEventListener('click', toggleWatch);
+        clearBtn?.addEventListener('click', clearAll);
+
+        // Init carte au chargement
+        window.addEventListener('load', () => {
+            initMap();
+            if (accEl.value) renderAccuracyBadge(parseFloat(accEl.value));
+        });
+    })();
 
     document.addEventListener('DOMContentLoaded', function() {
         const checkedCommune = document.querySelector('input[name="commune"]:checked');
