@@ -45,7 +45,51 @@
     @media (min-width: 768px) { .container { max-width: 720px; } }
     @media (min-width: 992px) { .container { max-width: 960px; } }
     @media (min-width: 1200px) { .container { max-width: 1140px; } }
+
+    /* ==== Géolocalisation ==== */
+    .geo-card{
+        background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+        border: 1px solid #bbf7d0; border-radius: 14px; padding: 1rem 1.15rem;
+        margin-bottom: 1rem; box-shadow: 0 4px 14px -8px rgba(11,122,59,.35);
+    }
+    .geo-card .geo-head{ display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap; }
+    .geo-card .geo-title{ font-weight:700; color:#065f46; display:flex; align-items:center; gap:.5rem; margin:0;}
+    .geo-card .geo-hint{ font-size:.82rem; color:#047857; margin:.25rem 0 .75rem;}
+    .btn-geo{
+        background: linear-gradient(135deg,#0b7a3b,#0e9a4a); color:#fff; border:0;
+        padding:.55rem 1rem; border-radius:10px; font-weight:600; display:inline-flex; align-items:center; gap:.5rem;
+        box-shadow: 0 6px 16px -6px rgba(11,122,59,.55); transition: transform .15s, box-shadow .15s;
+    }
+    .btn-geo:hover{ transform: translateY(-1px); box-shadow: 0 10px 20px -8px rgba(11,122,59,.6); color:#fff;}
+    .btn-geo:disabled{ opacity:.75; cursor:progress;}
+    .btn-geo-outline{
+        background:#fff; color:#065f46; border:1px solid #10b981; padding:.5rem .85rem; border-radius:10px;
+        font-weight:600; display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .btn-geo-outline:hover{ background:#ecfdf5; color:#065f46;}
+    .geo-status{ font-size:.85rem; margin-top:.5rem; display:flex; align-items:center; gap:.4rem;}
+    .geo-status.ok{ color:#047857;}
+    .geo-status.err{ color:#b91c1c;}
+    .geo-status.info{ color:#0369a1;}
+    .geo-accuracy-badge{
+        display:inline-flex; align-items:center; gap:.3rem; padding:.15rem .55rem; border-radius:99px;
+        font-size:.75rem; font-weight:600;
+    }
+    .geo-accuracy-badge.excellent{ background:#dcfce7; color:#166534;}
+    .geo-accuracy-badge.good{ background:#dbeafe; color:#1e40af;}
+    .geo-accuracy-badge.medium{ background:#fef3c7; color:#92400e;}
+    .geo-accuracy-badge.poor{ background:#fee2e2; color:#991b1b;}
+    #geo-map{ height: 280px; width:100%; border-radius:12px; border:1px solid #d1fae5; margin-top:.5rem; z-index:0;}
+    .geo-fields .form-control[readonly]{ background:#f9fafb;}
+    .geo-locked-note{ font-size:.72rem; color:#6b7280; margin-top:.15rem;}
+    @keyframes geoPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    .geo-pulse{ animation: geoPulse 1.2s ease-in-out infinite; }
 </style>
+@endpush
+
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 @endpush
 
 @php
@@ -197,37 +241,68 @@
                 <input type="text" name="hameau" id="hameau" class="form-control"
                        value="{{ old('hameau', optional($infrastructure)->hameau) }}">
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12">
+                <div class="geo-card">
+                    <div class="geo-head">
+                        <h6 class="geo-title">
+                            <i class="fas fa-satellite-dish"></i>
+                            Position géographique de l'infrastructure
+                        </h6>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" id="get-location" class="btn-geo">
+                                <i class="fas fa-location-crosshairs"></i>
+                                <span id="geo-btn-label">Utiliser ma position actuelle</span>
+                            </button>
+                            <button type="button" id="geo-watch" class="btn-geo-outline" title="Suivi continu jusqu'à obtention d'une position précise">
+                                <i class="fas fa-satellite"></i>
+                                <span id="geo-watch-label">Suivi haute précision</span>
+                            </button>
+                            <button type="button" id="geo-clear" class="btn-geo-outline" title="Effacer les coordonnées">
+                                <i class="fas fa-eraser"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="geo-hint mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Autorisez le navigateur à accéder à votre position, puis affinez si besoin en cliquant ou en déplaçant le repère sur la carte.
+                    </p>
+                    <div id="geo-status" class="geo-status info" style="display:none;"></div>
+                    <div id="geo-map" aria-label="Carte pour ajuster la position"></div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 geo-fields">
                 <label for="latitude" class="form-label">
                     <i class="fas fa-map-marker-alt text-success me-1"></i>
-                    Latitude (x,y°)
+                    Latitude (°)
                 </label>
-                <input type="number" step="any" min="-90" max="90" name="latitude" id="latitude" class="form-control" placeholder="Latitude"
+                <input type="number" step="any" min="-90" max="90" name="latitude" id="latitude" class="form-control" placeholder="Ex. 9.345678"
                        value="{{ old('latitude', optional($infrastructure)->latitude) }}">
+                <div class="geo-locked-note">Modifiable manuellement si besoin.</div>
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-6 geo-fields">
                 <label for="longitude" class="form-label">
                     <i class="fas fa-map-marker-alt text-success me-1"></i>
-                    Longitude (x,y°)
+                    Longitude (°)
                 </label>
-                <input type="number" step="any" min="-180" max="180" name="longitude" id="longitude" class="form-control" placeholder="Longitude"
+                <input type="number" step="any" min="-180" max="180" name="longitude" id="longitude" class="form-control" placeholder="Ex. 2.456789"
                        value="{{ old('longitude', optional($infrastructure)->longitude) }}">
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-6 geo-fields">
                 <label for="altitude" class="form-label">
-                    <i class="fas fa-mountains text-success me-1"></i>
+                    <i class="fas fa-mountain text-success me-1"></i>
                     Altitude (m)
                 </label>
                 <input type="number" step="any" min="-500" max="9000" name="altitude" id="altitude" class="form-control" placeholder="Altitude"
                        value="{{ old('altitude', optional($infrastructure)->altitude) }}">
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-6 geo-fields">
                 <label for="precision" class="form-label">
                     <i class="fas fa-ruler text-success me-1"></i>
                     Précision (m)
                 </label>
-                <input type="number" step="any" min="0" max="10000" name="precision" id="precision" class="form-control" placeholder="Précision"
+                <input type="number" step="any" min="0" max="10000" name="precision" id="precision" class="form-control" placeholder="Précision GPS"
                        value="{{ old('precision', optional($infrastructure)->precision) }}">
+                <div id="geo-accuracy-indicator"></div>
             </div>
         </div>
         <div class="form-group mb-4">
@@ -763,26 +838,213 @@
         }
     }
 
-    document.getElementById('get-location')?.addEventListener('click', () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
-                document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
-                document.getElementById('altitude').value = position.coords.altitude ? position.coords.altitude.toFixed(2) : '';
-                document.getElementById('precision').value = position.coords.accuracy.toFixed(2);
-                alert('Coordonnées GPS obtenues avec succès !');
-            }, error => {
-                console.error('Erreur géolocalisation:', error);
-                alert('Impossible d\'obtenir les coordonnées GPS: ' + error.message);
-            }, {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            });
-        } else {
-            alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+    /* =========================================================
+     * Géolocalisation + carte interactive (Leaflet)
+     * ========================================================= */
+    (function initGeoModule(){
+        const BENIN_CENTER = [9.3077, 2.3158];
+        const latEl = document.getElementById('latitude');
+        const lngEl = document.getElementById('longitude');
+        const altEl = document.getElementById('altitude');
+        const accEl = document.getElementById('precision');
+        const statusEl = document.getElementById('geo-status');
+        const accBadge = document.getElementById('geo-accuracy-indicator');
+        const btn = document.getElementById('get-location');
+        const btnLabel = document.getElementById('geo-btn-label');
+        const watchBtn = document.getElementById('geo-watch');
+        const watchLabel = document.getElementById('geo-watch-label');
+        const clearBtn = document.getElementById('geo-clear');
+        const mapEl = document.getElementById('geo-map');
+
+        let map, marker, accuracyCircle, watchId = null;
+
+        function ensureLeaflet(cb){
+            if (window.L) return cb();
+            const s = document.createElement('script');
+            s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+            s.crossOrigin = '';
+            s.onload = cb;
+            document.head.appendChild(s);
         }
-    });
+
+        function showStatus(kind, html){
+            statusEl.style.display = 'flex';
+            statusEl.className = 'geo-status ' + kind;
+            statusEl.innerHTML = html;
+        }
+        function accuracyClass(acc){
+            if (acc == null) return null;
+            if (acc <= 10) return {c:'excellent', t:'Excellente précision'};
+            if (acc <= 30) return {c:'good', t:'Bonne précision'};
+            if (acc <= 100) return {c:'medium', t:'Précision moyenne'};
+            return {c:'poor', t:'Faible précision'};
+        }
+        function renderAccuracyBadge(acc){
+            const info = accuracyClass(acc);
+            if (!info){ accBadge.innerHTML = ''; return; }
+            accBadge.innerHTML = `<span class="geo-accuracy-badge ${info.c} mt-1">
+                <i class="fas fa-circle-dot"></i> ${info.t} (±${Math.round(acc)} m)
+            </span>`;
+        }
+
+        function setFields(lat, lng, alt, acc){
+            latEl.value = Number(lat).toFixed(6);
+            lngEl.value = Number(lng).toFixed(6);
+            if (alt !== undefined && alt !== null && !isNaN(alt)) altEl.value = Number(alt).toFixed(2);
+            if (acc !== undefined && acc !== null && !isNaN(acc)) {
+                accEl.value = Number(acc).toFixed(2);
+                renderAccuracyBadge(acc);
+            }
+        }
+
+        function initMap(){
+            ensureLeaflet(() => {
+                if (map) return;
+                const startLat = parseFloat(latEl.value);
+                const startLng = parseFloat(lngEl.value);
+                const hasStart = !isNaN(startLat) && !isNaN(startLng);
+                map = L.map(mapEl, { zoomControl: true }).setView(
+                    hasStart ? [startLat, startLng] : BENIN_CENTER,
+                    hasStart ? 16 : 7
+                );
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+
+                if (hasStart) placeMarker(startLat, startLng);
+
+                map.on('click', (e) => {
+                    placeMarker(e.latlng.lat, e.latlng.lng);
+                    setFields(e.latlng.lat, e.latlng.lng);
+                    showStatus('info', '<i class="fas fa-hand-pointer"></i> Position ajustée manuellement sur la carte.');
+                });
+
+                setTimeout(() => map.invalidateSize(), 200);
+            });
+        }
+
+        function placeMarker(lat, lng, acc){
+            if (!map) return;
+            if (!marker){
+                marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                marker.on('dragend', () => {
+                    const p = marker.getLatLng();
+                    setFields(p.lat, p.lng);
+                    map.panTo(p);
+                    showStatus('info', '<i class="fas fa-arrows-up-down-left-right"></i> Repère déplacé : coordonnées mises à jour.');
+                });
+            } else {
+                marker.setLatLng([lat, lng]);
+            }
+            if (accuracyCircle) { map.removeLayer(accuracyCircle); accuracyCircle = null; }
+            if (acc && acc > 0){
+                accuracyCircle = L.circle([lat, lng], {
+                    radius: acc, color:'#0b7a3b', fillColor:'#10b981', fillOpacity:.12, weight:1
+                }).addTo(map);
+            }
+            map.setView([lat, lng], Math.max(map.getZoom(), 16));
+        }
+
+        function locateOnce(){
+            if (!navigator.geolocation){
+                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> Géolocalisation non supportée par ce navigateur.');
+                return;
+            }
+            btn.disabled = true;
+            btnLabel.innerHTML = 'Localisation en cours...';
+            btn.classList.add('geo-pulse');
+            showStatus('info', '<i class="fas fa-spinner fa-spin"></i> Recherche de votre position...');
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude, longitude, altitude, accuracy } = pos.coords;
+                setFields(latitude, longitude, altitude, accuracy);
+                initMap();
+                const apply = () => placeMarker(latitude, longitude, accuracy);
+                if (map) apply(); else ensureLeaflet(() => { initMap(); setTimeout(apply, 250); });
+                showStatus('ok', `<i class="fas fa-circle-check"></i> Position obtenue (±${Math.round(accuracy)} m).`);
+                btn.disabled = false;
+                btn.classList.remove('geo-pulse');
+                btnLabel.innerHTML = 'Mettre à jour ma position';
+            }, err => {
+                btn.disabled = false;
+                btn.classList.remove('geo-pulse');
+                btnLabel.innerHTML = 'Utiliser ma position actuelle';
+                const msg = err.code === 1
+                    ? 'Autorisation refusée. Activez la localisation dans votre navigateur, puis réessayez.'
+                    : err.code === 2 ? 'Position indisponible. Vérifiez le GPS ou la connexion.'
+                    : err.code === 3 ? 'Délai dépassé. Réessayez à l\'extérieur pour un meilleur signal.'
+                    : err.message;
+                showStatus('err', `<i class="fas fa-circle-exclamation"></i> ${msg}`);
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        }
+
+        function toggleWatch(){
+            if (watchId !== null){
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                watchLabel.textContent = 'Suivi haute précision';
+                watchBtn.classList.remove('geo-pulse');
+                showStatus('ok', '<i class="fas fa-stop"></i> Suivi arrêté.');
+                return;
+            }
+            if (!navigator.geolocation){
+                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> Géolocalisation non supportée.');
+                return;
+            }
+            initMap();
+            watchLabel.textContent = 'Arrêter le suivi';
+            watchBtn.classList.add('geo-pulse');
+            showStatus('info', '<i class="fas fa-satellite fa-beat"></i> Suivi actif : les coordonnées s\'affinent automatiquement.');
+            watchId = navigator.geolocation.watchPosition(pos => {
+                const { latitude, longitude, altitude, accuracy } = pos.coords;
+                setFields(latitude, longitude, altitude, accuracy);
+                placeMarker(latitude, longitude, accuracy);
+                if (accuracy <= 10){
+                    showStatus('ok', `<i class="fas fa-bullseye"></i> Position optimale atteinte (±${Math.round(accuracy)} m). Suivi arrêté.`);
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                    watchLabel.textContent = 'Suivi haute précision';
+                    watchBtn.classList.remove('geo-pulse');
+                }
+            }, err => {
+                showStatus('err', `<i class="fas fa-circle-exclamation"></i> ${err.message}`);
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                watchLabel.textContent = 'Suivi haute précision';
+                watchBtn.classList.remove('geo-pulse');
+            }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+        }
+
+        function clearAll(){
+            latEl.value = ''; lngEl.value = ''; altEl.value = ''; accEl.value = '';
+            accBadge.innerHTML = '';
+            if (marker && map){ map.removeLayer(marker); marker = null; }
+            if (accuracyCircle && map){ map.removeLayer(accuracyCircle); accuracyCircle = null; }
+            if (map) map.setView(BENIN_CENTER, 7);
+            showStatus('info', '<i class="fas fa-eraser"></i> Coordonnées effacées.');
+        }
+
+        // Sync manuel : si l'utilisateur édite lat/lng à la main, on déplace le repère.
+        function syncFromInputs(){
+            const la = parseFloat(latEl.value), ln = parseFloat(lngEl.value);
+            if (isNaN(la) || isNaN(ln)) return;
+            initMap();
+            const apply = () => placeMarker(la, ln);
+            if (map) apply(); else ensureLeaflet(() => { initMap(); setTimeout(apply, 250); });
+        }
+        [latEl, lngEl].forEach(i => i.addEventListener('change', syncFromInputs));
+
+        btn?.addEventListener('click', locateOnce);
+        watchBtn?.addEventListener('click', toggleWatch);
+        clearBtn?.addEventListener('click', clearAll);
+
+        // Init carte au chargement
+        window.addEventListener('load', () => {
+            initMap();
+            if (accEl.value) renderAccuracyBadge(parseFloat(accEl.value));
+        });
+    })();
 
     document.addEventListener('DOMContentLoaded', function() {
         const checkedCommune = document.querySelector('input[name="commune"]:checked');
