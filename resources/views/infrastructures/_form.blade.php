@@ -241,37 +241,68 @@
                 <input type="text" name="hameau" id="hameau" class="form-control"
                        value="{{ old('hameau', optional($infrastructure)->hameau) }}">
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12">
+                <div class="geo-card">
+                    <div class="geo-head">
+                        <h6 class="geo-title">
+                            <i class="fas fa-satellite-dish"></i>
+                            Position géographique de l'infrastructure
+                        </h6>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" id="get-location" class="btn-geo">
+                                <i class="fas fa-location-crosshairs"></i>
+                                <span id="geo-btn-label">Utiliser ma position actuelle</span>
+                            </button>
+                            <button type="button" id="geo-watch" class="btn-geo-outline" title="Suivi continu jusqu'à obtention d'une position précise">
+                                <i class="fas fa-satellite"></i>
+                                <span id="geo-watch-label">Suivi haute précision</span>
+                            </button>
+                            <button type="button" id="geo-clear" class="btn-geo-outline" title="Effacer les coordonnées">
+                                <i class="fas fa-eraser"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="geo-hint mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Autorisez le navigateur à accéder à votre position, puis affinez si besoin en cliquant ou en déplaçant le repère sur la carte.
+                    </p>
+                    <div id="geo-status" class="geo-status info" style="display:none;"></div>
+                    <div id="geo-map" aria-label="Carte pour ajuster la position"></div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 geo-fields">
                 <label for="latitude" class="form-label">
                     <i class="fas fa-map-marker-alt text-success me-1"></i>
-                    Latitude (x,y°)
+                    Latitude (°)
                 </label>
-                <input type="number" step="any" min="-90" max="90" name="latitude" id="latitude" class="form-control" placeholder="Latitude"
+                <input type="number" step="any" min="-90" max="90" name="latitude" id="latitude" class="form-control" placeholder="Ex. 9.345678"
                        value="{{ old('latitude', optional($infrastructure)->latitude) }}">
+                <div class="geo-locked-note">Modifiable manuellement si besoin.</div>
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-6 geo-fields">
                 <label for="longitude" class="form-label">
                     <i class="fas fa-map-marker-alt text-success me-1"></i>
-                    Longitude (x,y°)
+                    Longitude (°)
                 </label>
-                <input type="number" step="any" min="-180" max="180" name="longitude" id="longitude" class="form-control" placeholder="Longitude"
+                <input type="number" step="any" min="-180" max="180" name="longitude" id="longitude" class="form-control" placeholder="Ex. 2.456789"
                        value="{{ old('longitude', optional($infrastructure)->longitude) }}">
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-6 geo-fields">
                 <label for="altitude" class="form-label">
-                    <i class="fas fa-mountains text-success me-1"></i>
+                    <i class="fas fa-mountain text-success me-1"></i>
                     Altitude (m)
                 </label>
                 <input type="number" step="any" min="-500" max="9000" name="altitude" id="altitude" class="form-control" placeholder="Altitude"
                        value="{{ old('altitude', optional($infrastructure)->altitude) }}">
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-6 geo-fields">
                 <label for="precision" class="form-label">
                     <i class="fas fa-ruler text-success me-1"></i>
                     Précision (m)
                 </label>
-                <input type="number" step="any" min="0" max="10000" name="precision" id="precision" class="form-control" placeholder="Précision"
+                <input type="number" step="any" min="0" max="10000" name="precision" id="precision" class="form-control" placeholder="Précision GPS"
                        value="{{ old('precision', optional($infrastructure)->precision) }}">
+                <div id="geo-accuracy-indicator"></div>
             </div>
         </div>
         <div class="form-group mb-4">
