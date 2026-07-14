@@ -11,11 +11,27 @@
         <a href="{{ route('infrastructures.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Retour au tableau</a>
     </div>
 
-    <div class="mb-3 d-flex gap-2 align-items-center">
-        <button type="button" class="btn btn-primary btn-sm" id="export-selected-btn"><i class="fas fa-file-excel me-1"></i> Exporter sélection</button>
-        <a href="{{ request()->fullUrlWithQuery(['format' => 'excel', 'export_scope' => 'filtered']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-excel me-1"></i> Exporter (tous filtrés)</a>
-        <span class="ms-auto small text-muted">Sélectionnez les lignes, puis cliquez sur «Exporter sélection».</span>
+    <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+        <button type="button" class="btn btn-danger btn-sm" id="export-plan-selected-btn">
+            <i class="fas fa-file-pdf me-1"></i> Exporter Plan Triennal (sélection)
+        </button>
+        <a href="{{ route('infrastructures.planned.export', array_merge(request()->except(['page','_token']), ['export_scope' => 'filtered'])) }}"
+           class="btn btn-outline-danger btn-sm">
+            <i class="fas fa-file-pdf me-1"></i> Exporter Plan Triennal (tous filtrés)
+        </a>
+        <span class="vr d-none d-md-inline"></span>
+        <button type="button" class="btn btn-primary btn-sm" id="export-selected-btn"><i class="fas fa-file-excel me-1"></i> Excel (sélection)</button>
+        <a href="{{ request()->fullUrlWithQuery(['format' => 'excel', 'export_scope' => 'filtered']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-excel me-1"></i> Excel (tous filtrés)</a>
+        <span class="ms-auto small text-muted">Le Plan Triennal respecte le modèle MDGL — République du Bénin.</span>
     </div>
+
+    {{-- Formulaire caché pour l'export PDF de la sélection --}}
+    <form id="plan-export-form" method="POST" action="{{ route('infrastructures.planned.export') }}" style="display:none">
+        @csrf
+        <input type="hidden" name="export_scope" value="selected">
+        @if(request('commune'))<input type="hidden" name="commune" value="{{ request('commune') }}">@endif
+        <div id="plan-export-selected-container"></div>
+    </form>
 
     <div class="card mb-3">
         <div class="card-body p-3">
@@ -194,6 +210,22 @@
             selectAll.addEventListener('change', function () {
                 rowCheckboxes.forEach(cb => cb.checked = this.checked);
                 updateExportState();
+            });
+        }
+
+        // Export PDF Plan Triennal (sélection)
+        const planBtn = document.getElementById('export-plan-selected-btn');
+        const planForm = document.getElementById('plan-export-form');
+        const planContainer = document.getElementById('plan-export-selected-container');
+        if (planBtn && planForm && planContainer) {
+            planBtn.addEventListener('click', function () {
+                const ids = rowCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
+                if (!ids.length) {
+                    alert('Veuillez sélectionner au moins une infrastructure planifiée pour générer le Plan Triennal.');
+                    return;
+                }
+                planContainer.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
+                planForm.submit();
             });
         }
 

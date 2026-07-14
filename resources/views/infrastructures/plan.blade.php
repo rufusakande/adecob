@@ -173,14 +173,37 @@
                             <span class="input-group-text">FCFA</span>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Année d'exécution (plan triennal) <span class="text-danger">*</span></label>
+                        <div class="btn-group w-100" role="group" aria-label="Année d'exécution">
+                            @php $selectedYear = (int) old('annee_execution', optional($existingPlannedWork)->annee_execution); @endphp
+                            @foreach([1,2,3] as $y)
+                                <input type="radio" class="btn-check" name="annee_execution" id="annee_execution_{{ $y }}" value="{{ $y }}" @checked($selectedYear === $y) required>
+                                <label class="btn btn-outline-success" for="annee_execution_{{ $y }}">Année {{ $y }}</label>
+                            @endforeach
+                        </div>
+                        <div class="form-text">Cochez l'année du plan triennal à laquelle l'intervention est prévue.</div>
+                        @error('annee_execution')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Acteur(s) concerné(s) <span class="text-danger">*</span></label>
+                        <textarea name="acteurs_concernes" rows="2" class="form-control @error('acteurs_concernes') is-invalid @enderror" maxlength="1000" required placeholder="Ex. : DST, DSI, AUE, APE, ONG partenaires…">{{ old('acteurs_concernes', optional($existingPlannedWork)->acteurs_concernes) }}</textarea>
+                        @error('acteurs_concernes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Source(s) de financement <span class="text-danger">*</span></label>
+                        <textarea name="sources_financement" rows="2" class="form-control @error('sources_financement') is-invalid @enderror" maxlength="1000" required placeholder="Ex. : FADeC Investissement, Budget communal, Coopération Suisse…">{{ old('sources_financement', optional($existingPlannedWork)->sources_financement) }}</textarea>
+                        @error('sources_financement')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                     <div class="col-12">
-                        <label class="form-label">Acteurs impliqués</label>
-                        <textarea name="provider_name" rows="3" class="form-control" maxlength="255" placeholder="Ex. : Mairie, ONG, artisans locaux, comité de gestion…">{{ old('provider_name', optional($existingPlannedWork)->provider_name) }}</textarea>
+                        <label class="form-label">Acteurs / prestataires additionnels</label>
+                        <textarea name="provider_name" rows="2" class="form-control" maxlength="255" placeholder="Ex. : Mairie, artisans locaux, comité de gestion…">{{ old('provider_name', optional($existingPlannedWork)->provider_name) }}</textarea>
                     </div>
                 </div>
 
                 <div class="form-section-title">Observations complémentaires</div>
-                <textarea name="observations" rows="3" class="form-control" maxlength="5000" placeholder="Notes internes, priorités, contraintes…">{{ old('observations', optional($existingPlannedWork)->observations) }}</textarea>
+                <textarea name="observations" rows="3" class="form-control" maxlength="5000" placeholder="Ex. : Priorité très élevée, contraintes saisonnières…">{{ old('observations', optional($existingPlannedWork)->observations) }}</textarea>
+
 
                 <div class="d-flex justify-content-between align-items-center mt-4">
                     <a href="{{ route('infrastructures.index') }}" class="btn btn-light"><i class="fas fa-arrow-left me-1"></i> Retour</a>

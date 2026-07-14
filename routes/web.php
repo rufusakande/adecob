@@ -85,6 +85,8 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     // Page des infrastructures planifiées (admins : super admin + commune admin)
     Route::get('/infrastructures-planifiees', [App\Http\Controllers\InfrastructureController::class, 'plannedIndex'])
         ->middleware('admin.access')->name('infrastructures.planned');
+    Route::match(['get','post'], '/infrastructures-planifiees/export-pdf', [App\Http\Controllers\InfrastructureController::class, 'exportPlannedPdf'])
+        ->middleware('admin.access')->name('infrastructures.planned.export');
 
     // Planification single-infrastructure: formulaire et enregistrement
     Route::get('/infrastructures/{infrastructure}/plan', [App\Http\Controllers\InfrastructureController::class, 'planForm'])

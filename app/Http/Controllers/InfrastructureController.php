@@ -695,13 +695,16 @@ class InfrastructureController extends Controller
         $this->authorizePlanning($infrastructure);
 
         $validated = $request->validate([
-            'work_type'        => 'required|string|max:255',
-            'description'      => 'required|string|min:5|max:5000',
-            'completion_date'  => 'required|date|after_or_equal:today',
-            'cost'             => 'required|numeric|min:0|max:9999999999999',
-            'provider_name'    => 'nullable|string|max:255',
-            'provider_contact' => 'nullable|string|max:255',
-            'observations'     => 'nullable|string|max:5000',
+            'work_type'           => 'required|string|max:255',
+            'description'         => 'required|string|min:5|max:5000',
+            'completion_date'     => 'required|date|after_or_equal:today',
+            'cost'                => 'required|numeric|min:0|max:9999999999999',
+            'annee_execution'     => 'required|integer|in:1,2,3',
+            'acteurs_concernes'   => 'required|string|max:1000',
+            'sources_financement' => 'required|string|max:1000',
+            'provider_name'       => 'nullable|string|max:255',
+            'provider_contact'    => 'nullable|string|max:255',
+            'observations'        => 'nullable|string|max:5000',
         ]);
         $validated['status'] = 'planned';
 
@@ -763,6 +766,80 @@ class InfrastructureController extends Controller
 
         return view('infrastructures.planned', compact('infrastructures', 'communes', 'secteurs', 'types', 'etats', 'niveaux'));
     }
+
+    /**
+     * Exporter le Plan Triennal des infrastructures planifiées en PDF
+     * (respecte le modèle officiel MDGL — République du Bénin).
+     */
+    public function exportPlannedPdf(Request $request)
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->isSuperAdmin() || $user->isCommuneAdmin()), 403);
+
+        $selectedIds = (array) $request->input('selected_ids', []);
+        $scope = $request->input('export_scope', 'filtered');
+
+        $query = Infrastructure::query()->visibleTo($user)
+            ->whereHas('works', fn($q) => $q->where('status', 'planned'));
+
+        if ($scope === 'selected') {
+            if (empty($selectedIds)) {
+                return redirect()->back()->with('error', 'Sélectionnez au moins une infrastructure avant d\'exporter.');
+            }
+            $query->whereIn('id', $selectedIds);
+        } else {
+            // Reappliquer les filtres de la page planifiées
+            foreach (['commune','secteur_domaine','type_infrastructure','etat_fonctionnement','niveau_degradation'] as $f) {
+                if ($request->filled($f)) {
+                    $query->where($f, $request->input($f));
+                }
+            }
+        }
+
+        $infrastructures = $query->with(['works' => fn($q) => $q->where('status', 'planned')->orderBy('completion_date')])
+            ->orderBy('commune')->orderBy('id')->get();
+
+        // Déterminer la commune / logo pour l'en-tête
+        $communeName = $request->input('commune');
+        if (!$communeName && $user->isCommuneAdmin()) {
+            $communeName = optional($user->commune)->name;
+        }
+        // Si toutes les infrastructures exportées appartiennent à une même commune, on l'utilise
+        if (!$communeName) {
+            $uniqueCommunes = $infrastructures->pluck('commune')->filter()->unique();
+            if ($uniqueCommunes->count() === 1) {
+                $communeName = $uniqueCommunes->first();
+            }
+        }
+
+        $communeModel = $communeName
+            ? \App\Models\Commune::where('name', $communeName)->first()
+            : null;
+
+        $communeLogoData = null;
+        if ($communeModel && $communeModel->logo) {
+            $absolute = storage_path('app/public/' . $communeModel->logo);
+            if (is_file($absolute)) {
+                $mime = function_exists('mime_content_type') ? (mime_content_type($absolute) ?: 'image/png') : 'image/png';
+                $communeLogoData = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($absolute));
+            }
+        }
+
+        // Département : on prend celui de la 1ère infra sinon "Borgou" par défaut (contexte projet)
+        $departement = optional($infrastructures->first())->departement ?: 'Borgou';
+
+        $pdf = Pdf::loadView('infrastructures.planned_export_pdf', [
+            'infrastructures' => $infrastructures,
+            'communeName'     => $communeName,
+            'communeLogoData' => $communeLogoData,
+            'departement'     => $departement,
+            'dateElaboration' => now()->locale('fr')->isoFormat('D MMMM YYYY'),
+        ])->setPaper('a4', 'landscape');
+
+        $filename = 'plan_triennal_' . ($communeName ? \Illuminate\Support\Str::slug($communeName) . '_' : '') . now()->format('Ymd_His') . '.pdf';
+        return $pdf->download($filename);
+    }
+
 
     /** Marquer une infrastructure comme réhabilitée (best-effort) */
     public function markAsRehabilitated(Request $request, Infrastructure $infrastructure)
