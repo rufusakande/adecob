@@ -19,6 +19,9 @@ class InfrastructureWork extends Model
         'provider_contact',
         'cost',
         'status',
+        'acteurs_concernes',
+        'sources_financement',
+        'annee_execution',
     ];
 
     protected $casts = [
