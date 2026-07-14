@@ -213,6 +213,22 @@
             });
         }
 
+        // Export PDF Plan Triennal (sélection)
+        const planBtn = document.getElementById('export-plan-selected-btn');
+        const planForm = document.getElementById('plan-export-form');
+        const planContainer = document.getElementById('plan-export-selected-container');
+        if (planBtn && planForm && planContainer) {
+            planBtn.addEventListener('click', function () {
+                const ids = rowCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
+                if (!ids.length) {
+                    alert('Veuillez sélectionner au moins une infrastructure planifiée pour générer le Plan Triennal.');
+                    return;
+                }
+                planContainer.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
+                planForm.submit();
+            });
+        }
+
         updateExportState();
     });
 </script>
