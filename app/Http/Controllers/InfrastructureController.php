@@ -695,13 +695,16 @@ class InfrastructureController extends Controller
         $this->authorizePlanning($infrastructure);
 
         $validated = $request->validate([
-            'work_type'        => 'required|string|max:255',
-            'description'      => 'required|string|min:5|max:5000',
-            'completion_date'  => 'required|date|after_or_equal:today',
-            'cost'             => 'required|numeric|min:0|max:9999999999999',
-            'provider_name'    => 'nullable|string|max:255',
-            'provider_contact' => 'nullable|string|max:255',
-            'observations'     => 'nullable|string|max:5000',
+            'work_type'           => 'required|string|max:255',
+            'description'         => 'required|string|min:5|max:5000',
+            'completion_date'     => 'required|date|after_or_equal:today',
+            'cost'                => 'required|numeric|min:0|max:9999999999999',
+            'annee_execution'     => 'required|integer|in:1,2,3',
+            'acteurs_concernes'   => 'required|string|max:1000',
+            'sources_financement' => 'required|string|max:1000',
+            'provider_name'       => 'nullable|string|max:255',
+            'provider_contact'    => 'nullable|string|max:255',
+            'observations'        => 'nullable|string|max:5000',
         ]);
         $validated['status'] = 'planned';
 
