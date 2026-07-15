@@ -105,16 +105,26 @@
     $communes = $restrictedCommune
         ? array_filter([$userCommune])
         : ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
-    $secteurs = ['EDUCATION', 'SANTE', 'AGRICULTURE/ELEVAGE', 'MARCHE', 'ADMINISTRATION', 'CULTURE, SPORT, LOISIRS & TOURISME', 'EAU POTABLE', 'ASSAINISSEMENT'];
-    $types = [
-        'Latrines/douche', 'FPM (Forage)', 'AEV', 'PEA', 'Puits à Grand diamètre', 'Périmètre maraîcher', 'Retenue d\'eau', 'Dispensaire', 'Maternité', 'Incinérateur', 'Pharmacie', 'Logement', 'Magasin', 'Hangar', 'Cantine scolaire', 'Boutique', 'Hangar', 'Bloc administratif', 'Packing', 'Eclairage publique', 'Quai d\'embarquement', 'Clôture', 'Piste à bétail', 'Salle d\'alphabétisation', 'Maison des jeunes', 'Boucherie', 'Terrain de sport',
-        'Module de classes avec 1 classe', 'Module de classes avec 2 classe', 'Module de classes avec 3 classe', 'Module de classes avec 4 classe', 'Module de classes avec 1 classe + Bureau et magasin', 'Module de classes avec 2 classe + Bureau et magasin', 'Module de classes avec 3 classe + Bureau et magasin', 'Module de classes avec 4 classe + Bureau et magasin'
+    $secteurs = ['Education', 'Santé', 'Agriculture / Elevage', 'Marché à bétail', 'Administration', 'Eau potable', 'Assainissement', 'Culture/Sport/Loisirs', 'Tourisme', 'Autre'];
+    $typesBySecteur = [
+        'Education' => ['Module de 1 classe', 'Module de 2 classes', 'Module de 3 classes', 'Module de 4 classes', 'Module de 5 classes', 'Module + Bureau', 'Cantine scolaire', 'Magasin', 'Bloc administratif', 'Logement'],
+        'Santé' => ['Dispensaire', 'Maternité', 'Pharmacie', 'Incinérateur', 'Logement'],
+        'Eau potable' => ['Forage (FPM)', 'AEV', 'PEA', 'Puits à grand diamètre', 'Retenue d\'eau'],
+        'Agriculture / Elevage' => ['Périmètre maraîcher', 'Magasin', 'Hangar', 'Packing'],
+        'Assainissement' => ['Latrine 1 cabine', 'Latrine 2 cabines', 'Latrine 3 cabines', 'Latrine 4 cabines', 'Latrine 5 cabines', 'Latrine 6 cabines', 'Latrine 7 cabines', 'Latrine 8 cabines', 'Toilette', 'Dépotoir'],
+        'Marché à bétail' => ['Hangar', 'Boutique', 'Quai d\'embarquement', 'Boucherie'],
+        'Culture/Sport/Loisirs' => ['Maison des jeunes', 'Salle d\'alphabétisation', 'Terrain de sport'],
+        'Administration' => ['Bloc administratif', 'Logement'],
+        'Tourisme' => ['Autre (préciser)'],
+        'Autre' => ['Clôture', 'Piste à bétail', 'Eclairage public', 'Cimetière', 'Autre (préciser)'],
     ];
-    $materiaux = ['Précaire', 'Définitif'];
-    $etats = ['Fonctionnel', 'Partiellement fonctionnel', 'Non fonctionnel', 'En construction'];
-    $niveaux = ['Faible', 'Moyen', 'Élevé', 'Aucun'];
-    $modes = ['Affermage', 'Délégataire', 'Comité', 'REGIE', 'Mairie', 'Autres'];
-    $rehabs = ['Faible', 'Moyen', 'Élevé'];
+    $materiaux = ['Définitif', 'Semi-définitif', 'Précaire'];
+    $etats = ['Fonctionnel', 'Fonctionnel avec quelques défaillances', 'Partiellement fonctionnel', 'Non fonctionnel', 'Abandonné'];
+    $niveaux = ['Aucun', 'Faible', 'Moyen', 'Élevé', 'Très élevé', 'Ruine'];
+    $modes = ['Comité de gestion', 'Mairie', 'Régie', 'Affermage', 'Délégataire', 'Association', 'Privé', 'Communauté', 'Autre'];
+    $naturesTravaux = ['Réhabilitation légère', 'Réhabilitation moyenne', 'Réhabilitation lourde', 'Reconstruction'];
+    $currentRehab = old('rehabilitation', optional($infrastructure)->rehabilitation);
+    $rehabNeeded = $currentRehab && $currentRehab !== 'Non' ? 'Oui' : ($currentRehab === 'Non' ? 'Non' : '');
     $submitLabel = $submitLabel ?? ($isEdit ? 'Enregistrer les modifications' : 'Soumettre la fiche');
     $existingDate = data_get($infrastructure, 'date');
     $dateValue = old('date', $existingDate ? \Illuminate\Support\Carbon::parse($existingDate)->format('Y-m-d') : date('Y-m-d'));
