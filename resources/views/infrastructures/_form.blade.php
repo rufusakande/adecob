@@ -496,17 +496,31 @@
         <div class="form-group mb-4">
             <label class="form-label">
                 <i class="fas fa-hammer text-success me-1"></i>
-                Réhabilitation
+                Réhabilitation nécessaire ?
             </label>
-            <div class="d-flex flex-wrap gap-3">
-                @foreach($rehabs as $rehab)
+            <div class="d-flex flex-wrap gap-3 mb-2">
+                @foreach(['Oui','Non'] as $opt)
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="rehabilitation" id="rehab_{{ $loop->index }}"
-                               value="{{ $rehab }}" {{ old('rehabilitation', optional($infrastructure)->rehabilitation) === $rehab ? 'checked' : '' }}>
-                        <label class="form-check-label" for="rehab_{{ $loop->index }}">{{ $rehab }}</label>
+                        <input class="form-check-input rehab-needed" type="radio" name="rehab_needed" id="rehab_needed_{{ $opt }}"
+                               value="{{ $opt }}" {{ $rehabNeeded === $opt ? 'checked' : '' }}>
+                        <label class="form-check-label" for="rehab_needed_{{ $opt }}">{{ $opt }}</label>
                     </div>
                 @endforeach
             </div>
+            <div id="nature-travaux-block" style="display:{{ $rehabNeeded === 'Oui' ? 'block' : 'none' }};">
+                <div class="small text-muted mb-2">Nature des travaux</div>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach($naturesTravaux as $nature)
+                        <div class="form-check">
+                            <input class="form-check-input nature-travaux" type="radio" name="rehabilitation" id="nature_{{ $loop->index }}"
+                                   value="{{ $nature }}" {{ $currentRehab === $nature ? 'checked' : '' }}>
+                            <label class="form-check-label" for="nature_{{ $loop->index }}">{{ $nature }}</label>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            <input type="hidden" name="rehabilitation" id="rehabilitation_non_input" value="Non"
+                   {{ $rehabNeeded === 'Non' ? '' : 'disabled' }}>
         </div>
         <div class="form-group mb-4">
             <h5 class="text-success mb-3">
