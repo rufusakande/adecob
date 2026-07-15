@@ -105,16 +105,26 @@
     $communes = $restrictedCommune
         ? array_filter([$userCommune])
         : ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
-    $secteurs = ['EDUCATION', 'SANTE', 'AGRICULTURE/ELEVAGE', 'MARCHE', 'ADMINISTRATION', 'CULTURE, SPORT, LOISIRS & TOURISME', 'EAU POTABLE', 'ASSAINISSEMENT'];
-    $types = [
-        'Latrines/douche', 'FPM (Forage)', 'AEV', 'PEA', 'Puits à Grand diamètre', 'Périmètre maraîcher', 'Retenue d\'eau', 'Dispensaire', 'Maternité', 'Incinérateur', 'Pharmacie', 'Logement', 'Magasin', 'Hangar', 'Cantine scolaire', 'Boutique', 'Hangar', 'Bloc administratif', 'Packing', 'Eclairage publique', 'Quai d\'embarquement', 'Clôture', 'Piste à bétail', 'Salle d\'alphabétisation', 'Maison des jeunes', 'Boucherie', 'Terrain de sport',
-        'Module de classes avec 1 classe', 'Module de classes avec 2 classe', 'Module de classes avec 3 classe', 'Module de classes avec 4 classe', 'Module de classes avec 1 classe + Bureau et magasin', 'Module de classes avec 2 classe + Bureau et magasin', 'Module de classes avec 3 classe + Bureau et magasin', 'Module de classes avec 4 classe + Bureau et magasin'
+    $secteurs = ['Education', 'Santé', 'Agriculture / Elevage', 'Marché à bétail', 'Administration', 'Eau potable', 'Assainissement', 'Culture/Sport/Loisirs', 'Tourisme', 'Autre'];
+    $typesBySecteur = [
+        'Education' => ['Module de 1 classe', 'Module de 2 classes', 'Module de 3 classes', 'Module de 4 classes', 'Module de 5 classes', 'Module + Bureau', 'Cantine scolaire', 'Magasin', 'Bloc administratif', 'Logement'],
+        'Santé' => ['Dispensaire', 'Maternité', 'Pharmacie', 'Incinérateur', 'Logement'],
+        'Eau potable' => ['Forage (FPM)', 'AEV', 'PEA', 'Puits à grand diamètre', 'Retenue d\'eau'],
+        'Agriculture / Elevage' => ['Périmètre maraîcher', 'Magasin', 'Hangar', 'Packing'],
+        'Assainissement' => ['Latrine 1 cabine', 'Latrine 2 cabines', 'Latrine 3 cabines', 'Latrine 4 cabines', 'Latrine 5 cabines', 'Latrine 6 cabines', 'Latrine 7 cabines', 'Latrine 8 cabines', 'Toilette', 'Dépotoir'],
+        'Marché à bétail' => ['Hangar', 'Boutique', 'Quai d\'embarquement', 'Boucherie'],
+        'Culture/Sport/Loisirs' => ['Maison des jeunes', 'Salle d\'alphabétisation', 'Terrain de sport'],
+        'Administration' => ['Bloc administratif', 'Logement'],
+        'Tourisme' => ['Autre (préciser)'],
+        'Autre' => ['Clôture', 'Piste à bétail', 'Eclairage public', 'Cimetière', 'Autre (préciser)'],
     ];
-    $materiaux = ['Précaire', 'Définitif'];
-    $etats = ['Fonctionnel', 'Partiellement fonctionnel', 'Non fonctionnel', 'En construction'];
-    $niveaux = ['Faible', 'Moyen', 'Élevé', 'Aucun'];
-    $modes = ['Affermage', 'Délégataire', 'Comité', 'REGIE', 'Mairie', 'Autres'];
-    $rehabs = ['Faible', 'Moyen', 'Élevé'];
+    $materiaux = ['Définitif', 'Semi-définitif', 'Précaire'];
+    $etats = ['Fonctionnel', 'Fonctionnel avec quelques défaillances', 'Partiellement fonctionnel', 'Non fonctionnel', 'Abandonné'];
+    $niveaux = ['Aucun', 'Faible', 'Moyen', 'Élevé', 'Très élevé', 'Ruine'];
+    $modes = ['Comité de gestion', 'Mairie', 'Régie', 'Affermage', 'Délégataire', 'Association', 'Privé', 'Communauté', 'Autre'];
+    $naturesTravaux = ['Réhabilitation légère', 'Réhabilitation moyenne', 'Réhabilitation lourde', 'Reconstruction'];
+    $currentRehab = old('rehabilitation', optional($infrastructure)->rehabilitation);
+    $rehabNeeded = $currentRehab && $currentRehab !== 'Non' ? 'Oui' : ($currentRehab === 'Non' ? 'Non' : '');
     $submitLabel = $submitLabel ?? ($isEdit ? 'Enregistrer les modifications' : 'Soumettre la fiche');
     $existingDate = data_get($infrastructure, 'date');
     $dateValue = old('date', $existingDate ? \Illuminate\Support\Carbon::parse($existingDate)->format('Y-m-d') : date('Y-m-d'));
@@ -308,32 +318,48 @@
         <div class="form-group mb-4">
             <label class="form-label">
                 <i class="fas fa-industry text-success me-1"></i>
-                Secteur/Domaine
+                Secteur / Domaine
             </label>
+            @php $currentSecteur = old('secteur_domaine', optional($infrastructure)->secteur_domaine); $isSecteurAutre = $currentSecteur && !in_array($currentSecteur, $secteurs, true); @endphp
             <div class="d-flex flex-wrap gap-3">
                 @foreach($secteurs as $secteur)
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="secteur_domaine" id="secteur_{{ $loop->index }}"
-                               value="{{ $secteur }}" {{ old('secteur_domaine', optional($infrastructure)->secteur_domaine) === $secteur ? 'checked' : '' }}>
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_{{ $loop->index }}"
+                               value="{{ $secteur }}" data-secteur="{{ $secteur }}"
+                               {{ $currentSecteur === $secteur || ($isSecteurAutre && $secteur === 'Autre') ? 'checked' : '' }}>
                         <label class="form-check-label" for="secteur_{{ $loop->index }}">{{ $secteur }}</label>
                     </div>
                 @endforeach
             </div>
+            <input type="text" id="secteur_autre_preciser" class="form-control mt-2" placeholder="Préciser le secteur"
+                   value="{{ $isSecteurAutre ? $currentSecteur : '' }}" style="display:{{ $isSecteurAutre ? 'block' : 'none' }};max-width:400px;">
         </div>
         <div class="form-group mb-4">
             <label class="form-label">
                 <i class="fas fa-tools text-success me-1"></i>
                 Type d'infrastructure
             </label>
-            <div class="d-flex flex-wrap gap-3">
-                @foreach($types as $type)
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="type_infrastructure" id="type_{{ $loop->index }}"
-                               value="{{ $type }}" {{ old('type_infrastructure', optional($infrastructure)->type_infrastructure) === $type ? 'checked' : '' }}>
-                        <label class="form-check-label" for="type_{{ $loop->index }}">{{ $type }}</label>
+            @php $currentType = old('type_infrastructure', optional($infrastructure)->type_infrastructure); @endphp
+            <div id="types-container">
+                @foreach($typesBySecteur as $sect => $typesGroup)
+                    <div class="type-group mb-3" data-secteur="{{ $sect }}" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">{{ $sect }}</div>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach($typesGroup as $type)
+                                <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_{{ \Illuminate\Support\Str::slug($sect.'_'.$type) }}"
+                                           value="{{ $type }}" {{ $currentType === $type ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="type_{{ \Illuminate\Support\Str::slug($sect.'_'.$type) }}">{{ $type }}</label>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 @endforeach
+                <div id="type-empty-msg" class="text-muted small">Sélectionnez d'abord un secteur pour afficher les types disponibles.</div>
             </div>
+            <input type="text" id="type_autre_preciser" class="form-control mt-2" placeholder="Préciser le type d'infrastructure"
+                   value="" style="display:none;max-width:400px;">
         </div>
         <div class="form-group mb-4">
             <label for="nom_infrastructure" class="form-label">
@@ -470,17 +496,31 @@
         <div class="form-group mb-4">
             <label class="form-label">
                 <i class="fas fa-hammer text-success me-1"></i>
-                Réhabilitation
+                Réhabilitation nécessaire ?
             </label>
-            <div class="d-flex flex-wrap gap-3">
-                @foreach($rehabs as $rehab)
+            <div class="d-flex flex-wrap gap-3 mb-2">
+                @foreach(['Oui','Non'] as $opt)
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="rehabilitation" id="rehab_{{ $loop->index }}"
-                               value="{{ $rehab }}" {{ old('rehabilitation', optional($infrastructure)->rehabilitation) === $rehab ? 'checked' : '' }}>
-                        <label class="form-check-label" for="rehab_{{ $loop->index }}">{{ $rehab }}</label>
+                        <input class="form-check-input rehab-needed" type="radio" name="rehab_needed" id="rehab_needed_{{ $opt }}"
+                               value="{{ $opt }}" {{ $rehabNeeded === $opt ? 'checked' : '' }}>
+                        <label class="form-check-label" for="rehab_needed_{{ $opt }}">{{ $opt }}</label>
                     </div>
                 @endforeach
             </div>
+            <div id="nature-travaux-block" style="display:{{ $rehabNeeded === 'Oui' ? 'block' : 'none' }};">
+                <div class="small text-muted mb-2">Nature des travaux</div>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach($naturesTravaux as $nature)
+                        <div class="form-check">
+                            <input class="form-check-input nature-travaux" type="radio" name="rehabilitation" id="nature_{{ $loop->index }}"
+                                   value="{{ $nature }}" {{ $currentRehab === $nature ? 'checked' : '' }}>
+                            <label class="form-check-label" for="nature_{{ $loop->index }}">{{ $nature }}</label>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            <input type="hidden" name="rehabilitation" id="rehabilitation_non_input" value="Non"
+                   {{ $rehabNeeded === 'Non' ? '' : 'disabled' }}>
         </div>
         <div class="form-group mb-4">
             <h5 class="text-success mb-3">
@@ -635,6 +675,79 @@
             });
         }
     }
+
+    // ==== Filtrage des types par secteur + "Autre à préciser" ====
+    function updateTypesBySecteur() {
+        const checked = document.querySelector('input.secteur-radio:checked');
+        const secteur = checked ? checked.dataset.secteur : null;
+        const groups = document.querySelectorAll('#types-container .type-group');
+        let anyVisible = false;
+        groups.forEach(g => {
+            const show = g.dataset.secteur === secteur;
+            g.style.display = show ? 'block' : 'none';
+            if (show) anyVisible = true;
+            if (!show) g.querySelectorAll('input.type-radio:checked').forEach(i => i.checked = false);
+        });
+        const emptyMsg = document.getElementById('type-empty-msg');
+        if (emptyMsg) emptyMsg.style.display = anyVisible ? 'none' : 'block';
+
+        // Autre secteur : afficher input préciser
+        const secteurAutreInput = document.getElementById('secteur_autre_preciser');
+        if (secteurAutreInput) secteurAutreInput.style.display = (secteur === 'Autre') ? 'block' : 'none';
+
+        // Type "Autre (préciser)" : afficher input préciser
+        toggleTypeAutreInput();
+    }
+    function toggleTypeAutreInput() {
+        const typeChecked = document.querySelector('input.type-radio:checked');
+        const input = document.getElementById('type_autre_preciser');
+        if (!input) return;
+        const isAutre = typeChecked && typeChecked.value === 'Autre (préciser)';
+        input.style.display = isAutre ? 'block' : 'none';
+    }
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('input.secteur-radio')) updateTypesBySecteur();
+        if (e.target.matches('input.type-radio')) toggleTypeAutreInput();
+        if (e.target.matches('input.rehab-needed')) toggleRehabNature();
+    });
+    function toggleRehabNature() {
+        const val = document.querySelector('input.rehab-needed:checked')?.value;
+        const block = document.getElementById('nature-travaux-block');
+        const nonInput = document.getElementById('rehabilitation_non_input');
+        if (val === 'Oui') {
+            block.style.display = 'block';
+            nonInput.disabled = true;
+        } else if (val === 'Non') {
+            block.style.display = 'none';
+            document.querySelectorAll('input.nature-travaux:checked').forEach(i => i.checked = false);
+            nonInput.disabled = false;
+        } else {
+            block.style.display = 'none';
+            nonInput.disabled = true;
+        }
+    }
+
+    // Sur soumission : injecter les valeurs "Autre" personnalisées
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTypesBySecteur();
+        toggleRehabNature();
+        const form = document.getElementById('infraForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const secteurChecked = document.querySelector('input.secteur-radio:checked');
+                const secteurAutre = document.getElementById('secteur_autre_preciser');
+                if (secteurChecked && secteurChecked.value === 'Autre' && secteurAutre && secteurAutre.value.trim()) {
+                    secteurChecked.value = secteurAutre.value.trim();
+                }
+                const typeChecked = document.querySelector('input.type-radio:checked');
+                const typeAutre = document.getElementById('type_autre_preciser');
+                if (typeChecked && typeChecked.value === 'Autre (préciser)' && typeAutre && typeAutre.value.trim()) {
+                    typeChecked.value = typeAutre.value.trim();
+                }
+            });
+        }
+    });
+
 
     function syncStepper(current) {
         document.querySelectorAll('#infraStepper .st-item').forEach(el => {
