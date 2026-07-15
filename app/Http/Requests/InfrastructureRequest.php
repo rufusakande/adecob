@@ -43,7 +43,7 @@ class InfrastructureRequest extends FormRequest
             'defectuosites_relevees' => 'nullable|string|max:2000',
             'mesures_proposees' => 'nullable|string|max:2000',
             'observation_generale' => 'nullable|string|max:2000',
-            'rehabilitation' => ['nullable', 'string', 'in:Faible,Moyen,Élevé'],
+            'rehabilitation' => ['nullable', 'string', 'in:Non,Réhabilitation légère,Réhabilitation moyenne,Réhabilitation lourde,Reconstruction,Faible,Moyen,Élevé'],
             'photo1' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
             'photo2' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
             'photo3' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
