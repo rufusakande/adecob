@@ -676,6 +676,79 @@
         }
     }
 
+    // ==== Filtrage des types par secteur + "Autre à préciser" ====
+    function updateTypesBySecteur() {
+        const checked = document.querySelector('input.secteur-radio:checked');
+        const secteur = checked ? checked.dataset.secteur : null;
+        const groups = document.querySelectorAll('#types-container .type-group');
+        let anyVisible = false;
+        groups.forEach(g => {
+            const show = g.dataset.secteur === secteur;
+            g.style.display = show ? 'block' : 'none';
+            if (show) anyVisible = true;
+            if (!show) g.querySelectorAll('input.type-radio:checked').forEach(i => i.checked = false);
+        });
+        const emptyMsg = document.getElementById('type-empty-msg');
+        if (emptyMsg) emptyMsg.style.display = anyVisible ? 'none' : 'block';
+
+        // Autre secteur : afficher input préciser
+        const secteurAutreInput = document.getElementById('secteur_autre_preciser');
+        if (secteurAutreInput) secteurAutreInput.style.display = (secteur === 'Autre') ? 'block' : 'none';
+
+        // Type "Autre (préciser)" : afficher input préciser
+        toggleTypeAutreInput();
+    }
+    function toggleTypeAutreInput() {
+        const typeChecked = document.querySelector('input.type-radio:checked');
+        const input = document.getElementById('type_autre_preciser');
+        if (!input) return;
+        const isAutre = typeChecked && typeChecked.value === 'Autre (préciser)';
+        input.style.display = isAutre ? 'block' : 'none';
+    }
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('input.secteur-radio')) updateTypesBySecteur();
+        if (e.target.matches('input.type-radio')) toggleTypeAutreInput();
+        if (e.target.matches('input.rehab-needed')) toggleRehabNature();
+    });
+    function toggleRehabNature() {
+        const val = document.querySelector('input.rehab-needed:checked')?.value;
+        const block = document.getElementById('nature-travaux-block');
+        const nonInput = document.getElementById('rehabilitation_non_input');
+        if (val === 'Oui') {
+            block.style.display = 'block';
+            nonInput.disabled = true;
+        } else if (val === 'Non') {
+            block.style.display = 'none';
+            document.querySelectorAll('input.nature-travaux:checked').forEach(i => i.checked = false);
+            nonInput.disabled = false;
+        } else {
+            block.style.display = 'none';
+            nonInput.disabled = true;
+        }
+    }
+
+    // Sur soumission : injecter les valeurs "Autre" personnalisées
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTypesBySecteur();
+        toggleRehabNature();
+        const form = document.getElementById('infraForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const secteurChecked = document.querySelector('input.secteur-radio:checked');
+                const secteurAutre = document.getElementById('secteur_autre_preciser');
+                if (secteurChecked && secteurChecked.value === 'Autre' && secteurAutre && secteurAutre.value.trim()) {
+                    secteurChecked.value = secteurAutre.value.trim();
+                }
+                const typeChecked = document.querySelector('input.type-radio:checked');
+                const typeAutre = document.getElementById('type_autre_preciser');
+                if (typeChecked && typeChecked.value === 'Autre (préciser)' && typeAutre && typeAutre.value.trim()) {
+                    typeChecked.value = typeAutre.value.trim();
+                }
+            });
+        }
+    });
+
+
     function syncStepper(current) {
         document.querySelectorAll('#infraStepper .st-item').forEach(el => {
             const n = parseInt(el.dataset.step, 10);
