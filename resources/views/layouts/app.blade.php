@@ -70,24 +70,51 @@
             background-color: #0b6623;
             z-index: 1020;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            padding: 0.35rem 0;
+        }
+
+        .fixed-navbar .container {
+            align-items: flex-start;
         }
 
         .navbar-brand {
             font-weight: 700;
             color: #FFD100 !important;
-            font-size: 1.3rem;
+            font-size: clamp(1rem, 1.8vw, 1.3rem);
             letter-spacing: 0.5px;
+            line-height: 1.2;
+            max-width: 100%;
+        }
+
+        .fixed-navbar .navbar-collapse {
+            flex-grow: 1;
+            justify-content: flex-end;
+        }
+
+        .fixed-navbar .navbar-nav {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.2rem 0.35rem;
+            width: 100%;
+        }
+
+        .fixed-navbar .nav-item {
+            display: flex;
+            align-items: center;
         }
 
         .nav-link {
             color: #fff !important;
             font-weight: 500;
-            padding: 0.5rem 1rem !important;
+            padding: 0.5rem 0.9rem !important;
             transition: background 0.3s ease, border-radius 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
             line-height: 1;
+            white-space: nowrap;
         }
 
         .nav-link:hover, .nav-item.dropdown:hover .nav-link {
@@ -186,9 +213,27 @@
         }
 
         /* Responsive adjustments */
+        @media (max-width: 991.98px) {
+            .fixed-navbar .navbar-collapse {
+                margin-top: 0.6rem;
+                background: rgba(11, 102, 35, 0.97);
+                border-radius: 0.75rem;
+                padding: 0.5rem;
+            }
+
+            .fixed-navbar .navbar-nav {
+                justify-content: flex-start;
+                gap: 0.2rem;
+            }
+
+            .fixed-navbar .nav-link {
+                width: 100%;
+            }
+        }
+
         @media (max-width: 768px) {
             .navbar-brand {
-                font-size: 1.1rem;
+                font-size: 1.05rem;
             }
 
             .fixed-header .text-muted {
@@ -223,13 +268,11 @@
                 <!-- Info + Contact (desktop) -->
                 <div class="col-md-6 d-none d-md-flex justify-content-end align-items-center gap-3">
                     <div class="d-flex align-items-center text-muted small">
-                        <i class="bi bi-building me-2"></i>
                         <div>
                             <div>Siège: <strong>N'DALI</strong></div>
                         </div>
                     </div>
                     <div class="d-flex align-items-center text-muted small">
-                        <i class="bi bi-envelope-fill me-2"></i>
                         <div>
                             <div>Mail : <strong>secretariatadecob@yahoo.fr</strong></div>
                         </div>
@@ -244,25 +287,15 @@
 
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg fixed-navbar">
-        <br>
-        <br>
-        <br>
         <div class="container">
-            <a class="navbar-brand" href="{{ url('/') }}">ADECOB Infrastructure Plannification</a>
+            <a class="navbar-brand me-3" href="{{ url('/') }}">ADECOB Infrastructure Plannification</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto d-flex align-items-center">
-                    <!-- Icône Facebook -->
-                    <li class="nav-item me-3">
-                        <a class="nav-link social-icon" href="https://www.facebook.com/adebob" target="_blank" rel="noopener">
-                            <i class="bi bi-facebook"></i>
-                        </a>
-                    </li>
-
+                <ul class="navbar-nav ms-auto">
                     @guest
                         <!-- Guest Links -->
                         <li class="nav-item">
@@ -279,7 +312,6 @@
 
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle" aria-hidden="true"></i>
                                 {{ Auth::user()->prenom ?? '' }} {{ Auth::user()->name }}
                                 @php
                                     $roleLabels = [
@@ -295,23 +327,17 @@
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="dropdown-item">
-                                            <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Déconnexion
-                                        </button>
+                                        <button type="submit" class="dropdown-item">Déconnexion</button>
                                     </form>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 @if(auth()->user()->isSuperAdmin() || auth()->user()->isCommuneAdmin())
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('infrastructures.planned') }}">
-                                        <i class="bi bi-calendar-check"></i> Infrastructures planifiées
-                                    </a>
+                                    <a class="dropdown-item" href="{{ route('infrastructures.planned') }}">Infrastructures planifiées</a>
                                 </li>
                                 @endif
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('mairie-agent.dashboard') }}">
-                                        <i class="bi bi-speedometer2"></i> Tableau de bord
-                                    </a>
+                                    <a class="dropdown-item" href="{{ route('mairie-agent.dashboard') }}">Tableau de bord</a>
                                 </li>
                                 @if(auth()->user()->isSuperAdmin())
                                 <li><hr class="dropdown-divider"></li>
@@ -319,18 +345,13 @@
                                     <span class="dropdown-header fw-bold">Administration</span>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('admin.communes.index') }}">
-                                        <i class="bi bi-building"></i> Gestion des communes
-                                    </a>
+                                    <a class="dropdown-item" href="{{ route('admin.communes.index') }}">Gestion des communes</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('admin.users.index') }}">
-                                        <i class="bi bi-people"></i> Gestion des utilisateurs
-                                    </a>
+                                    <a class="dropdown-item" href="{{ route('admin.users.index') }}">Gestion des utilisateurs</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}">
-                                        <i class="bi bi-person-plus"></i> Inscriptions en attente 
+                                    <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}">Inscriptions en attente 
                                         <span class="badge bg-warning text-dark">{{ \App\Models\User::where('is_approved', false)->count() }}</span>
                                     </a>
                                 </li>
@@ -340,20 +361,15 @@
                                     <span class="dropdown-header fw-bold">Gestion Commune</span>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}">
-                                        <i class="bi bi-person-plus"></i> Inscriptions en attente 
+                                    <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}">Inscriptions en attente 
                                         <span class="badge bg-warning text-dark">{{ \App\Models\User::where('is_approved', false)->count() }}</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('commune-admin.dashboard') }}">
-                                        <i class="bi bi-speedometer2"></i> Tableau de bord commune
-                                    </a>
+                                    <a class="dropdown-item" href="{{ route('commune-admin.dashboard') }}">Tableau de bord commune</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('commune-admin.access-code.edit') }}">
-                                        <i class="bi bi-key"></i> Code d'accès
-                                    </a>
+                                    <a class="dropdown-item" href="{{ route('commune-admin.access-code.edit') }}">Code d'accès</a>
                                 </li>
                                 @endif
                             </ul>

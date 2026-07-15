@@ -13,49 +13,49 @@
 
 @if($u->isSuperAdmin())
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.dashboard') }}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Tableau de bord</a>
+        <a class="nav-link" href="{{ route('admin.dashboard') }}">Tableau de bord</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.communes.index') }}"><i class="bi bi-building" aria-hidden="true"></i> Communes</a>
+        <a class="nav-link" href="{{ route('admin.communes.index') }}">Communes</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.users.index') }}"><i class="bi bi-people" aria-hidden="true"></i> Utilisateurs</a>
+        <a class="nav-link" href="{{ route('admin.users.index') }}">Utilisateurs</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ url('/infrastructures') }}"><i class="bi bi-list-ul" aria-hidden="true"></i> Infrastructures</a>
+        <a class="nav-link" href="{{ url('/infrastructures') }}">Infrastructures</a>
     </li>
 @elseif($u->isCommuneAdmin())
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('commune-admin.dashboard') }}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Tableau de bord</a>
+        <a class="nav-link" href="{{ route('commune-admin.dashboard') }}">Tableau de bord</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ url('/infrastructures') }}"><i class="bi bi-list-ul" aria-hidden="true"></i> Infrastructures</a>
+        <a class="nav-link" href="{{ url('/infrastructures') }}">Infrastructures</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('infrastructures.planned') }}"><i class="bi bi-calendar-check" aria-hidden="true"></i> Infrastructures planifiées</a>
+        <a class="nav-link" href="{{ route('infrastructures.planned') }}">Infrastructures planifiées</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('mairie-agent.dashboard') }}"><i class="bi bi-bullseye" aria-hidden="true"></i> Planification</a>
+        <a class="nav-link" href="{{ route('mairie-agent.dashboard') }}">Planification</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('commune-admin.access-code.edit') }}"><i class="bi bi-key" aria-hidden="true"></i> Code d'accès</a>
+        <a class="nav-link" href="{{ route('commune-admin.access-code.edit') }}">Code d'accès</a>
     </li>
 @elseif($u->isAgent())
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('mairie-agent.dashboard') }}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Mon tableau</a>
+        <a class="nav-link" href="{{ route('mairie-agent.dashboard') }}">Mon tableau</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ url('/infrastructures') }}"><i class="bi bi-list-ul" aria-hidden="true"></i> Mes infrastructures</a>
+        <a class="nav-link" href="{{ url('/infrastructures') }}">Mes infrastructures</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('infrastructures.create') }}"><i class="bi bi-plus-circle" aria-hidden="true"></i> Ajouter</a>
+        <a class="nav-link" href="{{ route('infrastructures.create') }}">Ajouter</a>
     </li>
 @endif
 
 @if($u->isSuperAdmin() || $u->isCommuneAdmin())
     <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.pending-registrations') }}">
-            <i class="bi bi-person-plus" aria-hidden="true"></i> Inscriptions
+            Inscriptions
             @if($pendingCount > 0)
                 <span class="badge bg-warning text-dark ms-1">{{ $pendingCount }}</span>
             @endif
