@@ -102,9 +102,19 @@
         $storedArrondissements = json_decode($storedArrondissements, true) ?: [];
     }
     $currentArrondissements = old('arrondissement', is_array($storedArrondissements) ? $storedArrondissements : []);
+    $communeArrondissementsMap = [
+        'Parakou' => ['1er arrondissement', '2e arrondissement', '3e arrondissement'],
+        'Tchaourou' => ['Beterou', 'Sanson', 'Tchatchou', 'Kika', 'Tchaourou', 'Goro', 'Alafiarou'],
+        'N\'Dali' => ['Bori', 'Ouenou', 'N\'Dali', 'Gbegourou', 'Sirarou'],
+        'Nikki' => ['Biro', 'Gnonkourali', 'Serekale', 'Nikki', 'Ouenou', 'Tasso', 'Suya'],
+        'Bembèrèkè' => ['Beroubouya', 'Gamia', 'Bouanri', 'Bembèrèkè', 'Ina'],
+        'Kalalé' => ['Dunkassa', 'Peonga', 'Kalalé', 'Basso', 'Derassi', 'Bouka'],
+        'Sinendé' => ['Sekere', 'Sinendé', 'Sikki', 'Do_Boure'],
+        'Pèrèrè' => ['Sontou', 'Perere', 'Kpane', 'Pebie', 'Gninsy', 'Guinagourou'],
+    ];
     $communes = $restrictedCommune
-        ? array_filter([$userCommune])
-        : ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
+        ? array_values(array_filter([$userCommune]))
+        : array_keys($communeArrondissementsMap);
     $secteurs = ['Education', 'Santé', 'Agriculture / Elevage', 'Marché à bétail', 'Administration', 'Eau potable', 'Assainissement', 'Culture/Sport/Loisirs', 'Tourisme', 'Autre'];
     $typesBySecteur = [
         'Education' => ['Module de 1 classe', 'Module de 2 classes', 'Module de 3 classes', 'Module de 4 classes', 'Module de 5 classes', 'Module + Bureau', 'Cantine scolaire', 'Magasin', 'Bloc administratif', 'Logement'],
@@ -199,6 +209,13 @@
                 <i class="fas fa-city text-success me-1"></i>
                 Commune
             </label>
+            @if($restrictedCommune)
+                <div class="alert alert-light border py-2 px-3 mb-3">
+                    <div class="fw-semibold text-success"><i class="fas fa-lock me-1"></i> Commune attribuée</div>
+                    <div class="small text-muted">La commune suivante a été attribuée à votre compte et sera utilisée automatiquement pour cette saisie.</div>
+                    <div class="fw-bold mt-1">{{ $userCommune }}</div>
+                </div>
+            @endif
             <div class="d-flex flex-wrap gap-3">
                 @foreach($communes as $commune)
                     <div class="form-check">
@@ -645,35 +662,68 @@
 </form>
 
 <script>
-    const arrondissements = {
-        'Parakou': ['1er arrondissement', '2e arrondissement', '3e arrondissement'],
-        'Tchaourou': ['Beterou', 'Sanson', 'Tchatchou', 'Kika', 'Tchaourou', 'Goro', 'Alafiarou'],
-        'N\'Dali': ['Bori', 'Ouenou', 'N\'Dali', 'Gbegourou', 'Sirarou'],
-        'Nikki': ['Biro', 'Gnonkourali', 'Serekale', 'Nikki', 'Ouenou', 'Tasso', 'Suya'],
-        'Bembèrèkè': ['Beroubouya', 'Gamia', 'Bouanri', 'Bembèrèkè', 'Ina'],
-        'Kalalé': ['Dunkassa', 'Peonga', 'Kalalé', 'Basso', 'Derassi', 'Bouka'],
-        'Sinendé': ['Sekere', 'Sinendé', 'Sikki', 'Do_Boure'],
-        'Pèrèrè': ['Sontou', 'Perere', 'Kpane', 'Pebie', 'Gninsy', 'Guinagourou'],
-    };
+    const arrondissements = @json($communeArrondissementsMap);
     const previousArrondissements = @json($currentArrondissements);
 
+    function normalizeCommuneName(value) {
+        return (value || '')
+            .toString()
+            .trim()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, ' ')
+            .toLowerCase();
+    }
+
+    function getSelectedCommune() {
+        const checked = document.querySelector('input[name="commune"]:checked');
+        if (checked && checked.value) {
+            return checked.value;
+        }
+
+        const hidden = document.querySelector('input[name="commune"][type="hidden"]');
+        if (hidden && hidden.value) {
+            return hidden.value;
+        }
+
+        return null;
+    }
+
+    function getArrondissementsForCommune(commune) {
+        if (!commune) return [];
+
+        if (arrondissements[commune]) {
+            return arrondissements[commune];
+        }
+
+        const normalizedTarget = normalizeCommuneName(commune);
+        const matchingEntry = Object.entries(arrondissements).find(([name]) => normalizeCommuneName(name) === normalizedTarget);
+        return matchingEntry ? matchingEntry[1] : [];
+    }
+
     function updateArrondissements() {
-        const selectedCommune = document.querySelector('input[name="commune"]:checked')?.value;
+        const selectedCommune = getSelectedCommune();
         const arrContainer = document.getElementById('arrondissements');
         if (!selectedCommune || !arrContainer) return;
+
         arrContainer.innerHTML = '';
-        if (arrondissements[selectedCommune]) {
-            arrondissements[selectedCommune].forEach(arr => {
-                const div = document.createElement('div');
-                div.className = 'form-check form-check-inline';
-                const isChecked = previousArrondissements.includes(arr) ? 'checked' : '';
-                div.innerHTML = `
-                    <input class="form-check-input" type="checkbox" name="arrondissement[]" id="arr_${arr}" value="${arr}" ${isChecked}>
-                    <label class="form-check-label" for="arr_${arr}">${arr}</label>
-                `;
-                arrContainer.appendChild(div);
-            });
+        const communeArrondissements = getArrondissementsForCommune(selectedCommune);
+
+        if (communeArrondissements.length === 0) {
+            arrContainer.innerHTML = '<div class="text-muted small">Aucun arrondissement n\'est disponible pour cette commune.</div>';
+            return;
         }
+
+        communeArrondissements.forEach(arr => {
+            const div = document.createElement('div');
+            div.className = 'form-check form-check-inline';
+            const isChecked = previousArrondissements.includes(arr) ? 'checked' : '';
+            div.innerHTML = `
+                <input class="form-check-input" type="checkbox" name="arrondissement[]" id="arr_${arr}" value="${arr}" ${isChecked}>
+                <label class="form-check-label" for="arr_${arr}">${arr}</label>
+            `;
+            arrContainer.appendChild(div);
+        });
     }
 
     // ==== Filtrage des types par secteur + "Autre à préciser" ====
@@ -1160,7 +1210,11 @@
     })();
 
     document.addEventListener('DOMContentLoaded', function() {
-        const checkedCommune = document.querySelector('input[name="commune"]:checked');
+        document.querySelectorAll('input[name="commune"]').forEach(input => {
+            input.addEventListener('change', updateArrondissements);
+        });
+
+        const checkedCommune = getSelectedCommune();
         if (checkedCommune) {
             updateArrondissements();
         }

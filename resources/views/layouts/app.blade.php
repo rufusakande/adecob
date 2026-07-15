@@ -12,7 +12,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <!-- Auth Enhancements CSS -->
     <link rel="stylesheet" href="{{ asset('css/auth-enhancements.css') }}">
@@ -81,6 +84,10 @@
             font-weight: 500;
             padding: 0.5rem 1rem !important;
             transition: background 0.3s ease, border-radius 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            line-height: 1;
         }
 
         .nav-link:hover, .nav-item.dropdown:hover .nav-link {
@@ -156,6 +163,21 @@
             font-size: 1.3rem;
             margin: 0 8px;
             transition: transform 0.3s ease, color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fixed-header .bi,
+        .fixed-header .fa,
+        .fixed-header .fas,
+        .fixed-navbar .bi,
+        .fixed-navbar .fa,
+        .fixed-navbar .fas {
+            display: inline-block;
+            min-width: 1.1em;
+            text-align: center;
+            line-height: 1;
         }
 
         .social-icon:hover {
@@ -257,7 +279,7 @@
 
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle"></i>
+                                <i class="bi bi-person-circle" aria-hidden="true"></i>
                                 {{ Auth::user()->prenom ?? '' }} {{ Auth::user()->name }}
                                 @php
                                     $roleLabels = [
@@ -274,16 +296,18 @@
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <button type="submit" class="dropdown-item">
-                                            <i class="bi bi-box-arrow-right"></i> Déconnexion
+                                            <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Déconnexion
                                         </button>
                                     </form>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
+                                @if(auth()->user()->isSuperAdmin() || auth()->user()->isCommuneAdmin())
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('mairie-agent.form') }}">
-                                        <i class="bi bi-file-earmark-text"></i> Formulaire Mairie
+                                    <a class="dropdown-item" href="{{ route('infrastructures.planned') }}">
+                                        <i class="bi bi-calendar-check"></i> Infrastructures planifiées
                                     </a>
                                 </li>
+                                @endif
                                 <li>
                                     <a class="dropdown-item" href="{{ route('mairie-agent.dashboard') }}">
                                         <i class="bi bi-speedometer2"></i> Tableau de bord
