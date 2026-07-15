@@ -318,32 +318,48 @@
         <div class="form-group mb-4">
             <label class="form-label">
                 <i class="fas fa-industry text-success me-1"></i>
-                Secteur/Domaine
+                Secteur / Domaine
             </label>
+            @php $currentSecteur = old('secteur_domaine', optional($infrastructure)->secteur_domaine); $isSecteurAutre = $currentSecteur && !in_array($currentSecteur, $secteurs, true); @endphp
             <div class="d-flex flex-wrap gap-3">
                 @foreach($secteurs as $secteur)
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="secteur_domaine" id="secteur_{{ $loop->index }}"
-                               value="{{ $secteur }}" {{ old('secteur_domaine', optional($infrastructure)->secteur_domaine) === $secteur ? 'checked' : '' }}>
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_{{ $loop->index }}"
+                               value="{{ $secteur }}" data-secteur="{{ $secteur }}"
+                               {{ $currentSecteur === $secteur || ($isSecteurAutre && $secteur === 'Autre') ? 'checked' : '' }}>
                         <label class="form-check-label" for="secteur_{{ $loop->index }}">{{ $secteur }}</label>
                     </div>
                 @endforeach
             </div>
+            <input type="text" id="secteur_autre_preciser" class="form-control mt-2" placeholder="Préciser le secteur"
+                   value="{{ $isSecteurAutre ? $currentSecteur : '' }}" style="display:{{ $isSecteurAutre ? 'block' : 'none' }};max-width:400px;">
         </div>
         <div class="form-group mb-4">
             <label class="form-label">
                 <i class="fas fa-tools text-success me-1"></i>
                 Type d'infrastructure
             </label>
-            <div class="d-flex flex-wrap gap-3">
-                @foreach($types as $type)
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="type_infrastructure" id="type_{{ $loop->index }}"
-                               value="{{ $type }}" {{ old('type_infrastructure', optional($infrastructure)->type_infrastructure) === $type ? 'checked' : '' }}>
-                        <label class="form-check-label" for="type_{{ $loop->index }}">{{ $type }}</label>
+            @php $currentType = old('type_infrastructure', optional($infrastructure)->type_infrastructure); @endphp
+            <div id="types-container">
+                @foreach($typesBySecteur as $sect => $typesGroup)
+                    <div class="type-group mb-3" data-secteur="{{ $sect }}" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">{{ $sect }}</div>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach($typesGroup as $type)
+                                <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_{{ \Illuminate\Support\Str::slug($sect.'_'.$type) }}"
+                                           value="{{ $type }}" {{ $currentType === $type ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="type_{{ \Illuminate\Support\Str::slug($sect.'_'.$type) }}">{{ $type }}</label>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 @endforeach
+                <div id="type-empty-msg" class="text-muted small">Sélectionnez d'abord un secteur pour afficher les types disponibles.</div>
             </div>
+            <input type="text" id="type_autre_preciser" class="form-control mt-2" placeholder="Préciser le type d'infrastructure"
+                   value="" style="display:none;max-width:400px;">
         </div>
         <div class="form-group mb-4">
             <label for="nom_infrastructure" class="form-label">
