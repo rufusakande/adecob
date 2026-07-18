@@ -368,9 +368,7 @@
                                 <li>
                                     <a class="dropdown-item" href="{{ route('commune-admin.dashboard') }}">Tableau de bord commune</a>
                                 </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('commune-admin.access-code.edit') }}">Code d'accès</a>
-                                </li>
+
                                 @endif
                             </ul>
                         </li>
@@ -404,8 +402,27 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ asset('resources/js/form-validation.js') }}"></script>
+
     <script src="{{ asset('js/auth-enhancements.js') }}"></script>
+    @auth
+    <!-- Keep-alive ping to prevent session/CSRF timeout -->
+    <script>
+        setInterval(function() {
+            fetch("{{ route('ping') }}", {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.warn('Keep-alive ping failed.');
+                }
+            })
+            .catch(error => console.error('Keep-alive error:', error));
+        }, 120000); // Ping every 2 minutes
+    </script>
+    @endauth
     @stack('scripts')
 </body>
 </html>

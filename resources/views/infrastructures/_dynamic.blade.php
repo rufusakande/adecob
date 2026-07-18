@@ -1,10 +1,11 @@
 {{-- Zone dynamique rechargée en AJAX lors des filtrages --}}
 @php
     $priorityCards = [
-        'tres_urgent' => ['label' => 'Très Urgent', 'sub' => '(Score ≥ 4.2)', 'color' => 'danger', 'count' => $priorityStats['tres_urgent'] ?? 0],
-        'urgent'      => ['label' => 'Urgent',      'sub' => '(Score 3.0-4.19)', 'color' => 'warning', 'count' => $priorityStats['urgent'] ?? 0],
-        'moyenne'     => ['label' => 'Moyenne',     'sub' => '(Score 2.0-2.99)', 'color' => 'info',    'count' => $priorityStats['moyenne'] ?? 0],
-        'faible'      => ['label' => 'Faible Priorité', 'sub' => '(Score < 2.0)', 'color' => 'secondary', 'count' => $priorityStats['faible'] ?? 0],
+        'tres_urgent' => ['label' => 'Très Urgent', 'sub' => '(81 - 100)', 'color' => 'danger', 'count' => $priorityStats['tres_urgent'] ?? 0],
+        'urgent'      => ['label' => 'Urgent',      'sub' => '(61 - 80)', 'color' => 'warning', 'count' => $priorityStats['urgent'] ?? 0],
+        'moyenne'     => ['label' => 'Moyenne',     'sub' => '(41 - 60)', 'color' => 'info',    'count' => $priorityStats['moyenne'] ?? 0],
+        'faible'      => ['label' => 'Faible',      'sub' => '(21 - 40)', 'color' => 'secondary', 'count' => $priorityStats['faible'] ?? 0],
+        'bon_etat'    => ['label' => 'Bon État',    'sub' => '(0 - 20)',  'color' => 'success', 'count' => $priorityStats['bon_etat'] ?? 0],
     ];
     $baseParams = request()->except(['priority', 'page']);
 @endphp
@@ -91,10 +92,11 @@
                         $priorityClass = '';
                         $priorityLabel = 'N/A';
                         $priorityColor = 'secondary';
-                        if ($score >= 4.2) { $priorityClass = 'table-danger'; $priorityLabel = 'Très Urgent'; $priorityColor = 'danger'; }
-                        elseif ($score >= 3.0) { $priorityClass = 'table-warning'; $priorityLabel = 'Urgent'; $priorityColor = 'warning'; }
-                        elseif ($score >= 2.0) { $priorityClass = 'table-info'; $priorityLabel = 'Moyenne'; $priorityColor = 'info'; }
-                        elseif ($score > 0) { $priorityClass = 'table-secondary'; $priorityLabel = 'Faible'; $priorityColor = 'secondary'; }
+                        if ($score >= 81) { $priorityClass = 'table-danger'; $priorityLabel = 'Très Urgent'; $priorityColor = 'danger'; }
+                        elseif ($score >= 61) { $priorityClass = 'table-warning'; $priorityLabel = 'Urgent'; $priorityColor = 'warning'; }
+                        elseif ($score >= 41) { $priorityClass = 'table-info'; $priorityLabel = 'Moyenne'; $priorityColor = 'info'; }
+                        elseif ($score >= 21) { $priorityClass = 'table-secondary'; $priorityLabel = 'Faible'; $priorityColor = 'secondary'; }
+                        else { $priorityClass = 'table-success'; $priorityLabel = 'Bon État'; $priorityColor = 'success'; }
                         $rowClass = $isPlanned ? 'table-success' : $priorityClass;
                     @endphp
                     <tr class="{{ $rowClass }}">

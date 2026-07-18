@@ -55,11 +55,12 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'approved_at' => 'datetime',
-        'rejected_at' => 'datetime',
-        'password' => 'hashed',
-        'is_approved' => 'boolean',
-        'telephone' => 'encrypted',
+        'approved_at'       => 'datetime',
+        'rejected_at'       => 'datetime',
+        'role_changed_at'   => 'datetime',
+        'password'          => 'hashed',
+        'is_approved'       => 'boolean',
+        'telephone'         => 'encrypted',
     ];
 
     /**

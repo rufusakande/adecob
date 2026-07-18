@@ -12,7 +12,29 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->bind('path.public', function () {
+            // Par défaut, Laravel cherche le dossier 'public' dans le dossier racine du projet.
+            $default = base_path('public');
+            if (is_dir($default)) {
+                return $default;
+            }
+
+            // Sur hébergement partagé (ex: Hostinger), le dossier public est souvent 'public_html' au même niveau que le projet.
+            $parentDir = dirname(base_path());
+            $publicHtml = $parentDir . '/public_html';
+            if (is_dir($publicHtml)) {
+                return $publicHtml;
+            }
+
+            // Tente de trouver un dossier 'public' au niveau parent.
+            $parentPublic = $parentDir . '/public';
+            if (is_dir($parentPublic)) {
+                return $parentPublic;
+            }
+
+            // Fallback ultime : retourne le dossier racine du projet pour ne pas bloquer dompdf.
+            return base_path();
+        });
     }
 
     public function boot(): void

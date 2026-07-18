@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Commune;
 use App\Models\User;
 use App\Http\Controllers\Controller;
+use App\Notifications\RoleChanged;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class CommuneAdminController extends Controller
@@ -139,11 +141,40 @@ class CommuneAdminController extends Controller
                 ->with('error', "Les super-administrateurs ne peuvent pas être admins de commune.");
         }
 
+        $oldRole = $user->role;
+
         // Promotion : le commune_id reste inchangé (c'est sa commune d'inscription).
-        $user->role = 'commune_admin';
+        $user->role           = 'commune_admin';
+        $user->role_changed_at = now();
         $user->save();
 
+        // Mettre à jour le created_by de la commune.
+        $commune->update(['created_by' => $user->id]);
+
+        // Invalider les sessions si le rôle a réellement changé.
+        if ($oldRole !== 'commune_admin') {
+            // Régénérer le remember_token.
+            $user->forceFill(['remember_token' => \Illuminate\Support\Str::random(60)])->save();
+
+            // Supprimer les sessions DB si applicable.
+            if (config('session.driver') === 'database') {
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+            }
+
+            // Notifier l'utilisateur par email.
+            try {
+                $user->notify(new RoleChanged('commune_admin', $commune->name));
+            } catch (\Exception $e) {
+                \Log::warning('Notification RoleChanged (assignCommuneAdmin) échouée: ' . $e->getMessage(), [
+                    'user_id' => $user->id,
+                ]);
+            }
+        }
+
         return redirect()->route('admin.communes.index')
-            ->with('success', "{$user->prenom} {$user->name} est maintenant administrateur de « {$commune->name} ».");
+            ->with('success',
+                "✅ {$user->prenom} {$user->name} est maintenant administrateur de « {$commune->name} ». "
+                . "Sa session a été fermée et il a été notifié par email."
+            );
     }
 }

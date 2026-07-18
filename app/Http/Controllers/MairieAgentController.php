@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Commune;
 use App\Models\MairieAgentData;
 use App\Models\Infrastructure;
 use Illuminate\Support\Facades\DB;
@@ -33,18 +34,14 @@ class MairieAgentController extends Controller
     public function create($infrastructure_id = null)
     {
         $this->ensureAuthorizedRole();
-        $communes = ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
+        $communes = Commune::orderBy('name')->pluck('name')->toArray();
         $secteurs = ['EDUCATION', 'SANTE', 'AGRICULTURE/ELEVAGE', 'MARCHE', 'ADMINISTRATION', 'CULTURE, SPORT, LOISIRS & TOURISME', 'EAU POTABLE', 'ASSAINISSEMENT'];
-
-        
 
         $infrastructureData = [];
         $isEdit = false;
         $infrastructure = null;
 
         if ($infrastructure_id) {
-            \Log::info("Chargement des données MairieAgent pour infrastructure_id: $infrastructure_id");
-
             $data = MairieAgentData::where('infrastructure_id', $infrastructure_id)->first();
 
             if ($data) {
@@ -78,8 +75,8 @@ class MairieAgentController extends Controller
     {
         $this->ensureAuthorizedRole();
 
-        $communes = ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
-        $secteurs = ['Education', 'Santé', 'Infrastructures', 'Agriculture', 'Transport'];
+        $communes = Commune::orderBy('name')->pluck('name')->toArray();
+        $secteurs = ['EDUCATION', 'SANTE', 'AGRICULTURE/ELEVAGE', 'MARCHE', 'ADMINISTRATION', 'CULTURE, SPORT, LOISIRS & TOURISME', 'EAU POTABLE', 'ASSAINISSEMENT'];
 
         $record = MairieAgentData::findOrFail($id);
         $this->authorizeManage($record);
@@ -160,7 +157,7 @@ class MairieAgentController extends Controller
     {
         $this->ensureAuthorizedRole();
 
-        $communes = ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
+        $communes = Commune::orderBy('name')->pluck('name')->toArray();
         $secteurs = ['EDUCATION', 'SANTE', 'AGRICULTURE/ELEVAGE', 'MARCHE', 'ADMINISTRATION', 'CULTURE, SPORT, LOISIRS & TOURISME', 'EAU POTABLE', 'ASSAINISSEMENT'];
 
         $user = auth()->user();
@@ -219,20 +216,14 @@ class MairieAgentController extends Controller
         $infrastructuresWithPriority = $priorityQuery->select(
             'id', 'commune', 'secteur_domaine', 'type_infrastructure', 
             'etat_fonctionnement', 'niveau_degradation', 'rehabilitation'
-        )->selectRaw(
-            "CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END as note_fonctionnement,"
-            . "CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END as note_degradation,"
-            . "CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END as note_cout,"
-            . "((CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END * 0.40) + "
-            . "(CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END * 0.40) + "
-            . "(CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END * 0.20)) as score_priorite"
-        )->get();
+        )->selectRaw(\App\Models\Infrastructure::iprSql() . " as score_priorite")->get();
 
         $priorityStats = [
-            'tres_urgent' => $infrastructuresWithPriority->where('score_priorite', '>=', 4.2)->count(),
-            'urgent' => $infrastructuresWithPriority->whereBetween('score_priorite', [3.0, 4.19])->count(),
-            'moyenne' => $infrastructuresWithPriority->whereBetween('score_priorite', [2.0, 2.99])->count(),
-            'faible' => $infrastructuresWithPriority->where('score_priorite', '<', 2.0)->count(),
+            'tres_urgent' => $infrastructuresWithPriority->where('score_priorite', '>=', 81)->count(),
+            'urgent' => $infrastructuresWithPriority->whereBetween('score_priorite', [61, 80.99])->count(),
+            'moyenne' => $infrastructuresWithPriority->whereBetween('score_priorite', [41, 60.99])->count(),
+            'faible' => $infrastructuresWithPriority->whereBetween('score_priorite', [21, 40.99])->count(),
+            'bon_etat' => $infrastructuresWithPriority->where('score_priorite', '<', 21)->count(),
         ];
 
         // Statistiques générales filtrées (créer des requêtes indépendantes sans héritage)
@@ -360,7 +351,7 @@ class MairieAgentController extends Controller
             abort(403, 'Accès au monitoring réservé aux administrateurs.');
         }
 
-        $communes = ['Parakou', 'Tchaourou', 'N\'Dali', 'Nikki', 'Bembèrèkè', 'Kalalé', 'Sinendé', 'Pèrèrè'];
+        $communes = Commune::orderBy('name')->pluck('name')->toArray();
         $secteurs = ['EDUCATION', 'SANTE', 'AGRICULTURE/ELEVAGE', 'MARCHE', 'ADMINISTRATION', 'CULTURE, SPORT, LOISIRS & TOURISME', 'EAU POTABLE', 'ASSAINISSEMENT'];
 
         // Closures de scoping

@@ -26,6 +26,19 @@
                 </div>
             </div>
 
+            <!-- Message de succès (renvoi de code) -->
+            @if (session('message'))
+                <div class="success-message" role="alert">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <div>
+                        <strong>Code envoyé</strong>
+                        <p style="margin-top: 0.25rem; font-size: 0.875rem;">{{ session('message') }}</p>
+                    </div>
+                </div>
+            @endif
+
             <!-- Messages d'erreur -->
             @if ($errors->any())
                 <div class="error-message" role="alert">
@@ -85,6 +98,16 @@
                 </button>
             </form>
 
+            <!-- Demander à nouveau le code -->
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <form method="POST" action="{{ route('mfa.resend') }}" style="display: inline;">
+                    @csrf
+                    <button type="submit" class="btn-link" style="border: none; background: none; font-size: 0.875rem; cursor: pointer; text-decoration: underline;">
+                        Renvoyer un nouveau code par email
+                    </button>
+                </form>
+            </div>
+
             <!-- Aide -->
             <div style="background-color: var(--color-gray-50); border-left: 4px solid var(--color-info); padding: 1rem; border-radius: var(--radius-lg); margin-top: 1.5rem; font-size: 0.875rem;">
                 <strong style="color: var(--color-info);">💡 Conseils :</strong>
@@ -98,7 +121,7 @@
 
         <!-- Footer -->
         <div class="auth-footer">
-            <a href="{{ route('logout') }}" class="btn-link">Annuler et se déconnecter</a>
+            <a href="{{ route('logout') }}" class="btn-link" style="text-decoration: none;">Annuler et se déconnecter</a>
         </div>
     </div>
 </div>

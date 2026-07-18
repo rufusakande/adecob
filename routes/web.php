@@ -21,6 +21,10 @@ use App\Http\Controllers\Admin\CommuneAdminController;
 
 use Illuminate\Support\Facades\Auth;
 
+Route::get('/ping', function () {
+    return response()->json(['status' => 'OK']);
+})->middleware(['auth'])->name('ping');
+
 // Pages publiques (accessibles sans connexion)
 Route::get('/', [App\Http\Controllers\PublicController::class, 'landing'])->name('public.landing');
 Route::get('/infrastructures/public', [App\Http\Controllers\PublicController::class, 'infrastructures'])
@@ -39,7 +43,7 @@ Route::post('/register', [App\Http\Controllers\AuthController::class, 'register'
 Route::get('/login', [App\Http\Controllers\AuthController::class, 'showLoginForm'])->name('login.form');
 Route::post('/login', [App\Http\Controllers\AuthController::class, 'login'])
     ->middleware('throttle:login')->name('login');
-Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
 
 // MFA email pour comptes admin
 Route::middleware(['auth'])->group(function () {
@@ -170,7 +174,7 @@ Route::middleware(['auth', 'super.admin', 'mfa.verified'])->group(function () {
     Route::get('/admin/users', [App\Http\Controllers\Admin\UserManagementController::class, 'index'])->name('admin.users.index');
     Route::get('/admin/users/{user}/edit', [App\Http\Controllers\Admin\UserManagementController::class, 'edit'])->name('admin.users.edit');
     Route::put('/admin/users/{user}', [App\Http\Controllers\Admin\UserManagementController::class, 'update'])->name('admin.users.update');
-    Route::put('/admin/users/{user}/toggle-admin', [App\Http\Controllers\Admin\UserManagementController::class, 'toggleAdmin'])->name('admin.users.toggle-admin');
+    Route::put('/admin/users/{user}/toggle-admin', [App\Http\Controllers\Admin\UserManagementController::class, 'toggleSuperAdmin'])->name('admin.users.toggle-admin');
 
     // Routes pour la gestion des communes
     Route::resource('/admin/communes', CommuneAdminController::class, ['as' => 'admin']);

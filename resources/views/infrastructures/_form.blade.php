@@ -112,9 +112,13 @@
         'Sinendé' => ['Sekere', 'Sinendé', 'Sikki', 'Do_Boure'],
         'Pèrèrè' => ['Sontou', 'Perere', 'Kpane', 'Pebie', 'Gninsy', 'Guinagourou'],
     ];
+    // Liste des communes : priorité à la variable injectée par le contrôleur ($communeNames),
+    // avec fallback sur les clés du mapping local pour la rétrocompatibilité.
     $communes = $restrictedCommune
         ? array_values(array_filter([$userCommune]))
-        : array_keys($communeArrondissementsMap);
+        : (isset($communeNames) && count($communeNames) > 0
+            ? $communeNames
+            : array_keys($communeArrondissementsMap));
     $secteurs = ['Education', 'Santé', 'Agriculture / Elevage', 'Marché à bétail', 'Administration', 'Eau potable', 'Assainissement', 'Culture/Sport/Loisirs', 'Tourisme', 'Autre'];
     $typesBySecteur = [
         'Education' => ['Module de 1 classe', 'Module de 2 classes', 'Module de 3 classes', 'Module de 4 classes', 'Module de 5 classes', 'Module + Bureau', 'Cantine scolaire', 'Magasin', 'Bloc administratif', 'Logement'],

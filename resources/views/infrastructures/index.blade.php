@@ -19,7 +19,7 @@
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
             <i class="fas fa-check-circle me-2"></i>
-            {{ session('success') }}
+            {!! session('success') !!}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
@@ -27,6 +27,28 @@
         <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>
             {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if(session('import_errors'))
+        <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Erreurs lors de l'importation</h6>
+            <ul class="mb-0 small">
+                @foreach(session('import_errors') as $importError)
+                    <li>{{ $importError }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <h6 class="alert-heading"><i class="fas fa-times-circle me-2"></i>Erreurs</h6>
+            <ul class="mb-0 small">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
@@ -63,9 +85,11 @@
                     @endif
                 </a>
             @endif
+            @if(Auth::user()->isSuperAdmin())
             <button class="btn btn-danger d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="fas fa-file-import"></i> Importer
             </button>
+            @endif
             <a href="{{ route('infrastructures.create') }}" class="btn btn-success d-flex align-items-center gap-2">
                 <i class="fas fa-plus"></i> Nouveau
             </a>
@@ -458,37 +482,70 @@
 </div>
 @endif
 
-<!-- Modal d'import -->
+<!-- Modal d'import (Super Admin uniquement) -->
+@if(Auth::user()->isSuperAdmin())
 <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('infrastructures.import') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('infrastructures.import') }}" method="POST" enctype="multipart/form-data" id="importForm">
                 @csrf
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="importModalLabel">
                         <i class="fas fa-file-import me-2"></i>
-                        Importer des données
+                        Importer des infrastructures
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="file" class="form-label">Sélectionner un fichier</label>
+                        <label for="file" class="form-label fw-bold">Sélectionner un fichier Excel</label>
                         <input class="form-control" type="file" id="file" name="file" accept=".xlsx,.xls,.csv" required>
-                        <div class="form-text">Formats acceptés: Excel (.xlsx, .xls) ou CSV</div>
+                        <div class="form-text">Formats acceptés : Excel (.xlsx, .xls) ou CSV — Taille max : 20 Mo</div>
                     </div>
-                    
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="overwrite" name="overwrite">
-                        <label class="form-check-label" for="overwrite">
-                            <strong>Remplacer les données existantes</strong>
-                            <div class="text-muted small">Cette action supprimera toutes les données actuelles et les remplacera par celles du fichier importé</div>
-                        </label>
+
+                    <div class="alert alert-info border-0 rounded-3 py-2 px-3 small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Format attendu :</strong> La première ligne du fichier doit contenir les en-têtes
+                        (Date, Nom de l'enquêteur, Commune, Arrondissement, etc.).
+                        Les infrastructures importées seront automatiquement marquées comme <strong>validées</strong>.
+                    </div>
+
+                    <!-- Option d'écrasement -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="overwrite" name="overwrite" value="1"
+                                   onchange="toggleOverwriteWarning()">
+                            <label class="form-check-label fw-bold" for="overwrite">
+                                Écraser les données existantes
+                            </label>
+                        </div>
+                        <div id="overwriteWarning" class="alert alert-danger border-0 rounded-3 py-2 px-3 mt-2 small d-none">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Attention :</strong> Toutes les infrastructures existantes seront
+                            <strong>supprimées définitivement</strong> avant l'importation du nouveau fichier.
+                            Cette action est irréversible.
+                        </div>
+                        <small class="form-text text-muted">
+                            Si décoché, les nouvelles infrastructures seront <strong>ajoutées</strong> aux données existantes.
+                        </small>
+                    </div>
+
+                    <!-- Indicateur de chargement (masqué par défaut) -->
+                    <div id="importProgress" class="d-none">
+                        <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Importation en cours...</span>
+                            </div>
+                            <div>
+                                <strong>Importation en cours...</strong>
+                                <div class="text-muted small">Cela peut prendre quelques minutes pour les fichiers volumineux.</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                    <button type="submit" class="btn btn-danger">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger" id="importSubmitBtn">
                         <i class="fas fa-upload me-2"></i> Importer
                     </button>
                 </div>
@@ -496,6 +553,31 @@
         </div>
     </div>
 </div>
+<script>
+    function toggleOverwriteWarning() {
+        const warning = document.getElementById('overwriteWarning');
+        const checkbox = document.getElementById('overwrite');
+        if (checkbox.checked) {
+            warning.classList.remove('d-none');
+        } else {
+            warning.classList.add('d-none');
+        }
+    }
+
+    document.getElementById('importForm')?.addEventListener('submit', function(e) {
+        const overwrite = document.getElementById('overwrite');
+        if (overwrite && overwrite.checked) {
+            if (!confirm('⚠️ ATTENTION : Toutes les infrastructures existantes seront SUPPRIMÉES DÉFINITIVEMENT et remplacées par le contenu du fichier.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        document.getElementById('importSubmitBtn').disabled = true;
+        document.getElementById('importSubmitBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Importation...';
+        document.getElementById('importProgress').classList.remove('d-none');
+    });
+</script>
+@endif
 
 <!-- Styles personnalisés -->
 <style>

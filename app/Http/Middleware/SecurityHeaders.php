@@ -51,10 +51,10 @@ class SecurityHeaders
             "frame-ancestors 'self'",
             "form-action 'self'",
             "img-src 'self' data: blob: https:",
-            "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
+            "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://www.google.com https://www.gstatic.com",
-            "connect-src 'self' https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org",
+            "connect-src 'self' https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://cdn.jsdelivr.net https://unpkg.com",
             "frame-src https://www.google.com",
             "object-src 'none'",
         ]);

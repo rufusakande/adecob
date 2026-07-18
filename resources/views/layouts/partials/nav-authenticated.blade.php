@@ -37,9 +37,7 @@
     <li class="nav-item">
         <a class="nav-link" href="{{ route('mairie-agent.dashboard') }}">Planification</a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link" href="{{ route('commune-admin.access-code.edit') }}">Code d'accès</a>
-    </li>
+
 @elseif($u->isAgent())
     <li class="nav-item">
         <a class="nav-link" href="{{ route('mairie-agent.dashboard') }}">Mon tableau</a>

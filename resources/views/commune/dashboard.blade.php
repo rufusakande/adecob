@@ -103,8 +103,8 @@
                 </div>
                 <div class="card-body">
                     <div class="list-group list-group-flush">
-                        <a href="{{ route('commune-admin.access-code.edit') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            <span><i class="fas fa-key"></i> Gérer le code d'accès</span>
+                        <a href="{{ route('admin.pending-registrations') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-user-check"></i> Inscriptions en attente</span>
                             <i class="fas fa-chevron-right text-muted"></i>
                         </a>
                         <a href="{{ route('infrastructures.index') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">

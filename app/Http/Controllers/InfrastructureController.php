@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Infrastructure;
+use App\Models\Commune;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\InfrastructuresImport;
 use App\Exports\InfrastructuresExport;
@@ -50,17 +51,53 @@ class InfrastructureController extends Controller
             $query->where('type_infrastructure', $request->type_infrastructure);
         }
 
-        // Fetch distinct values for filters
-        $communes = Infrastructure::select('commune')->distinct()->orderBy('commune')->pluck('commune')->filter()->values();
-        $arrondissements = Infrastructure::select('arrondissement')->distinct()->orderBy('arrondissement')->pluck('arrondissement')->filter()->values();
-        $villages = Infrastructure::select('village')->distinct()->orderBy('village')->pluck('village')->filter()->values();
-        $secteurs = Infrastructure::select('secteur_domaine')->distinct()->orderBy('secteur_domaine')->pluck('secteur_domaine')->filter()->values();
-        $types = Infrastructure::select('type_infrastructure')->distinct()->orderBy('type_infrastructure')->pluck('type_infrastructure')->filter()->values();
-        $annees = Infrastructure::select('annee_realisation')->distinct()->orderBy('annee_realisation')->pluck('annee_realisation')->filter()->values();
-        $etats = Infrastructure::select('etat_fonctionnement')->distinct()->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement')->filter()->values();
-        $niveaux = Infrastructure::select('niveau_degradation')->distinct()->orderBy('niveau_degradation')->pluck('niveau_degradation')->filter()->values();
+        // Fetch distinct values for filters, scoped to user visibility
+        $communes = Infrastructure::query()->visibleTo($user)->select('commune')->distinct()->orderBy('commune')->pluck('commune')->filter()->values();
+        $arrondissements = Infrastructure::query()->visibleTo($user)
+            ->whereNotNull('arrondissement')
+            ->pluck('arrondissement')
+            ->flatMap(function ($item) {
+                if (is_array($item)) return $item;
+                $decoded = json_decode($item, true);
+                if (is_array($decoded)) return $decoded;
+                if (is_string($item) && $item !== '') return array_map('trim', explode(',', $item));
+                return [];
+            })
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+        $villages = Infrastructure::query()->visibleTo($user)->select('village')->distinct()->orderBy('village')->pluck('village')->filter()->values();
+        $secteurs = Infrastructure::query()->visibleTo($user)->select('secteur_domaine')->distinct()->orderBy('secteur_domaine')->pluck('secteur_domaine')->filter()->values();
+        $types = Infrastructure::query()->visibleTo($user)->select('type_infrastructure')->distinct()->orderBy('type_infrastructure')->pluck('type_infrastructure')->filter()->values();
+        $annees = Infrastructure::query()->visibleTo($user)->select('annee_realisation')->distinct()->orderBy('annee_realisation')->pluck('annee_realisation')->filter()->values();
+        $etats = Infrastructure::query()->visibleTo($user)->select('etat_fonctionnement')->distinct()->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement')->filter()->values();
+        $niveaux = Infrastructure::query()->visibleTo($user)->select('niveau_degradation')->distinct()->orderBy('niveau_degradation')->pluck('niveau_degradation')->filter()->values();
 
-        $infrastructures = $query->with(['works' => fn($q) => $q->where('status', 'planned')])->paginate(15);
+        // Apply priority filter (using IPR score rules)
+        if ($request->filled('priority')) {
+            $priority = $request->priority;
+            if ($priority === 'tres_urgent') {
+                $query->whereRaw(\App\Models\Infrastructure::iprSql() . " >= 81");
+            } elseif ($priority === 'urgent') {
+                $query->whereRaw(\App\Models\Infrastructure::iprSql() . " >= 61 AND " . \App\Models\Infrastructure::iprSql() . " < 81");
+            } elseif ($priority === 'moyenne') {
+                $query->whereRaw(\App\Models\Infrastructure::iprSql() . " >= 41 AND " . \App\Models\Infrastructure::iprSql() . " < 61");
+            } elseif ($priority === 'faible') {
+                $query->whereRaw(\App\Models\Infrastructure::iprSql() . " >= 21 AND " . \App\Models\Infrastructure::iprSql() . " < 41");
+            } elseif ($priority === 'bon_etat') {
+                $query->whereRaw(\App\Models\Infrastructure::iprSql() . " < 21");
+            }
+        }
+
+        $query->select('infrastructures.*')
+              ->selectRaw(\App\Models\Infrastructure::iprSql() . " as score_priorite");
+
+        $infrastructures = $query->with(['works' => fn($q) => $q->where('status', 'planned')])
+                                 ->orderByDesc('score_priorite')
+                                 ->orderByDesc('updated_at')
+                                 ->paginate(15)
+                                 ->appends($request->except('page'));
 
         // Get list of infrastructure IDs that are planned (have mairie_agent_data)
         $plannedInfrastructureIds = MairieAgentData::whereNotNull('infrastructure_id')
@@ -79,21 +116,15 @@ class InfrastructureController extends Controller
         $infrastructuresWithPriority = $priorityQuery->select(
             'id', 'commune', 'secteur_domaine', 'type_infrastructure', 
             'etat_fonctionnement', 'niveau_degradation', 'rehabilitation'
-        )->selectRaw(
-            "CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END as note_fonctionnement,"
-            . "CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END as note_degradation,"
-            . "CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END as note_cout,"
-            . "((CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END * 0.40) + "
-            . "(CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END * 0.40) + "
-            . "(CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END * 0.20)) as score_priorite"
-        )->get();
+        )->selectRaw(\App\Models\Infrastructure::iprSql() . " as score_priorite")->get();
 
-        // Count by priority levels
+        // Count by priority levels (IPR)
         $priorityStats = [
-            'tres_urgent' => $infrastructuresWithPriority->where('score_priorite', '>=', 4.2)->count(),
-            'urgent' => $infrastructuresWithPriority->whereBetween('score_priorite', [3.0, 4.19])->count(),
-            'moyenne' => $infrastructuresWithPriority->whereBetween('score_priorite', [2.0, 2.99])->count(),
-            'faible' => $infrastructuresWithPriority->where('score_priorite', '<', 2.0)->count(),
+            'tres_urgent' => $infrastructuresWithPriority->where('score_priorite', '>=', 81)->count(),
+            'urgent' => $infrastructuresWithPriority->whereBetween('score_priorite', [61, 80.99])->count(),
+            'moyenne' => $infrastructuresWithPriority->whereBetween('score_priorite', [41, 60.99])->count(),
+            'faible' => $infrastructuresWithPriority->whereBetween('score_priorite', [21, 40.99])->count(),
+            'bon_etat' => $infrastructuresWithPriority->where('score_priorite', '<', 21)->count(),
         ];
 
         // Pour le moment, nous considérons que toutes les infrastructures planifiées sont à entretenir
@@ -133,8 +164,17 @@ class InfrastructureController extends Controller
 
     public function import(Request $request)
     {
+        // Seul le super admin peut importer (protection supplémentaire).
+        if (! auth()->user()->isSuperAdmin()) {
+            return redirect()->back()->with('error', 'Seul un Super Administrateur peut importer des fichiers.');
+        }
+
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:xlsx,xls,csv',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:20480', // Max 20 MB
+        ], [
+            'file.required' => 'Veuillez sélectionner un fichier à importer.',
+            'file.mimes'    => 'Le fichier doit être au format Excel (.xlsx, .xls) ou CSV (.csv).',
+            'file.max'      => 'Le fichier ne doit pas dépasser 20 Mo.',
         ]);
 
         if ($validator->fails()) {
@@ -142,26 +182,81 @@ class InfrastructureController extends Controller
         }
 
         try {
-            Excel::import(new InfrastructuresImport, $request->file('file'));
+            // Augmenter le timeout pour les gros fichiers (9000+ lignes).
+            set_time_limit(300);
 
-            return redirect()->route('infrastructures.index')->with('success', 'Importation réussie.');
+            // Si l'option "écraser" est cochée, supprimer toutes les infrastructures existantes.
+            $deletedCount = 0;
+            if ($request->has('overwrite')) {
+                $deletedCount = Infrastructure::count();
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                Infrastructure::truncate();
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            }
+
+            $import = new InfrastructuresImport(auth()->id());
+            $import->import($request->file('file'));
+
+            // Construire le message de résultat.
+            $messages = [];
+
+            if ($deletedCount > 0) {
+                $messages[] = "🗑️ {$deletedCount} infrastructure(s) existante(s) supprimée(s).";
+            }
+
+            $messages[] = "✅ Importation terminée : {$import->importedCount} infrastructure(s) importée(s).";
+
+            if ($import->skippedCount > 0) {
+                $messages[] = "⏭️ {$import->skippedCount} ligne(s) vide(s) ignorée(s).";
+            }
+
+            if (! empty($import->errors)) {
+                $errorCount = count($import->errors);
+                $messages[] = "⚠️ {$errorCount} erreur(s) rencontrée(s).";
+
+                // Afficher les premières erreurs dans la session flash.
+                $displayErrors = array_slice($import->errors, 0, 20);
+                return redirect()->route('infrastructures.index')
+                    ->with('success', implode(' ', $messages))
+                    ->with('import_errors', $displayErrors);
+            }
+
+            return redirect()->route('infrastructures.index')->with('success', implode(' ', $messages));
+
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             $failures = $e->failures();
-
             $errorMessages = [];
-            foreach ($failures as $failure) {
+            foreach (array_slice($failures, 0, 20) as $failure) {
                 $errorMessages[] = 'Ligne ' . $failure->row() . ': ' . implode(', ', $failure->errors());
+            }
+            if (count($failures) > 20) {
+                $errorMessages[] = '... et ' . (count($failures) - 20) . ' autres erreurs.';
             }
 
             return redirect()->back()->withErrors(['file' => $errorMessages])->withInput();
+
+        } catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
+            return redirect()->back()->withErrors([
+                'file' => 'Impossible de lire le fichier. Vérifiez qu\'il s\'agit bien d\'un fichier Excel valide (.xlsx ou .xls).'
+            ])->withInput();
+
         } catch (\Exception $e) {
-            return redirect()->back()->withErrors(['file' => 'Erreur lors de l\'importation: ' . $e->getMessage()])->withInput();
+            \Log::error('Erreur import infrastructures', [
+                'message' => $e->getMessage(),
+                'user_id' => auth()->id(),
+                'file'    => $request->file('file')?->getClientOriginalName(),
+            ]);
+
+            return redirect()->back()->withErrors([
+                'file' => 'Erreur lors de l\'importation : ' . $e->getMessage()
+            ])->withInput();
         }
     }
 
     public function create()
     {
-        return view('infrastructures.create');
+        $communeNames = Commune::orderBy('name')->pluck('name')->toArray();
+        return view('infrastructures.create', compact('communeNames'));
     }
 
     public function store(InfrastructureRequest $request)
@@ -206,17 +301,9 @@ class InfrastructureController extends Controller
         $infrastructure->rehabilitation = $validated['rehabilitation'] ?? null;
 
         // ---- Workflow de validation ----
-        // Agent : soumission en attente de validation par un admin.
-        // Admin (commune / super) : validation directe car auto-approuvée.
-        if ($authUser->isAgent()) {
-            $infrastructure->status = Infrastructure::STATUS_PENDING;
-            $infrastructure->submitted_at = now();
-        } else {
-            $infrastructure->status = Infrastructure::STATUS_VALIDATED;
-            $infrastructure->validated_by = $authUser->id;
-            $infrastructure->validated_at = now();
-            $infrastructure->submitted_at = now();
-        }
+        // Toutes les infrastructures créées via le formulaire passent par l'étape de validation
+        $infrastructure->status = Infrastructure::STATUS_PENDING;
+        $infrastructure->submitted_at = now();
 
 
         // Gérer les téléchargements de photos
@@ -272,24 +359,8 @@ class InfrastructureController extends Controller
         }
 
         $infrastructure->save();
-        
-        // Log pour déboguer la sauvegarde
-        \Log::info('Infrastructure créée', [
-            'id' => $infrastructure->id,
-            'nom_enqueteur' => $infrastructure->nom_enqueteur,
-            'commune' => $infrastructure->commune,
-            'date' => $infrastructure->date
-        ]);
 
-        \Log::info('Infrastructure créée avec succès', [
-            'id' => $infrastructure->id,
-            'nom_enqueteur' => $infrastructure->nom_enqueteur,
-            'commune' => $infrastructure->commune,
-            'date' => $infrastructure->date,
-            'photos_count' => count(array_filter([$infrastructure->photo1, $infrastructure->photo2, $infrastructure->photo3, $infrastructure->photo4]))
-        ]);
-
-        return redirect()->route('infrastructures.index')->with('success', 'Infrastructure enregistrée avec succès.');
+        return redirect()->route('infrastructures.index')->with('success', 'Infrastructure enregistrée avec succès. Elle est actuellement en attente de validation.');
     }
 
     public function edit(Infrastructure $infrastructure)
@@ -297,7 +368,8 @@ class InfrastructureController extends Controller
         if (!$infrastructure->canBeManagedBy(auth()->user())) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
-        return view('infrastructures.edit', compact('infrastructure'));
+        $communeNames = Commune::orderBy('name')->pluck('name')->toArray();
+        return view('infrastructures.edit', compact('infrastructure', 'communeNames'));
     }
 
     public function update(InfrastructureRequest $request, Infrastructure $infrastructure)
@@ -383,9 +455,6 @@ class InfrastructureController extends Controller
                 $file = $request->file($photoField);
                 $path = $file->store('photos', 'public');
                 $infrastructure->$photoField = $path;
-                
-                // Debug: Log pour vérifier que la photo est bien sauvegardée
-                \Log::info("Photo $i uploaded: " . $path);
             }
         }
 
@@ -429,19 +498,12 @@ class InfrastructureController extends Controller
                     \Storage::disk('public')->put($fileName, $data);
                     $infrastructure->$photoField = $fileName;
                     $count++;
-                    
-                    // Debug: Log pour vérifier que la photo base64 est bien sauvegardée
-                    \Log::info("Base64 photo uploaded: " . $fileName);
                 }
             }
         }
 
         // Sauvegarder les modifications
-        $saved = $infrastructure->save();
-        
-        // Debug: Log pour vérifier que l'infrastructure est bien sauvegardée
-        \Log::info("Infrastructure updated: " . $infrastructure->id . " - Saved: " . ($saved ? 'Yes' : 'No'));
-        \Log::info("Photos after save: photo1=" . $infrastructure->photo1 . ", photo2=" . $infrastructure->photo2 . ", photo3=" . $infrastructure->photo3 . ", photo4=" . $infrastructure->photo4);
+        $infrastructure->save();
 
         return redirect()->route('infrastructures.index')->with('success', 'Infrastructure mise à jour avec succès.');
     }
@@ -758,11 +820,11 @@ class InfrastructureController extends Controller
             ->appends($request->except('page'));
 
         // Lists for filters
-        $communes = Infrastructure::select('commune')->distinct()->whereNotNull('commune')->orderBy('commune')->pluck('commune');
-        $secteurs = Infrastructure::select('secteur_domaine')->distinct()->whereNotNull('secteur_domaine')->orderBy('secteur_domaine')->pluck('secteur_domaine');
-        $types = Infrastructure::select('type_infrastructure')->distinct()->whereNotNull('type_infrastructure')->orderBy('type_infrastructure')->pluck('type_infrastructure');
-        $etats = Infrastructure::select('etat_fonctionnement')->distinct()->whereNotNull('etat_fonctionnement')->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement');
-        $niveaux = Infrastructure::select('niveau_degradation')->distinct()->whereNotNull('niveau_degradation')->orderBy('niveau_degradation')->pluck('niveau_degradation');
+        $communes = Infrastructure::query()->visibleTo($user)->select('commune')->distinct()->whereNotNull('commune')->orderBy('commune')->pluck('commune');
+        $secteurs = Infrastructure::query()->visibleTo($user)->select('secteur_domaine')->distinct()->whereNotNull('secteur_domaine')->orderBy('secteur_domaine')->pluck('secteur_domaine');
+        $types = Infrastructure::query()->visibleTo($user)->select('type_infrastructure')->distinct()->whereNotNull('type_infrastructure')->orderBy('type_infrastructure')->pluck('type_infrastructure');
+        $etats = Infrastructure::query()->visibleTo($user)->select('etat_fonctionnement')->distinct()->whereNotNull('etat_fonctionnement')->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement');
+        $niveaux = Infrastructure::query()->visibleTo($user)->select('niveau_degradation')->distinct()->whereNotNull('niveau_degradation')->orderBy('niveau_degradation')->pluck('niveau_degradation');
 
         return view('infrastructures.planned', compact('infrastructures', 'communes', 'secteurs', 'types', 'etats', 'niveaux'));
     }
@@ -892,7 +954,20 @@ class InfrastructureController extends Controller
 
         // Récupérer tous les données de base (listes déroulantes)
         $communes = Infrastructure::where('commune', $commune->name)->select('commune')->distinct()->pluck('commune');
-        $arrondissements = Infrastructure::where('commune', $commune->name)->select('arrondissement')->distinct()->pluck('arrondissement');
+        $arrondissements = Infrastructure::where('commune', $commune->name)
+            ->whereNotNull('arrondissement')
+            ->pluck('arrondissement')
+            ->flatMap(function ($item) {
+                if (is_array($item)) return $item;
+                $decoded = json_decode($item, true);
+                if (is_array($decoded)) return $decoded;
+                if (is_string($item) && $item !== '') return array_map('trim', explode(',', $item));
+                return [];
+            })
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
         $villages = Infrastructure::where('commune', $commune->name)->select('village')->distinct()->pluck('village');
         $secteurs = Infrastructure::where('commune', $commune->name)->select('secteur_domaine')->distinct()->pluck('secteur_domaine');
         $types = Infrastructure::where('commune', $commune->name)->select('type_infrastructure')->distinct()->pluck('type_infrastructure');
@@ -904,23 +979,15 @@ class InfrastructureController extends Controller
         $priorityQuery = Infrastructure::where('commune', $commune->name);
         
         $infrastructuresWithPriority = $priorityQuery->select(
-            'id', 'commune', 'secteur_domaine', 'type_infrastructure', 
-            'etat_fonctionnement', 'niveau_degradation', 'rehabilitation'
-        )->selectRaw(
-            "CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END as note_fonctionnement,"
-            . "CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END as note_degradation,"
-            . "CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END as note_cout,"
-            . "((CASE WHEN etat_fonctionnement = 'Fonctionnel' THEN 1 WHEN etat_fonctionnement = 'Non fonctionnel' THEN 5 ELSE 3 END * 0.40) + "
-            . "(CASE WHEN niveau_degradation = 'Élevé' THEN 5 WHEN niveau_degradation = 'Moyen' THEN 3 WHEN niveau_degradation = 'Faible' THEN 1 ELSE 3 END * 0.40) + "
-            . "(CASE WHEN rehabilitation = 'Faible' THEN 1 WHEN rehabilitation = 'Moyen' THEN 3 WHEN rehabilitation = 'Élevé' THEN 5 ELSE 3 END * 0.20)) as score_priorite"
-        )->get();
+            'id', 'etat_fonctionnement', 'niveau_degradation', 'rehabilitation', 'secteur_domaine'
+        )->selectRaw(\App\Models\Infrastructure::iprSql() . " as score_priorite")->get();
 
-        // Count by priority levels
         $priorityStats = [
-            'tres_urgent' => $infrastructuresWithPriority->where('score_priorite', '>=', 4.2)->count(),
-            'urgent' => $infrastructuresWithPriority->whereBetween('score_priorite', [3.0, 4.19])->count(),
-            'moyenne' => $infrastructuresWithPriority->whereBetween('score_priorite', [2.0, 2.99])->count(),
-            'faible' => $infrastructuresWithPriority->where('score_priorite', '<', 2.0)->count(),
+            'tres_urgent' => $infrastructuresWithPriority->where('score_priorite', '>=', 81)->count(),
+            'urgent' => $infrastructuresWithPriority->whereBetween('score_priorite', [61, 80.99])->count(),
+            'moyenne' => $infrastructuresWithPriority->whereBetween('score_priorite', [41, 60.99])->count(),
+            'faible' => $infrastructuresWithPriority->whereBetween('score_priorite', [21, 40.99])->count(),
+            'bon_etat' => $infrastructuresWithPriority->where('score_priorite', '<', 21)->count(),
         ];
 
         // Pour le moment, nous considérons que toutes les infrastructures planifiées sont à entretenir

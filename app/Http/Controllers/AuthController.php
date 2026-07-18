@@ -99,6 +99,8 @@ class AuthController extends Controller
 
             if (Auth::attempt($credentials, $request->filled('remember'))) {
                 $request->session()->regenerate();
+                // Stocker le timestamp de connexion pour détecter les changements de rôle.
+                $request->session()->put('login_timestamp', now()->timestamp);
                 $user = Auth::user();
 
                 // Bloquer immédiatement les comptes non approuvés (sauf super admin)
@@ -106,13 +108,6 @@ class AuthController extends Controller
                     return redirect()->route('registration.pending')
                         ->with('message', 'Votre compte est en attente de validation par un administrateur.');
                 }
-
-                \Log::info('Utilisateur connecté', [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'ip' => $request->ip(),
-                ]);
 
                 return $this->redirectAfterLogin($user);
             }

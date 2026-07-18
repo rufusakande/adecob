@@ -63,7 +63,6 @@ class Infrastructure extends Model
         'arrondissement' => 'array',
         'photos' => 'array',
         'photo_count' => 'integer',
-        'numero_telephone' => 'encrypted',
         'validated_at' => 'datetime',
         'submitted_at' => 'datetime',
         'exported_at' => 'datetime',
@@ -162,5 +161,73 @@ class Infrastructure extends Model
         $this->export_count = ($this->export_count ?? 0) + 1;
         $this->exported_at = now();
         $this->save();
+    }
+
+    /** Accessor pour numero_telephone avec gestion d'erreur de chiffrement et de sérialisation */
+    public function getNumeroTelephoneAttribute($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            // Tente de déchiffrer avec unserialize (si inséré via import encrypt())
+            return decrypt($value);
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            // Si le payload est invalide, c'est que c'est du texte brut hérité
+            return $value;
+        } catch (\Exception $e) {
+            // Si le déchiffrement réussit mais que unserialize() plante (ex: inséré via Eloquent encryptString)
+            try {
+                return \Illuminate\Support\Facades\Crypt::decryptString($value);
+            } catch (\Exception $e2) {
+                return $value;
+            }
+        }
+    }
+
+    /** Mutator pour numero_telephone */
+    public function setNumeroTelephoneAttribute($value)
+    {
+        $this->attributes['numero_telephone'] = $value ? \Illuminate\Support\Facades\Crypt::encryptString($value) : null;
+    }
+
+    /**
+     * Retourne l'expression SQL brute pour calculer l'Indice de Priorité de Réhabilitation (IPR).
+     * Score maximal = 100
+     */
+    public static function iprSql(): string
+    {
+        return "(
+            (CASE 
+                WHEN etat_fonctionnement = 'Fonctionnel' THEN 0 
+                WHEN etat_fonctionnement = 'Fonctionnel avec quelques défaillances' THEN 10 
+                WHEN etat_fonctionnement = 'Partiellement fonctionnel' THEN 20 
+                WHEN etat_fonctionnement = 'Non fonctionnel' THEN 30 
+                ELSE 0 
+            END)
+            +
+            (CASE 
+                WHEN niveau_degradation = 'Aucun' THEN 0 
+                WHEN niveau_degradation = 'Faible' THEN 5 
+                WHEN niveau_degradation = 'Moyen' THEN 10 
+                WHEN niveau_degradation = 'Elevé' OR niveau_degradation = 'Élevé' THEN 25 
+                WHEN niveau_degradation = 'Très élevé' THEN 50 
+                ELSE 0 
+            END)
+            +
+            (CASE 
+                WHEN secteur_domaine = 'Santé' THEN 20 
+                WHEN secteur_domaine = 'Eau potable' THEN 20 
+                WHEN secteur_domaine = 'Education' OR secteur_domaine = 'Éducation' THEN 18 
+                WHEN secteur_domaine = 'Marché' THEN 15 
+                WHEN secteur_domaine = 'Agriculture/Elevage' OR secteur_domaine = 'Agriculture/Élevage' THEN 15 
+                WHEN secteur_domaine = 'Assainissement' THEN 14 
+                WHEN secteur_domaine = 'Administration' THEN 12 
+                WHEN secteur_domaine = 'Culture/Sport' THEN 8 
+                WHEN secteur_domaine = 'Loisirs/Tourisme' THEN 6 
+                ELSE 5 
+            END)
+        )";
     }
 }
