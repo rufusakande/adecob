@@ -124,6 +124,11 @@ class MfaController extends Controller
 
         try {
             $user->notify(new MfaCodeNotification($code, self::TTL_MINUTES));
+            
+            // Pour faciliter le développement en local, on affiche aussi le code dans les logs
+            if (app()->environment('local')) {
+                \Log::info("MFA Code pour {$user->email} : {$code}");
+            }
         } catch (\Exception $e) {
             \Log::error('Envoi code MFA échoué: ' . $e->getMessage(), ['user_id' => $user->id]);
         }

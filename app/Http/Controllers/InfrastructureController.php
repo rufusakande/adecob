@@ -761,7 +761,7 @@ class InfrastructureController extends Controller
             'description'         => 'required|string|min:5|max:5000',
             'completion_date'     => 'required|date|after_or_equal:today',
             'cost'                => 'required|numeric|min:0|max:9999999999999',
-            'annee_execution'     => 'required|integer|in:1,2,3',
+            'annee_execution'     => 'required|string|max:255',
             'acteurs_concernes'   => 'required|string|max:1000',
             'sources_financement' => 'required|string|max:1000',
             'provider_name'       => 'nullable|string|max:255',

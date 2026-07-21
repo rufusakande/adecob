@@ -79,7 +79,7 @@
     .geo-accuracy-badge.good{ background:#dbeafe; color:#1e40af;}
     .geo-accuracy-badge.medium{ background:#fef3c7; color:#92400e;}
     .geo-accuracy-badge.poor{ background:#fee2e2; color:#991b1b;}
-    #geo-map{ height: 280px; width:100%; border-radius:12px; border:1px solid #d1fae5; margin-top:.5rem; z-index:0;}
+    #geo-map{ height: 400px; width:100%; border-radius:12px; border:1px solid #d1fae5; margin-top:.5rem; z-index:0;}
     .geo-fields .form-control[readonly]{ background:#f9fafb;}
     .geo-locked-note{ font-size:.72rem; color:#6b7280; margin-top:.15rem;}
     @keyframes geoPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
@@ -823,6 +823,10 @@
         document.getElementById(`step-${step + 1}`).style.display = 'block';
         syncStepper(step + 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (step + 1 === 2 && typeof window.invalidateGeoMap === 'function') {
+            setTimeout(() => window.invalidateGeoMap(), 100);
+        }
     }
 
     function prevStep(step) {
@@ -1058,12 +1062,34 @@
         function setFields(lat, lng, alt, acc){
             latEl.value = Number(lat).toFixed(6);
             lngEl.value = Number(lng).toFixed(6);
-            if (alt !== undefined && alt !== null && !isNaN(alt)) altEl.value = Number(alt).toFixed(2);
+            
             if (acc !== undefined && acc !== null && !isNaN(acc)) {
                 accEl.value = Number(acc).toFixed(2);
                 renderAccuracyBadge(acc);
             }
+
+            if (alt !== undefined && alt !== null && !isNaN(alt)) {
+                altEl.value = Number(alt).toFixed(2);
+            } else if (!altEl.value && lat && lng) {
+                altEl.placeholder = 'Recherche...';
+                fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.elevation && data.elevation.length > 0) {
+                            altEl.value = Number(data.elevation[0]).toFixed(2);
+                        } else {
+                            altEl.placeholder = 'Altitude';
+                        }
+                    }).catch(e => {
+                        console.error(e);
+                        altEl.placeholder = 'Altitude';
+                    });
+            }
         }
+
+        window.invalidateGeoMap = function() {
+            if (map) map.invalidateSize();
+        };
 
         function initMap(){
             ensureLeaflet(() => {
@@ -1073,7 +1099,7 @@
                 const hasStart = !isNaN(startLat) && !isNaN(startLng);
                 map = L.map(mapEl, { zoomControl: true }).setView(
                     hasStart ? [startLat, startLng] : BENIN_CENTER,
-                    hasStart ? 16 : 7
+                    hasStart ? 16 : 6
                 );
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
@@ -1120,30 +1146,51 @@
                 return;
             }
             btn.disabled = true;
-            btnLabel.innerHTML = 'Localisation en cours...';
+            btnLabel.innerHTML = 'Recherche (objectif ≤ 5m)...';
             btn.classList.add('geo-pulse');
-            showStatus('info', '<i class="fas fa-spinner fa-spin"></i> Recherche de votre position...');
-            navigator.geolocation.getCurrentPosition(pos => {
-                const { latitude, longitude, altitude, accuracy } = pos.coords;
-                setFields(latitude, longitude, altitude, accuracy);
-                initMap();
-                const apply = () => placeMarker(latitude, longitude, accuracy);
-                if (map) apply(); else ensureLeaflet(() => { initMap(); setTimeout(apply, 250); });
-                showStatus('ok', `<i class="fas fa-circle-check"></i> Position obtenue (±${Math.round(accuracy)} m).`);
+            showStatus('info', '<i class="fas fa-spinner fa-spin"></i> Ajustement GPS en cours...');
+            
+            let bestPos = null;
+            let tempWatchId = navigator.geolocation.watchPosition(pos => {
+                const acc = pos.coords.accuracy;
+                if (!bestPos || acc < bestPos.coords.accuracy) {
+                    bestPos = pos;
+                    const { latitude, longitude, altitude } = pos.coords;
+                    setFields(latitude, longitude, altitude, acc);
+                    initMap();
+                    const apply = () => placeMarker(latitude, longitude, acc);
+                    if (map) apply(); else ensureLeaflet(() => { initMap(); setTimeout(apply, 250); });
+                    showStatus('info', `<i class="fas fa-spinner fa-spin"></i> Précision actuelle: ±${Math.round(acc)} m...`);
+                }
+                
+                if (acc <= 5) {
+                    navigator.geolocation.clearWatch(tempWatchId);
+                    clearTimeout(timeoutId);
+                    finalizeLocate('ok', `<i class="fas fa-circle-check"></i> Position optimale obtenue (±${Math.round(acc)} m).`);
+                }
+            }, err => {
+                if (!bestPos) {
+                    navigator.geolocation.clearWatch(tempWatchId);
+                    clearTimeout(timeoutId);
+                    finalizeLocate('err', `<i class="fas fa-circle-exclamation"></i> ${err.message}`);
+                }
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+
+            let timeoutId = setTimeout(() => {
+                navigator.geolocation.clearWatch(tempWatchId);
+                if (bestPos) {
+                    finalizeLocate('ok', `<i class="fas fa-circle-check"></i> Meilleure position trouvée (±${Math.round(bestPos.coords.accuracy)} m).`);
+                } else {
+                    finalizeLocate('err', '<i class="fas fa-circle-exclamation"></i> Impossible d\'obtenir une position précise.');
+                }
+            }, 15000);
+
+            function finalizeLocate(status, msg) {
                 btn.disabled = false;
                 btn.classList.remove('geo-pulse');
                 btnLabel.innerHTML = 'Mettre à jour ma position';
-            }, err => {
-                btn.disabled = false;
-                btn.classList.remove('geo-pulse');
-                btnLabel.innerHTML = 'Utiliser ma position actuelle';
-                const msg = err.code === 1
-                    ? 'Autorisation refusée. Activez la localisation dans votre navigateur, puis réessayez.'
-                    : err.code === 2 ? 'Position indisponible. Vérifiez le GPS ou la connexion.'
-                    : err.code === 3 ? 'Délai dépassé. Réessayez à l\'extérieur pour un meilleur signal.'
-                    : err.message;
-                showStatus('err', `<i class="fas fa-circle-exclamation"></i> ${msg}`);
-            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+                showStatus(status, msg);
+            }
         }
 
         function toggleWatch(){
@@ -1162,12 +1209,12 @@
             initMap();
             watchLabel.textContent = 'Arrêter le suivi';
             watchBtn.classList.add('geo-pulse');
-            showStatus('info', '<i class="fas fa-satellite fa-beat"></i> Suivi actif : les coordonnées s\'affinent automatiquement.');
+            showStatus('info', '<i class="fas fa-satellite fa-beat"></i> Suivi actif : les coordonnées s\'affinent (objectif ≤ 5m).');
             watchId = navigator.geolocation.watchPosition(pos => {
                 const { latitude, longitude, altitude, accuracy } = pos.coords;
                 setFields(latitude, longitude, altitude, accuracy);
                 placeMarker(latitude, longitude, accuracy);
-                if (accuracy <= 10){
+                if (accuracy <= 5){
                     showStatus('ok', `<i class="fas fa-bullseye"></i> Position optimale atteinte (±${Math.round(accuracy)} m). Suivi arrêté.`);
                     navigator.geolocation.clearWatch(watchId);
                     watchId = null;
@@ -1238,4 +1285,37 @@
     document.querySelectorAll('input[type="file"]').forEach(input => {
         input.addEventListener('change', updateCombinedPreviews);
     });
+
+    // === OFFLINE FORM INTERCEPTION ===
+    const infraForm = document.getElementById('infraForm');
+    if (infraForm) {
+        infraForm.addEventListener('submit', async function(e) {
+            const isEdit = {{ isset($isEdit) && $isEdit ? 'true' : 'false' }};
+            
+            // Si on est hors ligne ET en mode création
+            if (!navigator.onLine && !isEdit) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                
+                if (typeof hideCustomLoader === 'function') hideCustomLoader();
+                
+                // Sauvegarder localement
+                if (typeof saveInfrastructureLocally === 'function') {
+                    const success = await saveInfrastructureLocally(this);
+                    if (success) {
+                        alert("Vous êtes hors-ligne.\n\nVotre infrastructure a été sauvegardée localement avec succès ! Elle sera automatiquement envoyée au serveur dès que la connexion internet sera rétablie.");
+                        this.reset(); // Reset form for next entry
+                        window.scrollTo(0,0);
+                        
+                        // Si on a des aperçus d'images, on peut les vider ici
+                        if (typeof updateCombinedPreviews === 'function') updateCombinedPreviews();
+                    } else {
+                        alert("Une erreur est survenue lors de la sauvegarde locale.");
+                    }
+                } else {
+                    alert("Erreur: Le script de sauvegarde locale n'est pas chargé.");
+                }
+            }
+        });
+    }
 </script>

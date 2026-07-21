@@ -8,6 +8,15 @@
     <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="{{ asset('logo.jpg') }}">
 
+    <!-- PWA Meta Tags & Manifest -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#28a745">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ADECOB">
+    <link rel="apple-touch-icon" href="{{ asset('logo.jpg') }}">
+
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -373,10 +382,39 @@
                             </ul>
                         </li>
                     @endguest
+                    
+                    <!-- Offline Sync Badge -->
+                    <li class="nav-item ms-2">
+                        <a href="#" class="nav-link btn btn-warning text-dark px-3 py-1 fw-bold" id="offline-sync-badge" style="display: none; font-size: 0.85rem;" title="Cliquez pour synchroniser maintenant">
+                            <i class="bi bi-cloud-arrow-up-fill me-1"></i>
+                            <span class="count">0</span> en attente
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
+
+    <!-- Offline Banner -->
+    <div id="offline-banner" class="bg-danger text-white text-center py-2 fw-bold w-100" style="display: none; position: sticky; top: 60px; z-index: 1020; font-size: 0.9rem;">
+        <i class="bi bi-wifi-off me-2"></i> Mode hors-ligne activé. Les infrastructures seront sauvegardées localement.
+    </div>
+
+    <script>
+        // Gestion de l'affichage de la bannière hors-ligne
+        function updateOnlineStatus() {
+            const banner = document.getElementById('offline-banner');
+            if (navigator.onLine) {
+                banner.style.display = 'none';
+            } else {
+                banner.style.display = 'block';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        // Initial check
+        document.addEventListener('DOMContentLoaded', updateOnlineStatus);
+    </script>
 
     <!-- Main Content -->
     <main class="container-fluid px-3 mt-3">
@@ -423,6 +461,39 @@
         }, 120000); // Ping every 2 minutes
     </script>
     @endauth
+
+    <!-- PWA Install Modal -->
+    <div class="modal fade" id="pwaInstallModal" tabindex="-1" aria-labelledby="pwaInstallModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0" style="border-radius: 1rem;">
+                <div class="modal-header border-0 pb-0 justify-content-center position-relative">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    <div class="text-center mt-3">
+                        <img src="{{ asset('logo.jpg') }}" alt="ADECOB Logo" class="rounded-3 shadow-sm mb-3" style="width: 80px; height: 80px; object-fit: cover;">
+                        <h5 class="modal-title fw-bold" id="pwaInstallModalLabel">Installer ADECOB</h5>
+                    </div>
+                </div>
+                <div class="modal-body text-center pt-2">
+                    <p class="text-muted mb-4">Installez l'application sur votre écran d'accueil pour y accéder rapidement et facilement à tout moment, même avec une mauvaise connexion.</p>
+                    <button type="button" class="btn btn-success btn-lg w-100 rounded-pill fw-bold" id="pwaInstallBtn">
+                        <i class="bi bi-download me-2"></i> Installer l'application
+                    </button>
+                    <button type="button" class="btn btn-link text-muted mt-2 text-decoration-none" data-bs-dismiss="modal">
+                        Plus tard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA Install Script -->
+    <script src="{{ asset('js/pwa-install.js') }}"></script>
+
+    <!-- Offline Storage & Sync Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="{{ asset('js/offline-storage.js') }}"></script>
+    <script src="{{ asset('js/offline-sync.js') }}"></script>
+
     @stack('scripts')
 </body>
 </html>

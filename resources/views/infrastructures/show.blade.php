@@ -298,8 +298,8 @@
                         <div class="row g-3">
                             @foreach($photos as $index => $photoPath)
                                 <div class="col-12 col-sm-6">
-                                    <a href="{{ \Storage::url($photoPath) }}" target="_blank" class="d-block shadow-sm rounded overflow-hidden">
-                                        <img src="{{ \Storage::url($photoPath) }}" class="photo-thumb" alt="Photo {{ $index + 1 }}">
+                                    <a href="{{ route('storage.asset', ['any' => $photoPath]) }}" target="_blank" class="d-block shadow-sm rounded overflow-hidden">
+                                        <img src="{{ route('storage.asset', ['any' => $photoPath]) }}" class="photo-thumb" alt="Photo {{ $index + 1 }}">
                                         <div class="mt-2 small text-center text-muted">Photo {{ $index + 1 }} / {{ count($photos) }}</div>
                                     </a>
                                 </div>

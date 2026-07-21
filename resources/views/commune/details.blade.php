@@ -52,13 +52,29 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <p><strong>Nom :</strong> {{ $commune->name }}</p>
                             <p><strong>Code :</strong> <code>{{ $commune->code }}</code></p>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <p><strong>Région :</strong> {{ $commune->region ?? 'Non définie' }}</p>
                             <p><strong>Département :</strong> {{ $commune->department ?? 'Non défini' }}</p>
+                        </div>
+                        <div class="col-md-4 border-start">
+                            <strong>Logo de la commune :</strong>
+                            <div class="mt-2 mb-3">
+                                @if($commune->logo)
+                                    <img src="{{ route('storage.asset', ['any' => $commune->logo]) }}" alt="Logo {{ $commune->name }}" class="img-thumbnail" style="max-height: 80px;">
+                                @else
+                                    <span class="text-muted fst-italic">Aucun logo</span>
+                                @endif
+                            </div>
+                            <form action="{{ route('commune-admin.update-logo') }}" method="POST" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+                                @csrf
+                                <input type="file" name="logo" class="form-control form-control-sm" accept="image/jpeg,image/png,image/jpg,image/webp" required>
+                                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-upload"></i></button>
+                            </form>
+                            <small class="text-muted d-block mt-1">S'affiche sur les exports PDF.</small>
                         </div>
                     </div>
                 </div>

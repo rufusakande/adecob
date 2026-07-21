@@ -136,26 +136,23 @@
                                 </small>
                             </div>
 
-                            <!-- Commune (affichage informatif si commune_admin sélectionné) -->
+                            <!-- Commune -->
                             <div class="mb-4" id="commune-section" style="display: none;">
-                                <label class="form-label fw-bold">Commune administrée</label>
-                                @if($user->commune)
-                                    <div class="alert alert-info border-0 rounded-3 py-2 px-3">
-                                        <i class="bi bi-building me-2"></i>
-                                        <strong>{{ $user->commune->name }}</strong>
-                                        <small class="d-block text-muted mt-1">
-                                            L'utilisateur sera administrateur de cette commune (sa commune d'inscription).
-                                        </small>
-                                    </div>
-                                @else
-                                    <div class="alert alert-danger border-0 rounded-3 py-2 px-3">
-                                        <i class="bi bi-exclamation-circle me-2"></i>
-                                        <strong>Aucune commune associée</strong>
-                                        <small class="d-block text-muted mt-1">
-                                            Cet utilisateur ne peut pas être nommé Admin Commune car il n'est rattaché à aucune commune.
-                                        </small>
-                                    </div>
-                                @endif
+                                <label for="commune_id" class="form-label fw-bold">Commune d'attachement</label>
+                                <select name="commune_id" id="commune_id" class="form-select @error('commune_id') is-invalid @enderror">
+                                    <option value="">-- Sélectionnez une commune --</option>
+                                    @foreach($communes as $commune)
+                                        <option value="{{ $commune->id }}" {{ $user->commune_id == $commune->id ? 'selected' : '' }}>
+                                            {{ $commune->name }} ({{ $commune->code }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('commune_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="form-text text-muted mt-2">
+                                    Obligatoire pour les rôles <strong>Admin Commune</strong> et <strong>Agent Collecteur</strong>.
+                                </small>
                             </div>
 
                             <!-- Approbation -->
@@ -254,9 +251,9 @@ function updateRoleUI() {
     const isApprovedCheckbox = document.getElementById('is_approved');
     const roleChangeAlert = document.getElementById('role-change-alert');
 
-    // Afficher la section commune uniquement pour les admins commune
+    // Afficher la section commune pour les admins commune et les agents
     if (communeSection) {
-        communeSection.style.display = (role === 'commune_admin') ? 'block' : 'none';
+        communeSection.style.display = (role === 'commune_admin' || role === 'agent') ? 'block' : 'none';
     }
 
     // Auto-approuver les utilisateurs publics

@@ -174,16 +174,12 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Année d'exécution (plan triennal) <span class="text-danger">*</span></label>
-                        <div class="btn-group w-100" role="group" aria-label="Année d'exécution">
-                            @php $selectedYear = (int) old('annee_execution', optional($existingPlannedWork)->annee_execution); @endphp
-                            @foreach([1,2,3] as $y)
-                                <input type="radio" class="btn-check" name="annee_execution" id="annee_execution_{{ $y }}" value="{{ $y }}" @checked($selectedYear === $y) required>
-                                <label class="btn btn-outline-success" for="annee_execution_{{ $y }}">Année {{ $y }}</label>
-                            @endforeach
-                        </div>
-                        <div class="form-text">Cochez l'année du plan triennal à laquelle l'intervention est prévue.</div>
-                        @error('annee_execution')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        <label class="form-label">Plage / Année(s) d'exécution <span class="text-danger">*</span></label>
+                        <input type="text" name="annee_execution" class="form-control @error('annee_execution') is-invalid @enderror"
+                               value="{{ old('annee_execution', optional($existingPlannedWork)->annee_execution) }}" 
+                               placeholder="Ex. : 2026 - 2030, 2026-2028, 2027..." required maxlength="255">
+                        <div class="form-text">Indiquez la période ou l'année d'exécution (ex: 2026 - 2030).</div>
+                        @error('annee_execution')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Acteur(s) concerné(s) <span class="text-danger">*</span></label>

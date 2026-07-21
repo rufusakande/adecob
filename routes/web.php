@@ -25,6 +25,25 @@ Route::get('/ping', function () {
     return response()->json(['status' => 'OK']);
 })->middleware(['auth'])->name('ping');
 
+// Route personnalisée pour afficher les fichiers de stockage sans lien symbolique
+Route::get('/storage-asset/{any}', function ($any) {
+    $path = storage_path('app/public/' . $any);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    
+    // Protection basique contre la traversée de répertoire
+    if (strpos($any, '..') !== false) {
+        abort(403);
+    }
+    
+    $mime = function_exists('mime_content_type') ? mime_content_type($path) : 'application/octet-stream';
+    return response()->file($path, [
+        'Content-Type' => $mime,
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('any', '.*')->name('storage.asset');
+
 // Pages publiques (accessibles sans connexion)
 Route::get('/', [App\Http\Controllers\PublicController::class, 'landing'])->name('public.landing');
 Route::get('/infrastructures/public', [App\Http\Controllers\PublicController::class, 'infrastructures'])
@@ -186,7 +205,10 @@ Route::middleware(['auth', 'super.admin', 'mfa.verified'])->group(function () {
 Route::middleware(['auth', 'commune.admin', 'mfa.verified'])->prefix('dashboard')->group(function () {
     Route::get('/commune/dashboard', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'dashboard'])->name('commune-admin.dashboard');
     Route::get('/commune/details', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'details'])->name('commune-admin.details');
-    // commune-admin.access-code.edit supprimé (fonctionnalité retirée)
+    Route::post('/commune/logo', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'updateLogo'])->name('commune-admin.update-logo');
+    
+    // Promotion / Rétrogradation des agents
+    Route::put('/agents/{user}/promote', [App\Http\Controllers\Admin\CommuneAdminDashboardController::class, 'toggleAgentAdmin'])->name('commune-admin.promote-agent');
 });
 
 // Audit Logs Routes (super admin only)

@@ -65,9 +65,22 @@
                                         </td>
                                         <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
                                         <td>
-                                            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-outline-primary" title="Gérer les rôles et communes">
-                                                <i class="bi bi-pencil"></i> Gérer
-                                            </a>
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-outline-primary" title="Gérer les rôles et communes">
+                                                    <i class="bi bi-pencil"></i> Gérer
+                                                </a>
+
+                                                @if(in_array($user->role, ['super_admin', 'agent']))
+                                                    <form action="{{ route('admin.users.toggle-admin', $user) }}" method="POST" class="d-inline" onsubmit="return confirm('Voulez-vous vraiment {{ $user->role === 'super_admin' ? 'retirer' : 'donner' }} les privilèges de Super Admin à cet utilisateur ?');">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <button type="submit" class="btn btn-sm {{ $user->role === 'super_admin' ? 'btn-danger' : 'btn-outline-danger' }}" title="{{ $user->role === 'super_admin' ? 'Rétrograder en agent' : 'Promouvoir Super Admin' }}">
+                                                            <i class="bi bi-shield-lock-fill"></i>
+                                                            {{ $user->role === 'super_admin' ? 'Retirer Super Admin' : 'Nommer Super Admin' }}
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

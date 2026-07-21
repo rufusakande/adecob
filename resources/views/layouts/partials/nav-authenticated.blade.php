@@ -37,7 +37,14 @@
     <li class="nav-item">
         <a class="nav-link" href="{{ route('mairie-agent.dashboard') }}">Planification</a>
     </li>
-
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('admin.pending-registrations', ['status' => 'approved']) }}">
+            Agents de la commune
+            @if($pendingCount > 0)
+                <span class="badge bg-warning text-dark ms-1" title="{{ $pendingCount }} en attente">{{ $pendingCount }}</span>
+            @endif
+        </a>
+    </li>
 @elseif($u->isAgent())
     <li class="nav-item">
         <a class="nav-link" href="{{ route('mairie-agent.dashboard') }}">Mon tableau</a>
@@ -50,7 +57,7 @@
     </li>
 @endif
 
-@if($u->isSuperAdmin() || $u->isCommuneAdmin())
+@if($u->isSuperAdmin())
     <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.pending-registrations') }}">
             Inscriptions

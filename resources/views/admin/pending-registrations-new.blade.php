@@ -464,9 +464,35 @@
                             </button>
                         </form>
                     @else
-                        <button class="btn-action" disabled style="opacity: 0.5; cursor: not-allowed;">
-                            Décision prise
-                        </button>
+                        @if($user->is_approved && auth()->user()->isCommuneAdmin() && $user->commune_id === auth()->user()->commune_id && $user->id !== auth()->id())
+                            @if($user->role === 'agent')
+                                <form method="POST" action="{{ route('commune-admin.promote-agent', $user->id) }}" style="display: inline;" onsubmit="return confirm('Attention : Cet agent aura les pleins pouvoirs sur la commune (gestion des agents, validation, modification du logo, etc.). Voulez-vous vraiment le nommer Administrateur de la commune ?');">
+                                    @csrf
+                                    @method('PUT')
+                                    <button type="submit" class="btn-action btn-approve" style="background: linear-gradient(135deg, #2196F3, #1976D2);">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                        </svg>
+                                        Nommer Admin
+                                    </button>
+                                </form>
+                            @elseif($user->role === 'commune_admin')
+                                <form method="POST" action="{{ route('commune-admin.promote-agent', $user->id) }}" style="display: inline;" onsubmit="return confirm('Attention : Cet utilisateur perdra tous ses droits d\'administration sur la commune. Voulez-vous vraiment le rétrograder au rang de simple agent ?');">
+                                    @csrf
+                                    @method('PUT')
+                                    <button type="submit" class="btn-action btn-reject" style="background: linear-gradient(135deg, #ff9800, #f57c00);">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Retirer Admin
+                                    </button>
+                                </form>
+                            @endif
+                        @else
+                            <button class="btn-action" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                Décision prise
+                            </button>
+                        @endif
                     @endif
                 </div>
             </div>

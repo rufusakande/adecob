@@ -48,7 +48,7 @@
         .col-loc { width: 18%; }
         .col-sec { width: 12%; }
         .col-desc{ width: 22%; }
-        .col-y   { width: 4.5%; }
+        .col-y   { width: 13.5%; }
         .col-act { width: 12%; }
         .col-src { width: 12%; }
         .col-obs { width: 11.5%; }
@@ -68,9 +68,30 @@
     <table>
         <tr>
             <td class="header-left">
-                @php $armoirie = public_path('logo-alt.png'); @endphp
-                @if(is_file($armoirie))
-                    <img src="{{ $armoirie }}" alt="Armoiries">
+                @php 
+                    $possiblePaths = [
+                        public_path('logo-alt.png'),
+                        base_path('public/logo-alt.png'),
+                        dirname(base_path()) . '/public_html/logo-alt.png',
+                        dirname(base_path()) . '/public/logo-alt.png',
+                        base_path('logo-alt.png')
+                    ];
+                    $armoiriePath = null;
+                    foreach ($possiblePaths as $path) {
+                        if (is_file($path)) {
+                            $armoiriePath = $path;
+                            break;
+                        }
+                    }
+
+                    $armoirieBase64 = null;
+                    if($armoiriePath) {
+                        $mime = function_exists('mime_content_type') ? (mime_content_type($armoiriePath) ?: 'image/png') : 'image/png';
+                        $armoirieBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($armoiriePath));
+                    }
+                @endphp
+                @if($armoirieBase64)
+                    <img src="{{ $armoirieBase64 }}" alt="Armoiries">
                 @endif
             </td>
             <td class="header-center">
@@ -90,7 +111,7 @@
     </table>
 </div>
 
-<h1 class="title">PLAN TRIENNAL (Année 1 – Année 3) DE RÉHABILITATION DES INFRASTRUCTURES COMMUNALES</h1>
+<h1 class="title">PLAN DE RÉHABILITATION DES INFRASTRUCTURES COMMUNALES</h1>
 
 <div class="meta">
     <div class="line"><span class="label">Département :</span> {{ $departement ?: '…………………………' }}</div>
@@ -106,9 +127,7 @@
             <th class="col-loc">Localisation de l'infrastructure <br><em>(Commune, Arrondissement, Village/Quartier, Coordonnées GPS)</em></th>
             <th class="col-sec">Secteur / Type d'infrastructure</th>
             <th class="col-desc">Description de la réhabilitation ou des travaux à réaliser</th>
-            <th class="col-y">Année 1</th>
-            <th class="col-y">Année 2</th>
-            <th class="col-y">Année 3</th>
+            <th class="col-y">Période / Année(s) d'exécution</th>
             <th class="col-act">Acteur(s) concerné(s)</th>
             <th class="col-src">Source(s) de financement</th>
             <th class="col-obs">Observations</th>
@@ -136,7 +155,7 @@
                 );
                 $secteurType = trim(($infra->secteur_domaine ?: '') . ($infra->type_infrastructure ? ' / ' . $infra->type_infrastructure : ''), ' /');
                 $description = $plan->description ?: $infra->mesures_proposees;
-                $annee = (int) ($plan->annee_execution ?? 0);
+                $annee = $plan->annee_execution ?: '';
                 $observations = $plan->observations ?: '';
             @endphp
             <tr>
@@ -144,9 +163,7 @@
                 <td>{{ $localisation ?: '—' }}</td>
                 <td>{{ $secteurType ?: '—' }}</td>
                 <td>{{ $description ?: '—' }}</td>
-                <td class="center">@if($annee === 1)<span class="check">✓</span>@endif</td>
-                <td class="center">@if($annee === 2)<span class="check">✓</span>@endif</td>
-                <td class="center">@if($annee === 3)<span class="check">✓</span>@endif</td>
+                <td class="center"><strong>{{ $annee ?: '—' }}</strong></td>
                 <td>{{ $plan->acteurs_concernes ?: ($plan->provider_name ?: '—') }}</td>
                 <td>{{ $plan->sources_financement ?: '—' }}</td>
                 <td>{{ $observations ?: '—' }}</td>

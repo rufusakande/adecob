@@ -56,17 +56,23 @@ class UserManagementController extends Controller
         $validated = $request->validate([
             'role'        => 'required|in:commune_admin,agent,public_user',
             'is_approved' => 'nullable|boolean',
+            'commune_id'  => 'nullable|exists:communes,id',
         ]);
 
         $oldRole      = $user->role;
         $oldCommuneId = $user->commune_id; // Capturer avant modification
 
-        // Validation métier : commune_admin doit avoir une commune d'inscription.
+        // Mise à jour de la commune
+        if (isset($validated['commune_id'])) {
+            $user->commune_id = $validated['commune_id'];
+        }
+
+        // Validation métier : commune_admin doit avoir une commune.
         if ($validated['role'] === 'commune_admin' && ! $user->commune_id) {
             return back()->with('error',
                 "Impossible de nommer {$user->prenom} {$user->name} admin de commune : "
-                . "aucune commune n'est associée à son inscription. "
-                . "L'utilisateur doit d'abord s'inscrire dans une commune."
+                . "aucune commune n'est associée à son profil. "
+                . "Veuillez d'abord lui assigner une commune."
             );
         }
 
@@ -75,7 +81,7 @@ class UserManagementController extends Controller
             ? true
             : (bool) ($validated['is_approved'] ?? false);
 
-        // Mise à jour du rôle (commune_id reste la commune d'inscription, immuable).
+        // Mise à jour du rôle.
         $user->role        = $validated['role'];
         $user->is_approved = $isApproved;
 
@@ -155,11 +161,6 @@ class UserManagementController extends Controller
         $user->role       = $newRole;
         $user->is_approved = true; // Un super_admin est toujours approuvé.
 
-        // En devenant super_admin, la commune n'est plus pertinente.
-        if ($newRole === 'super_admin') {
-            $user->commune_id = null;
-        }
-
         $user->role_changed_at = now();
         $user->save();
 
@@ -181,11 +182,13 @@ class UserManagementController extends Controller
             ]);
         }
 
-        $message = ($newRole === 'super_admin')
-            ? "✅ {$user->prenom} {$user->name} est maintenant Super Administrateur. Sa session a été fermée et il a été notifié par email."
-            : "✅ Le rôle Super Admin a été retiré à {$user->prenom} {$user->name}. Il est maintenant agent collecteur. Sa session a été fermée.";
-
-        return back()->with('success', $message);
+        if ($newRole === 'super_admin') {
+            $message = "✅ {$user->prenom} {$user->name} est maintenant Super Administrateur. Sa session a été fermée et il a été notifié par email.";
+            return back()->with('success', $message);
+        } else {
+            $message = "✅ Le rôle Super Admin a été retiré à {$user->prenom} {$user->name}. Il est maintenant agent collecteur. Veuillez vérifier ou assigner sa commune ci-dessous.";
+            return redirect()->route('admin.users.edit', $user->id)->with('success', $message);
+        }
     }
 
     /**
