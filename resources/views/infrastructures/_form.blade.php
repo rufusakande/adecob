@@ -94,9 +94,9 @@
 
 @php
     $authUser = auth()->user();
-    $userCommune = optional($authUser->commune)->name;
-    $restrictedCommune = $authUser->isAgent() || $authUser->isCommuneAdmin();
-    $selectedCommune = old('commune', optional($infrastructure)->commune ?? $userCommune);
+    $userCommune = $authUser ? optional($authUser->commune)->name : null;
+    $restrictedCommune = $authUser ? ($authUser->isAgent() || $authUser->isCommuneAdmin()) : false;
+    $selectedCommune = old('commune', optional($infrastructure ?? null)->commune ?? $userCommune);
     $storedArrondissements = optional($infrastructure)->arrondissement;
     if (is_string($storedArrondissements)) {
         $storedArrondissements = json_decode($storedArrondissements, true) ?: [];
@@ -1286,36 +1286,5 @@
         input.addEventListener('change', updateCombinedPreviews);
     });
 
-    // === OFFLINE FORM INTERCEPTION ===
-    const infraForm = document.getElementById('infraForm');
-    if (infraForm) {
-        infraForm.addEventListener('submit', async function(e) {
-            const isEdit = {{ isset($isEdit) && $isEdit ? 'true' : 'false' }};
-            
-            // Si on est hors ligne ET en mode création
-            if (!navigator.onLine && !isEdit) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                
-                if (typeof hideCustomLoader === 'function') hideCustomLoader();
-                
-                // Sauvegarder localement
-                if (typeof saveInfrastructureLocally === 'function') {
-                    const success = await saveInfrastructureLocally(this);
-                    if (success) {
-                        alert("Vous êtes hors-ligne.\n\nVotre infrastructure a été sauvegardée localement avec succès ! Elle sera automatiquement envoyée au serveur dès que la connexion internet sera rétablie.");
-                        this.reset(); // Reset form for next entry
-                        window.scrollTo(0,0);
-                        
-                        // Si on a des aperçus d'images, on peut les vider ici
-                        if (typeof updateCombinedPreviews === 'function') updateCombinedPreviews();
-                    } else {
-                        alert("Une erreur est survenue lors de la sauvegarde locale.");
-                    }
-                } else {
-                    alert("Erreur: Le script de sauvegarde locale n'est pas chargé.");
-                }
-            }
-        });
-    }
+    // Aucune interception hors-ligne (désactivé à la demande de l'utilisateur)
 </script>

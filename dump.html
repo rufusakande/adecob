@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>@yield('title', 'ADECOB Infrastructure Plannification')</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>500 - Erreur Serveur</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/jpeg" href="{{ asset('logo.jpg') }}">
+    <link rel="icon" type="image/jpeg" href="http://localhost/logo.jpg">
 
     <!-- PWA Meta Tags & Manifest -->
-    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="manifest" href="http://localhost/manifest.json">
     <meta name="theme-color" content="#28a745">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ADECOB">
-    <link rel="apple-touch-icon" href="{{ asset('logo.jpg') }}">
+    <link rel="apple-touch-icon" href="http://localhost/logo.jpg">
 
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -28,13 +27,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <!-- Auth Enhancements CSS -->
-    <link rel="stylesheet" href="{{ asset('css/auth-enhancements.css') }}">
+    <link rel="stylesheet" href="http://localhost/css/auth-enhancements.css">
 
     <!-- Google Fonts - Poppins (optionnel pour plus d'élégance) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    @stack('styles')
-
+    
     <style>
         /* Police moderne */
         body {
@@ -268,7 +266,7 @@
             <div class="row align-items-center">
                 <!-- Logo + Texte -->
                 <div class="col-12 col-md-6 d-flex align-items-center mb-2 mb-md-0">
-                    <img src="{{ asset('logo.jpg') }}" alt="Logo ADECOB" class="me-3" style="height: 50px; border-radius: 8px;">
+                    <img src="http://localhost/logo.jpg" alt="Logo ADECOB" class="me-3" style="height: 50px; border-radius: 8px;">
                     <div class="logo-text">
                         ASSOCIATION POUR LE DÉVELOPPEMENT<br>
                         DES COMMUNES DU BORGOU
@@ -287,7 +285,7 @@
                             <div>Mail : <strong>secretariatadecob@yahoo.fr</strong></div>
                         </div>
                     </div>
-                    <a href="{{ route('contact.form') }}" class="btn btn-contact">
+                    <a href="http://localhost/contact" class="btn btn-contact">
                         CONTACTEZ-NOUS
                     </a>
                 </div>
@@ -298,7 +296,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg fixed-navbar">
         <div class="container">
-            <a class="navbar-brand me-3" href="{{ url('/') }}">ADECOB Infrastructure Plannification</a>
+            <a class="navbar-brand me-3" href="http://localhost">ADECOB Infrastructure Plannification</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -306,104 +304,125 @@
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    @guest
-                        <!-- Guest Links -->
+                                            <!-- Guest Links -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('login.form') }}">Se connecter</a>
+                            <a class="nav-link" href="http://localhost/login">Se connecter</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="{{ route('register.form') }}">
+                            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="http://localhost/register">
                                 S'inscrire
                             </a>
                         </li>
-                    @else
-                        {{-- Navigation contextuelle selon le rôle --}}
-                        @include('layouts.partials.nav-authenticated')
-
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
-                                {{ Auth::user()->prenom ?? '' }} {{ Auth::user()->name }}
-                                @php
-                                    $roleLabels = [
-                                        'super_admin'   => ['Super Admin', 'danger'],
-                                        'commune_admin' => ['Admin Commune', 'primary'],
-                                        'agent'         => ['Agent', 'success'],
-                                    ];
-                                    [$rLabel, $rColor] = $roleLabels[Auth::user()->role] ?? ['Utilisateur', 'secondary'];
-                                @endphp
-                                <span class="badge bg-{{ $rColor }} ms-1">{{ $rLabel }}</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item">Déconnexion</button>
-                                    </form>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                @if(auth()->user()->isSuperAdmin() || auth()->user()->isCommuneAdmin())
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('infrastructures.planned') }}">Infrastructures planifiées</a>
-                                </li>
-                                @endif
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('mairie-agent.dashboard') }}">Tableau de bord</a>
-                                </li>
-                                @if(auth()->user()->isSuperAdmin())
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <span class="dropdown-header fw-bold">Administration</span>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('admin.communes.index') }}">Gestion des communes</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('admin.users.index') }}">Gestion des utilisateurs</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}">Inscriptions en attente 
-                                        <span class="badge bg-warning text-dark">{{ \App\Models\User::where('is_approved', false)->count() }}</span>
-                                    </a>
-                                </li>
-                                @elseif(auth()->user()->isCommuneAdmin())
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <span class="dropdown-header fw-bold">Gestion Commune</span>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}">Inscriptions en attente 
-                                        <span class="badge bg-warning text-dark">{{ \App\Models\User::where('is_approved', false)->count() }}</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('commune-admin.dashboard') }}">Tableau de bord commune</a>
-                                </li>
-
-                                @endif
-                            </ul>
-                        </li>
-                    @endguest
-                </ul>
+                                    </ul>
             </div>
         </div>
     </nav>
 
     <main class="container-fluid px-3 mt-3">
-        @yield('content')
+        <div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 mt-5">
+                <div class="card-body text-center py-5">
+                    <div style="font-size: 4rem; color: #dc3545; margin-bottom: 20px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h1 class="card-title" style="color: #dc3545;">500 - Erreur Serveur</h1>
+                    <p class="card-text text-muted mt-3" style="font-size: 1.1rem;">
+                        Une erreur interne du serveur s'est produite. Nos équipes ont été notifiées.
+                    </p>
+                    <hr class="my-4">
+                    <p class="text-muted mb-4">
+                        <i class="fas fa-tools"></i> 
+                        Notre équipe technique travaille déjà à la résolution du problème. Veuillez réessayer dans quelques instants.
+                    </p>
+                    
+                                            <div class="alert alert-danger text-start mt-4" style="max-height: 300px; overflow-y: auto;">
+                            <h6 class="alert-heading mb-2">
+                                <i class="fas fa-bug"></i> Détails de l'erreur (Mode développement)
+                            </h6>
+                            <small>
+                                <strong>Exception :</strong> Illuminate\View\ViewException<br>
+                                <strong>Message :</strong> Undefined variable $errors (View: D:\Developpement-web\Site-web\Projet\adecob_new\adecob\resources\views\infrastructures\_form.blade.php) (View: D:\Developpement-web\Site-web\Projet\adecob_new\adecob\resources\views\infrastructures\_form.blade.php)<br>
+                                <strong>Fichier :</strong> D:\Developpement-web\Site-web\Projet\adecob_new\adecob\storage\framework\views\5e863de14e74d48214fed5f96c76c649.php<br>
+                                <strong>Ligne :</strong> 153
+                                
+                                                                    <hr class="my-2">
+                                    <strong>Cause :</strong> Undefined variable $errors (View: D:\Developpement-web\Site-web\Projet\adecob_new\adecob\resources\views\infrastructures\_form.blade.php)
+                                                            </small>
+                        </div>
+                    
+                    <div class="mt-4">
+                        <a href="http://localhost/home" class="btn btn-primary btn-lg mr-2">
+                            <i class="fas fa-home"></i> Retour à l'accueil
+                        </a>
+                        <a href="javascript:location.reload()" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-redo"></i> Réessayer
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support -->
+            <div class="mt-4 text-center">
+                <p class="text-muted mb-3">
+                    <strong>Si le problème persiste :</strong>
+                </p>
+                <small class="text-muted">
+                    Contactez l'équipe d'ADECOB à 
+                    <a href="mailto:secretariatadecob@yahoo.fr">secretariatadecob@yahoo.fr</a>
+                    ou appelez <a href="tel:+22901956473">0195647373</a><br>
+                    <strong>Horaires :</strong> Lun - Ven : 08h - 12h30 et 15h - 17h30
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .card {
+        border-radius: 15px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .btn {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .alert {
+        border-radius: 8px;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+    }
+</style>
     </main>
 
     <!-- Footer -->
     <footer class="text-center">
         <div class="footer-text">
-            &copy; {{ date('Y') }} <strong>ADECOB Infrastructure Plannification</strong>. Tous droits réservés.<br class="d-md-none">
+            &copy; 2026 <strong>ADECOB Infrastructure Plannification</strong>. Tous droits réservés.<br class="d-md-none">
             <div class="mt-2">
-                <a href="{{ route('legal.pssi') }}" class="text-white-50 mx-2">PSSI</a>
+                <a href="http://localhost/pssi" class="text-white-50 mx-2">PSSI</a>
                 <span class="text-white-50">·</span>
-                <a href="{{ route('legal.confidentialite') }}" class="text-white-50 mx-2">Politique de confidentialité</a>
+                <a href="http://localhost/politique-confidentialite" class="text-white-50 mx-2">Politique de confidentialité</a>
                 <span class="text-white-50">·</span>
-                <a href="{{ route('legal.cgu') }}" class="text-white-50 mx-2">CGU</a>
+                <a href="http://localhost/cgu" class="text-white-50 mx-2">CGU</a>
                 <span class="text-white-50">·</span>
-                <a href="{{ route('legal.registre') }}" class="text-white-50 mx-2">Registre des traitements</a>
+                <a href="http://localhost/registre-traitements" class="text-white-50 mx-2">Registre des traitements</a>
             </div>
             <p class="mb-0 opacity-0">Développé par Rufus Akande, développeur web freelance <a href="https://rufusakande.github.io/rufus-akande">Rufus Akande</a></p>
         </div>
@@ -412,34 +431,7 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="{{ asset('js/auth-enhancements.js') }}"></script>
+    <script src="http://localhost/js/auth-enhancements.js"></script>
     
-    <!-- Offline Sync Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src="{{ asset('js/offline-sync.js') }}"></script>
-    
-    @stack('scripts')
-
-    @auth
-    <!-- Keep-alive ping to prevent session/CSRF timeout -->
-    <script>
-        setInterval(function() {
-            fetch("{{ route('ping') }}", {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    console.warn('Keep-alive ping failed.');
-                }
-            })
-            .catch(error => console.error('Keep-alive error:', error));
-        }, 120000); // Ping every 2 minutes
-    </script>
-    @endauth
-
-    @stack('scripts')
-</body>
+    </body>
 </html>

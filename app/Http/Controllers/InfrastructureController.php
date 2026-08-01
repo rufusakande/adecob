@@ -255,9 +255,17 @@ class InfrastructureController extends Controller
 
     public function create()
     {
-        $communeNames = Commune::orderBy('name')->pluck('name')->toArray();
+        $user = auth()->user();
+        
+        $communeNames = [];
+        if ($user->isSuperAdmin()) {
+            $communeNames = Commune::orderBy('name')->pluck('name')->toArray();
+        }
+
         return view('infrastructures.create', compact('communeNames'));
     }
+
+
 
     public function store(InfrastructureRequest $request)
     {

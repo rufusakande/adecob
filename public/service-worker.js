@@ -1,30 +1,31 @@
-const CACHE_NAME = 'infrastructure-form-cache-v4';
+const CACHE_NAME = 'infrastructure-offline-v11';
+const OFFLINE_URL = '/offline.html';
 const urlsToCache = [
+  OFFLINE_URL,
   '/logo.jpg',
-  '/css/auth-modern.css',
+  '/css/auth-enhancements.css',
+  '/js/offline-storage.js',
   '/js/auth-enhancements.js',
-  '/js/auth-form.js',
-  '/manifest.json',
-  '/js/pwa-install.js'
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js'
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Force le nouveau SW à prendre le contrôle immédiatement
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return Promise.allSettled(
-          urlsToCache.map(url => {
-            return fetch(url)
-              .then(response => {
-                if (response.ok && response.status === 200) {
-                  return cache.put(url, response);
-                }
-              })
-              .catch(err => console.warn(`Service Worker: Échec de mise en cache pour ${url}`, err));
-          })
-        );
-      })
+    caches.open(CACHE_NAME).then(async cache => {
+      console.log('[ServiceWorker] Mise en cache des ressources hors-ligne');
+      // On fetch individuellement pour �viter que cache.addAll n'�choue tout entier si un fichier �choue
+      for (let url of urlsToCache) {
+        try {
+          const response = await fetch(url);
+          await cache.put(url, response);
+        } catch (error) {
+          console.warn('[ServiceWorker] Echec de la mise en cache de: ' + url, error);
+        }
+      }
+    })
   );
 });
 
@@ -33,59 +34,52 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.filter(name => name !== CACHE_NAME)
-          .map(name => caches.delete(name))
+          .map(name => {
+              console.log('[ServiceWorker] Suppression de l\'ancien cache', name);
+              return caches.delete(name);
+          })
       );
-    }).then(() => self.clients.claim()) // Prend le contrôle des pages ouvertes immédiatement
+    }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
-  const url = new URL(event.request.url);
-  
-  // Implémentation Network-First pour la page de création d'infrastructure
-  if (url.pathname === '/infrastructures/create') {
+  // Intercepter UNIQUEMENT la navigation
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Si on a le réseau, on met la page en cache pour la prochaine fois
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
-          return response;
-        })
-        .catch(() => {
-          // Hors-ligne ou erreur réseau : on retourne la page depuis le cache
-          return caches.match(event.request).then(cachedResponse => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // Si pas en cache, on retourne une réponse fallback pour éviter l'erreur TypeError (Failed to fetch)
-            return new Response(
-              '<html><body><h2>Vous êtes hors-ligne.</h2><p>Veuillez vous connecter à internet pour charger cette page pour la première fois. Une fois chargée, elle sera disponible hors-ligne.</p></body></html>', 
-              { status: 503, statusText: 'Service Unavailable', headers: new Headers({ 'Content-Type': 'text/html; charset=utf-8' }) }
-            );
-          });
-        })
+      fetch(event.request).catch(async () => {
+        console.log('[ServiceWorker] Hors-ligne, affichage de offline.html');
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          const cachedResponse = await cache.match(OFFLINE_URL);
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+        } catch (e) {
+          console.error('[ServiceWorker] Erreur de chargement du fallback', e);
+        }
+        
+        return new Response(
+          '<html><body><h2>Vous �tes hors-ligne. L\'application de secours est indisponible.</h2></body></html>', 
+          { status: 503, headers: new Headers({ 'Content-Type': 'text/html; charset=utf-8' }) }
+        );
+      })
     );
     return;
   }
 
-  // Ne pas intercepter les autres routes dynamiques et d'authentification pour éviter les jetons CSRF expirés (erreur 419)
-  if (url.pathname.startsWith('/infrastructures') || 
-      url.pathname === '/' || 
-      url.pathname.startsWith('/login') || 
-      url.pathname.startsWith('/mairie-agent') ||
-      url.pathname.startsWith('/mfa') ||
-      url.pathname.startsWith('/admin') ||
-      url.pathname.startsWith('/storage-asset')) {
-    return;
-  }
-
+  // Pour les autres ressources, network first (sans bloquer)
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
-      })
+    fetch(event.request).catch(async () => {
+      const cached = await caches.match(event.request);
+      if (cached) {
+        return cached;
+      }
+      // Il FAUT retourner une r�ponse, m�me vide, sinon on obtient une TypeError "Failed to convert value to Response"
+      return new Response('', { status: 404, statusText: 'Not Found in Cache' });
+    })
   );
 });
+

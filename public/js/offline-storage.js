@@ -1,91 +1,115 @@
-// Initialisation de la base de donnÃ©es locale
+// Configuration de localForage
 localforage.config({
-    name: 'AdecobOfflineDB',
-    storeName: 'infrastructures'
+    name: 'ADECOB',
+    storeName: 'infrastructures_offline',
+    description: 'Stockage des infrastructures créées hors-ligne'
 });
 
-/**
- * Convertit un fichier (File/Blob) en Base64 pour le stocker facilement.
- */
+document.addEventListener('DOMContentLoaded', async function() {
+    const form = document.getElementById('infraForm');
+    
+    // Create UI for showing pending items and success messages
+    const uiContainer = document.createElement('div');
+    uiContainer.id = 'offline-ui-container';
+    uiContainer.className = 'mb-4';
+    if(form) {
+        form.parentNode.insertBefore(uiContainer, form);
+    }
+    
+    await updatePendingCount();
+    
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Check HTML5 validity
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                // Scroll to the first invalid element
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) firstInvalid.scrollIntoView({behavior: 'smooth', block: 'center'});
+                return;
+            }
+            
+            try {
+                // Show saving state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enregistrement...';
+                submitBtn.disabled = true;
+
+                // Generate a unique local ID
+                const localId = 'offline_' + Date.now();
+                const formData = new FormData(form);
+                const data = { local_id: localId, timestamp: Date.now() };
+                
+                // Process all fields
+                for (let [key, value] of formData.entries()) {
+                    if (value instanceof File && value.size > 0) {
+                        data[key] = await fileToBase64(value);
+                    } else if (!(value instanceof File)) {
+                        data[key] = value;
+                    }
+                }
+                
+                // Save to localForage
+                let existingData = await localforage.getItem('pending_infrastructures') || [];
+                existingData.push(data);
+                await localforage.setItem('pending_infrastructures', existingData);
+                
+                // Reset UI
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                form.reset();
+                form.classList.remove('was-validated');
+                window.scrollTo(0, 0);
+                
+                // Show success banner
+                showSuccessBanner();
+                await updatePendingCount();
+                
+            } catch (err) {
+                console.error("Erreur de sauvegarde locale:", err);
+                alert("Erreur lors de la sauvegarde sur l'appareil: " + err.message);
+            }
+        });
+    }
+});
+
+async function updatePendingCount() {
+    try {
+        let existingData = await localforage.getItem('pending_infrastructures') || [];
+        const container = document.getElementById('offline-ui-container');
+        if (container) {
+            const existingBadge = document.getElementById('pending-badge');
+            if (existingData.length > 0) {
+                const html = '<div id="pending-badge" class="alert alert-warning text-center fw-bold shadow-sm"><i class="bi bi-hdd-fill me-2"></i> Vous avez ' + existingData.length + ' infrastructure(s) sauvegardée(s) sur cet appareil, en attente de synchronisation.</div>';
+                if (existingBadge) {
+                    existingBadge.outerHTML = html;
+                } else {
+                    container.insertAdjacentHTML('beforeend', html);
+                }
+            } else if (existingBadge) {
+                existingBadge.remove();
+            }
+        }
+    } catch(e) {}
+}
+
+function showSuccessBanner() {
+    const container = document.getElementById('offline-ui-container');
+    if (container) {
+        const html = '<div class="alert alert-success alert-dismissible fade show text-center shadow-sm" role="alert"><h4 class="alert-heading fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Sauvegarde réussie !</h4><p class="mb-0">L\'infrastructure a bien été enregistrée sur votre téléphone.</p><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        container.insertAdjacentHTML('afterbegin', html);
+    }
+}
+
+// Helper to convert File to Base64
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve({
-            name: file.name,
-            type: file.type,
-            data: reader.result
-        });
+        reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
     });
 }
-
-/**
- * Sauvegarde les donnÃ©es du formulaire localement
- */
-async function saveInfrastructureLocally(formElement) {
-    const formData = new FormData(formElement);
-    const infraData = {
-        id: Date.now().toString(), // ID unique temporaire
-        savedAt: new Date().toISOString(),
-        fields: {},
-        files: {}
-    };
-
-    // Parcourir toutes les entrÃ©es du formulaire
-    for (let [key, value] of formData.entries()) {
-        if (value instanceof File && value.size > 0) {
-            // C'est un fichier, on le convertit en Base64
-            infraData.files[key] = await fileToBase64(value);
-        } else if (!(value instanceof File)) {
-            // Champ texte classique
-            // GÃ©rer les champs multiples (tableaux comme nom[])
-            if (infraData.fields[key]) {
-                if (!Array.isArray(infraData.fields[key])) {
-                    infraData.fields[key] = [infraData.fields[key]];
-                }
-                infraData.fields[key].push(value);
-            } else {
-                infraData.fields[key] = value;
-            }
-        }
-    }
-
-    // Enregistrer dans IndexedDB
-    try {
-        await localforage.setItem(infraData.id, infraData);
-        
-        // Mettre Ã  jour le compteur d'UI
-        updateSyncBadge();
-
-        return true;
-    } catch (err) {
-        console.error('Erreur lors de la sauvegarde locale:', err);
-        return false;
-    }
-}
-
-/**
- * Met Ã  jour le badge affichant le nombre d'infrastructures en attente
- */
-async function updateSyncBadge() {
-    try {
-        const keys = await localforage.keys();
-        const count = keys.length;
-        
-        const badge = document.getElementById('offline-sync-badge');
-        if (badge) {
-            if (count > 0) {
-                badge.style.display = 'inline-block';
-                badge.querySelector('.count').textContent = count;
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-// Mettre Ã  jour le badge au chargement de la page
-document.addEventListener('DOMContentLoaded', updateSyncBadge);

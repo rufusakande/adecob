@@ -15,8 +15,8 @@
         .header-right { width: 20%; text-align: right; }
         .header-left img  { max-height: 78px; }
         .header-right .logo-box {
-            display: inline-block; border: 1.5px solid #e07a1f; border-radius: 6px;
-            padding: 6px 10px; color: #e07a1f; font-weight: 700; min-width: 90px; min-height: 60px;
+            display: inline-block;  border-radius: 6px;
+            padding: 6px 10px;  font-weight: 700; min-width: 90px; min-height: 60px;
             text-align: center; line-height: 1.2;
         }
         .header-right .logo-box img { max-height: 60px; max-width: 110px; display: block; margin: 0 auto; }
@@ -99,13 +99,7 @@
                 <div class="ministere">MINISTÈRE DE LA DÉCENTRALISATION ET DE LA GOUVERNANCE LOCALE (MDGL)</div>
             </td>
             <td class="header-right">
-                <div class="logo-box">
-                    @if($communeLogoData)
-                        <img src="{{ $communeLogoData }}" alt="Logo mairie">
-                    @else
-                        Logo mairie
-                    @endif
-                </div>
+                @if($communeLogoData)<div class="logo-box"><img src="{{ $communeLogoData }}" alt="Logo mairie"></div>@endif
             </td>
         </tr>
     </table>
@@ -180,3 +174,4 @@
 
 </body>
 </html>
+

@@ -21,6 +21,8 @@ use App\Http\Controllers\Admin\CommuneAdminController;
 
 use Illuminate\Support\Facades\Auth;
 
+
+
 Route::get('/ping', function () {
     return response()->json(['status' => 'OK']);
 })->middleware(['auth'])->name('ping');
@@ -220,3 +222,15 @@ Route::middleware(['auth', 'super.admin', 'mfa.verified'])->prefix('admin/audit'
     Route::post('export', [App\Http\Controllers\AuditLogController::class, 'export'])->name('audit.export');
     Route::post('clear-old', [App\Http\Controllers\AuditLogController::class, 'clearOldLogs'])->name('audit.clear-old');
 });
+
+// Route de secours pour l'affichage des images (contourne les problmes de symlink en ligne)
+Route::get('storage/{folder}/{filename}', function ($folder, $filename) {
+    $path = storage_path('app/public/' . $folder . '/' . $filename);
+    if (!\Illuminate\Support\Facades\File::exists($path)) {
+        abort(404);
+    }
+    $file = \Illuminate\Support\Facades\File::get($path);
+    $type = \Illuminate\Support\Facades\File::mimeType($path);
+    return response($file, 200)->header("Content-Type", $type);
+})->where('folder', '.*');
+

@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Saisie Hors-Ligne - Infrastructure</title>
+    <meta name="csrf-token" content="">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="https://adecob-infrastructure-plateforme.org/logo.jpg">
+
+    <!-- PWA Meta Tags & Manifest -->
+    <link rel="manifest" href="https://adecob-infrastructure-plateforme.org/manifest.json">
+    <meta name="theme-color" content="#28a745">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ADECOB">
+    <link rel="apple-touch-icon" href="https://adecob-infrastructure-plateforme.org/logo.jpg">
+
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Auth Enhancements CSS -->
+    <link rel="stylesheet" href="https://adecob-infrastructure-plateforme.org/css/auth-enhancements.css">
+
+    <!-- Google Fonts - Poppins (optionnel pour plus d'élégance) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+    .infra-stepper{ display:flex; justify-content:space-between; align-items:center; margin: 0 0 1.5rem;
+        background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:1rem 1.25rem; box-shadow:0 4px 16px -8px rgba(15,23,42,.1);}
+    .infra-stepper .st-item{ display:flex; align-items:center; gap:.6rem; color:#94a3b8; font-weight:500; flex:1; position:relative;}
+    .infra-stepper .st-item .st-num{ width:34px;height:34px; border-radius:50%; background:#e2e8f0; color:#64748b;
+        display:flex;align-items:center;justify-content:center; font-weight:700; transition:.2s;}
+    .infra-stepper .st-item.active{ color:#0b7a3b;}
+    .infra-stepper .st-item.active .st-num{ background:linear-gradient(135deg,#0b7a3b,#0e9a4a); color:#fff; box-shadow:0 4px 10px -4px rgba(11,122,59,.6);}
+    .infra-stepper .st-item.done .st-num{ background:#0e9a4a; color:#fff;}
+    .infra-stepper .st-sep{ flex:0 0 auto; width:40px; height:2px; background:#e2e8f0; margin:0 .25rem;}
+    .infra-workflow-banner{ background:linear-gradient(90deg,#fef3c7,#fde68a); color:#78350f;
+        border-left:4px solid #f59e0b; padding:.85rem 1rem; border-radius:10px; margin-bottom:1.25rem;}
+    .completion-bar{ height:8px; background:#e5e7eb; border-radius:99px; overflow:hidden; margin:.5rem 0 1rem;}
+    .completion-bar > span{ display:block; height:100%; background:linear-gradient(90deg,#0b7a3b,#f2b81a); width:0%; transition:.3s;}
+    input:invalid:not(:placeholder-shown), select:invalid { border-color:#ef4444; }
+    .form-hint{ font-size:.78rem; color:#64748b; margin-top:.2rem;}
+    .step { padding: 20px; border-radius: 8px; margin-bottom: 20px; background-color: #f8f9fa; }
+    .form-check-inline { margin-right: 15px; margin-bottom: 8px; }
+    .form-label { font-weight: 600; color: #495057; }
+    .btn { border-radius: 6px; transition: all 0.2s ease; }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .table th, .table td { vertical-align: middle; text-align: center; }
+    .table-hover tbody tr:hover { background-color: rgba(0, 123, 255, 0.05); }
+    .form-control:focus, .form-select:focus { border-color: #28a745; box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25); }
+    h2, h4 { color: #0b6623; }
+    .text-success { color: #0b6623 !important; }
+    .btn-success { background-color: #0b6623; border-color: #0b6623; }
+    .btn-success:hover { background-color: #09551e; border-color: #09551e; }
+    .bg-light { background-color: #f8f9fa !important; }
+    .shadow-sm { box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075) !important; }
+    .position-relative { position: relative; }
+    .position-absolute { position: absolute; }
+    .top-0 { top: 0; }
+    .end-0 { right: 0; }
+    .rounded-circle { border-radius: 50%; }
+    .img-fluid { max-width: 100%; height: auto; }
+    .nav-tabs .nav-link { border: 1px solid transparent; border-top-left-radius: 0.25rem; border-top-right-radius: 0.25rem; }
+    .nav-tabs .nav-link.active { color: #495057; background-color: #fff; border-color: #dee2e6 #dee2e6 #fff; }
+    .card { border: 1px solid rgba(0,0,0,.125); border-radius: 0.25rem; }
+    .card-header { padding: 0.75rem 1.25rem; margin-bottom: 0; background-color: rgba(0, 0, 0, 0.03); border-bottom: 1px solid rgba(0,0,0,.125); }
+    .card-body { flex: 1 1 auto; padding: 1.25rem; }
+    .container { width: 100%; padding-right: 15px; padding-left: 15px; margin-right: auto; margin-left: auto; }
+    @media (min-width: 576px) { .container { max-width: 540px; } }
+    @media (min-width: 768px) { .container { max-width: 720px; } }
+    @media (min-width: 992px) { .container { max-width: 960px; } }
+    @media (min-width: 1200px) { .container { max-width: 1140px; } }
+
+    /* ==== Géolocalisation ==== */
+    .geo-card{
+        background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+        border: 1px solid #bbf7d0; border-radius: 14px; padding: 1rem 1.15rem;
+        margin-bottom: 1rem; box-shadow: 0 4px 14px -8px rgba(11,122,59,.35);
+    }
+    .geo-card .geo-head{ display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap; }
+    .geo-card .geo-title{ font-weight:700; color:#065f46; display:flex; align-items:center; gap:.5rem; margin:0;}
+    .geo-card .geo-hint{ font-size:.82rem; color:#047857; margin:.25rem 0 .75rem;}
+    .btn-geo{
+        background: linear-gradient(135deg,#0b7a3b,#0e9a4a); color:#fff; border:0;
+        padding:.55rem 1rem; border-radius:10px; font-weight:600; display:inline-flex; align-items:center; gap:.5rem;
+        box-shadow: 0 6px 16px -6px rgba(11,122,59,.55); transition: transform .15s, box-shadow .15s;
+    }
+    .btn-geo:hover{ transform: translateY(-1px); box-shadow: 0 10px 20px -8px rgba(11,122,59,.6); color:#fff;}
+    .btn-geo:disabled{ opacity:.75; cursor:progress;}
+    .btn-geo-outline{
+        background:#fff; color:#065f46; border:1px solid #10b981; padding:.5rem .85rem; border-radius:10px;
+        font-weight:600; display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .btn-geo-outline:hover{ background:#ecfdf5; color:#065f46;}
+    .geo-status{ font-size:.85rem; margin-top:.5rem; display:flex; align-items:center; gap:.4rem;}
+    .geo-status.ok{ color:#047857;}
+    .geo-status.err{ color:#b91c1c;}
+    .geo-status.info{ color:#0369a1;}
+    .geo-accuracy-badge{
+        display:inline-flex; align-items:center; gap:.3rem; padding:.15rem .55rem; border-radius:99px;
+        font-size:.75rem; font-weight:600;
+    }
+    .geo-accuracy-badge.excellent{ background:#dcfce7; color:#166534;}
+    .geo-accuracy-badge.good{ background:#dbeafe; color:#1e40af;}
+    .geo-accuracy-badge.medium{ background:#fef3c7; color:#92400e;}
+    .geo-accuracy-badge.poor{ background:#fee2e2; color:#991b1b;}
+    #geo-map{ height: 400px; width:100%; border-radius:12px; border:1px solid #d1fae5; margin-top:.5rem; z-index:0;}
+    .geo-fields .form-control[readonly]{ background:#f9fafb;}
+    .geo-locked-note{ font-size:.72rem; color:#6b7280; margin-top:.15rem;}
+    @keyframes geoPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    .geo-pulse{ animation: geoPulse 1.2s ease-in-out infinite; }
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <style>
+        /* Police moderne */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+            padding-top: 170px; /* header (66px) + navbar (60px) + marge */
+            transition: padding 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 150px;
+            }
+        }
+
+        /* Header fixe - Logo et info */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1030;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .fixed-header .logo-text {
+            font-size: 0.95rem;
+            line-height: 1.3;
+            color: #0b6623;
+            font-weight: 600;
+        }
+
+        /* Navbar fixe - Navigation principale */
+        .fixed-navbar {
+            position: fixed;
+            top: 66px;
+            left: 0;
+            right: 0;
+            background-color: #0b6623;
+            z-index: 1020;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            padding: 0.35rem 0;
+        }
+
+        .fixed-navbar .container {
+            align-items: flex-start;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #FFD100 !important;
+            font-size: clamp(1rem, 1.8vw, 1.3rem);
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            max-width: 100%;
+        }
+
+        .fixed-navbar .navbar-collapse {
+            flex-grow: 1;
+            justify-content: flex-end;
+        }
+
+        .fixed-navbar .navbar-nav {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.2rem 0.35rem;
+            width: 100%;
+        }
+
+        .fixed-navbar .nav-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #fff !important;
+            font-weight: 500;
+            padding: 0.5rem 0.9rem !important;
+            transition: background 0.3s ease, border-radius 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover, .nav-item.dropdown:hover .nav-link {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: background 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: #0b6623;
+            color: white;
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+            margin-right: 8px;
+        }
+
+        /* Boutons dans le header */
+        .btn-contact {
+            background-color: #FFD100;
+            color: #0b6623;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-contact:hover {
+            background-color: #e6be00;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* Footer élégant */
+        footer {
+            background: linear-gradient(135deg, #0b6623, #09551e);
+            color: #FFD100;
+            padding: 25px 0;
+            margin-top: auto;
+        }
+
+        footer a {
+            color: #FFD100;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: white;
+        }
+
+        footer .footer-text {
+            font-size: 0.9rem;
+        }
+
+        /* Icônes sociales */
+        .social-icon {
+            color: #FFD100;
+            font-size: 1.3rem;
+            margin: 0 8px;
+            transition: transform 0.3s ease, color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fixed-header .bi,
+        .fixed-header .fa,
+        .fixed-header .fas,
+        .fixed-navbar .bi,
+        .fixed-navbar .fa,
+        .fixed-navbar .fas {
+            display: inline-block;
+            min-width: 1.1em;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .social-icon:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 991.98px) {
+            .fixed-navbar .navbar-collapse {
+                margin-top: 0.6rem;
+                background: rgba(11, 102, 35, 0.97);
+                border-radius: 0.75rem;
+                padding: 0.5rem;
+            }
+
+            .fixed-navbar .navbar-nav {
+                justify-content: flex-start;
+                gap: 0.2rem;
+            }
+
+            .fixed-navbar .nav-link {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.05rem;
+            }
+
+            .fixed-header .text-muted {
+                font-size: 0.8rem;
+            }
+
+            .btn-contact {
+                font-size: 0.8rem;
+                padding: 0.3rem 0.6rem;
+            }
+
+            .d-md-inline-flex {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Header -->
+    <header class="fixed-header">
+        <div class="container py-2 px-3">
+            <div class="row align-items-center">
+                <!-- Logo + Texte -->
+                <div class="col-12 col-md-6 d-flex align-items-center mb-2 mb-md-0">
+                    <img src="https://adecob-infrastructure-plateforme.org/logo.jpg" alt="Logo ADECOB" class="me-3" style="height: 50px; border-radius: 8px;">
+                    <div class="logo-text">
+                        ASSOCIATION POUR LE DÉVELOPPEMENT<br>
+                        DES COMMUNES DU BORGOU
+                    </div>
+                </div>
+
+                <!-- Info + Contact (desktop) -->
+                <div class="col-md-6 d-none d-md-flex justify-content-end align-items-center gap-3">
+                    <div class="d-flex align-items-center text-muted small">
+                        <div>
+                            <div>Siège: <strong>N'DALI</strong></div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center text-muted small">
+                        <div>
+                            <div>Mail : <strong>secretariatadecob@yahoo.fr</strong></div>
+                        </div>
+                    </div>
+                    <a href="https://adecob-infrastructure-plateforme.org/contact" class="btn btn-contact">
+                        CONTACTEZ-NOUS
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg fixed-navbar">
+        <div class="container">
+            <a class="navbar-brand me-3" href="https://adecob-infrastructure-plateforme.org">ADECOB Infrastructure Plannification</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                                            <!-- Guest Links -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="https://adecob-infrastructure-plateforme.org/login">Se connecter</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="https://adecob-infrastructure-plateforme.org/register">
+                                S'inscrire
+                            </a>
+                        </li>
+                                    </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-fluid px-3 mt-3">
+        <div class="container">
+    <div class="text-center mb-4">
+        <img src="https://adecob-infrastructure-plateforme.org/logo.jpg" alt="Logo ADECOB" class="img-fluid" style="max-height: 100px;">
+    </div>
+    <div class="alert alert-danger text-center shadow-sm" style="border-radius: 12px; border: 2px solid #dc3545;">
+        <h4 class="fw-bold mb-1"><i class="bi bi-wifi-off me-2"></i> MODE STRICTEMENT HORS-LIGNE</h4>
+        <p class="mb-0">Vous �tes actuellement d�connect� du r�seau. Vous pouvez saisir les informations de l'infrastructure ici. Elles seront sauvegard�es sur votre appareil.</p>
+    </div>
+    <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET �CONOMIQUES/ADECOB</h2>
+    
+    <form action="#" method="POST" enctype="multipart/form-data" class="bg-white p-4 rounded shadow-sm" data-loader id="infraForm" novalidate>
+    <input type="hidden" name="_token" value="" autocomplete="off">    
+    
+    <div class="infra-stepper" id="infraStepper">
+        <div class="st-item active" data-step="1"><div class="st-num">1</div><span>Enquêteur & lieu</span></div>
+        <div class="st-sep"></div>
+        <div class="st-item" data-step="2"><div class="st-num">2</div><span>Infrastructure</span></div>
+        <div class="st-sep"></div>
+        <div class="st-item" data-step="3"><div class="st-num">3</div><span>État & photos</span></div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center small text-muted">
+        <span><i class="fas fa-chart-line me-1"></i>Qualité de la saisie</span>
+        <span id="completionText">0 %</span>
+    </div>
+    <div class="completion-bar"><span id="completionBar"></span></div>
+
+    <div class="step" id="step-1">
+        <h4 class="text-primary mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            Informations Générales
+        </h4>
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <label for="date" class="form-label">
+                    <i class="fas fa-calendar-alt text-success me-1"></i>
+                    Date
+                </label>
+                <input type="date" name="date" id="date" class="form-control" value="2026-07-22">
+            </div>
+            <div class="col-12 col-md-4">
+                <label for="nom_enqueteur" class="form-label">
+                    <i class="fas fa-user text-success me-1"></i>
+                    Nom enquêteur
+                </label>
+                <input type="text" name="nom_enqueteur" id="nom_enqueteur" class="form-control" required
+                       value="">
+            </div>
+            <div class="col-12 col-md-4">
+                <label for="numero_telephone" class="form-label">
+                    <i class="fas fa-phone text-success me-1"></i>
+                    Numéro de téléphone
+                </label>
+                <input type="tel" name="numero_telephone" id="numero_telephone" class="form-control"
+                       pattern="^(\+229|00229)?[\s\-]?[0-9]{8,10}$"
+                       placeholder="+229 XX XX XX XX"
+                       title="Format Bénin : +229 suivi de 8 à 10 chiffres"
+                       value="">
+                <div class="form-hint">Format attendu : +229 01 02 03 04 05</div>
+            </div>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="form-label">
+                <i class="fas fa-city text-success me-1"></i>
+                Commune
+            </label>
+                        <div class="d-flex flex-wrap gap-3">
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commune" id="commune_0"
+                               value="Parakou" onclick="updateArrondissements()"
+                               
+                               >
+                        <label class="form-check-label" for="commune_0">Parakou</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commune" id="commune_1"
+                               value="Tchaourou" onclick="updateArrondissements()"
+                               
+                               >
+                        <label class="form-check-label" for="commune_1">Tchaourou</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commune" id="commune_2"
+                               value="N&#039;Dali" onclick="updateArrondissements()"
+                               
+                               >
+                        <label class="form-check-label" for="commune_2">N&#039;Dali</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commune" id="commune_3"
+                               value="Nikki" onclick="updateArrondissements()"
+                               
+                               >
+                        <label class="form-check-label" for="commune_3">Nikki</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commune" id="commune_4"
+                               value="Bembéréké" onclick="updateArrondissements()"
+                               
+                               >
+                        <label class="form-check-label" for="commune_4">Bembéréké</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commune" id="commune_5"
+                               value="Kalalé" onclick="updateArrondissements()"
+                               
+                               >
+                        <label class="form-check-label" for="commune_5">Kalalé</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commune" id="commune_6"
+                               value="Sinendé" onclick="updateArrondissements()"
+                               
+                               >
+                        <label class="form-check-label" for="commune_6">Sinendé</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commune" id="commune_7"
+                               value="Péréré" onclick="updateArrondissements()"
+                               
+                               >
+                        <label class="form-check-label" for="commune_7">Péréré</label>
+                    </div>
+                                            </div>
+        </div>
+
+        <div class="form-group mb-4" id="arrondissement-container">
+            <label class="form-label">
+                <i class="fas fa-map-marker-alt text-success me-1"></i>
+                Arrondissement
+            </label>
+            <div id="arrondissements" class="d-flex flex-wrap gap-3"></div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-primary" onclick="nextStep(1)">
+                <i class="fas fa-arrow-right me-2"></i> Suivant
+            </button>
+        </div>
+    </div>
+
+    <div class="step" id="step-2" style="display: none;">
+        <h4 class="text-primary mb-4">
+            <i class="fas fa-building me-2"></i>
+            Détails de l'infrastructure
+        </h4>
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-6">
+                <label for="village" class="form-label">
+                    <i class="fas fa-home text-success me-1"></i>
+                    Village / Quartier
+                </label>
+                <input type="text" name="village" id="village" class="form-control"
+                       value="">
+            </div>
+            <div class="col-12 col-md-6">
+                <label for="hameau" class="form-label">
+                    <i class="fas fa-home text-success me-1"></i>
+                    Hameau
+                </label>
+                <input type="text" name="hameau" id="hameau" class="form-control"
+                       value="">
+            </div>
+            <div class="col-12">
+                <div class="geo-card">
+                    <div class="geo-head">
+                        <h6 class="geo-title">
+                            <i class="fas fa-satellite-dish"></i>
+                            Position géographique de l'infrastructure
+                        </h6>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" id="get-location" class="btn-geo">
+                                <i class="fas fa-location-crosshairs"></i>
+                                <span id="geo-btn-label">Utiliser ma position actuelle</span>
+                            </button>
+                            <button type="button" id="geo-watch" class="btn-geo-outline" title="Suivi continu jusqu'à obtention d'une position précise">
+                                <i class="fas fa-satellite"></i>
+                                <span id="geo-watch-label">Suivi haute précision</span>
+                            </button>
+                            <button type="button" id="geo-clear" class="btn-geo-outline" title="Effacer les coordonnées">
+                                <i class="fas fa-eraser"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="geo-hint mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Autorisez le navigateur à accéder à votre position, puis affinez si besoin en cliquant ou en déplaçant le repère sur la carte.
+                    </p>
+                    <div id="geo-status" class="geo-status info" style="display:none;"></div>
+                    <div id="geo-map" aria-label="Carte pour ajuster la position"></div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 geo-fields">
+                <label for="latitude" class="form-label">
+                    <i class="fas fa-map-marker-alt text-success me-1"></i>
+                    Latitude (°)
+                </label>
+                <input type="number" step="any" min="-90" max="90" name="latitude" id="latitude" class="form-control" placeholder="Ex. 9.345678"
+                       value="">
+                <div class="geo-locked-note">Modifiable manuellement si besoin.</div>
+            </div>
+            <div class="col-12 col-md-6 geo-fields">
+                <label for="longitude" class="form-label">
+                    <i class="fas fa-map-marker-alt text-success me-1"></i>
+                    Longitude (°)
+                </label>
+                <input type="number" step="any" min="-180" max="180" name="longitude" id="longitude" class="form-control" placeholder="Ex. 2.456789"
+                       value="">
+            </div>
+            <div class="col-12 col-md-6 geo-fields">
+                <label for="altitude" class="form-label">
+                    <i class="fas fa-mountain text-success me-1"></i>
+                    Altitude (m)
+                </label>
+                <input type="number" step="any" min="-500" max="9000" name="altitude" id="altitude" class="form-control" placeholder="Altitude"
+                       value="">
+            </div>
+            <div class="col-12 col-md-6 geo-fields">
+                <label for="precision" class="form-label">
+                    <i class="fas fa-ruler text-success me-1"></i>
+                    Précision (m)
+                </label>
+                <input type="number" step="any" min="0" max="10000" name="precision" id="precision" class="form-control" placeholder="Précision GPS"
+                       value="">
+                <div id="geo-accuracy-indicator"></div>
+            </div>
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label">
+                <i class="fas fa-industry text-success me-1"></i>
+                Secteur / Domaine
+            </label>
+                        <div class="d-flex flex-wrap gap-3">
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_0"
+                               value="Education" data-secteur="Education"
+                               >
+                        <label class="form-check-label" for="secteur_0">Education</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_1"
+                               value="Santé" data-secteur="Santé"
+                               >
+                        <label class="form-check-label" for="secteur_1">Santé</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_2"
+                               value="Agriculture / Elevage" data-secteur="Agriculture / Elevage"
+                               >
+                        <label class="form-check-label" for="secteur_2">Agriculture / Elevage</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_3"
+                               value="Marché à bétail" data-secteur="Marché à bétail"
+                               >
+                        <label class="form-check-label" for="secteur_3">Marché à bétail</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_4"
+                               value="Administration" data-secteur="Administration"
+                               >
+                        <label class="form-check-label" for="secteur_4">Administration</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_5"
+                               value="Eau potable" data-secteur="Eau potable"
+                               >
+                        <label class="form-check-label" for="secteur_5">Eau potable</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_6"
+                               value="Assainissement" data-secteur="Assainissement"
+                               >
+                        <label class="form-check-label" for="secteur_6">Assainissement</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_7"
+                               value="Culture/Sport/Loisirs" data-secteur="Culture/Sport/Loisirs"
+                               >
+                        <label class="form-check-label" for="secteur_7">Culture/Sport/Loisirs</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_8"
+                               value="Tourisme" data-secteur="Tourisme"
+                               >
+                        <label class="form-check-label" for="secteur_8">Tourisme</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input secteur-radio" type="radio" name="secteur_domaine" id="secteur_9"
+                               value="Autre" data-secteur="Autre"
+                               >
+                        <label class="form-check-label" for="secteur_9">Autre</label>
+                    </div>
+                            </div>
+            <input type="text" id="secteur_autre_preciser" class="form-control mt-2" placeholder="Préciser le secteur"
+                   value="" style="display:none;max-width:400px;">
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label">
+                <i class="fas fa-tools text-success me-1"></i>
+                Type d'infrastructure
+            </label>
+                        <div id="types-container">
+                                    <div class="type-group mb-3" data-secteur="Education" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Education</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-module-de-1-classe"
+                                           value="Module de 1 classe" >
+                                    <label class="form-check-label" for="type_education-module-de-1-classe">Module de 1 classe</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-module-de-2-classes"
+                                           value="Module de 2 classes" >
+                                    <label class="form-check-label" for="type_education-module-de-2-classes">Module de 2 classes</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-module-de-3-classes"
+                                           value="Module de 3 classes" >
+                                    <label class="form-check-label" for="type_education-module-de-3-classes">Module de 3 classes</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-module-de-4-classes"
+                                           value="Module de 4 classes" >
+                                    <label class="form-check-label" for="type_education-module-de-4-classes">Module de 4 classes</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-module-de-5-classes"
+                                           value="Module de 5 classes" >
+                                    <label class="form-check-label" for="type_education-module-de-5-classes">Module de 5 classes</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-module-bureau"
+                                           value="Module + Bureau" >
+                                    <label class="form-check-label" for="type_education-module-bureau">Module + Bureau</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-cantine-scolaire"
+                                           value="Cantine scolaire" >
+                                    <label class="form-check-label" for="type_education-cantine-scolaire">Cantine scolaire</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-magasin"
+                                           value="Magasin" >
+                                    <label class="form-check-label" for="type_education-magasin">Magasin</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-bloc-administratif"
+                                           value="Bloc administratif" >
+                                    <label class="form-check-label" for="type_education-bloc-administratif">Bloc administratif</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_education-logement"
+                                           value="Logement" >
+                                    <label class="form-check-label" for="type_education-logement">Logement</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="type-group mb-3" data-secteur="Santé" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Santé</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_sante-dispensaire"
+                                           value="Dispensaire" >
+                                    <label class="form-check-label" for="type_sante-dispensaire">Dispensaire</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_sante-maternite"
+                                           value="Maternité" >
+                                    <label class="form-check-label" for="type_sante-maternite">Maternité</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_sante-pharmacie"
+                                           value="Pharmacie" >
+                                    <label class="form-check-label" for="type_sante-pharmacie">Pharmacie</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_sante-incinerateur"
+                                           value="Incinérateur" >
+                                    <label class="form-check-label" for="type_sante-incinerateur">Incinérateur</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_sante-logement"
+                                           value="Logement" >
+                                    <label class="form-check-label" for="type_sante-logement">Logement</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="type-group mb-3" data-secteur="Eau potable" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Eau potable</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_eau-potable-forage-fpm"
+                                           value="Forage (FPM)" >
+                                    <label class="form-check-label" for="type_eau-potable-forage-fpm">Forage (FPM)</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_eau-potable-aev"
+                                           value="AEV" >
+                                    <label class="form-check-label" for="type_eau-potable-aev">AEV</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_eau-potable-pea"
+                                           value="PEA" >
+                                    <label class="form-check-label" for="type_eau-potable-pea">PEA</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_eau-potable-puits-a-grand-diametre"
+                                           value="Puits à grand diamètre" >
+                                    <label class="form-check-label" for="type_eau-potable-puits-a-grand-diametre">Puits à grand diamètre</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_eau-potable-retenue-deau"
+                                           value="Retenue d&#039;eau" >
+                                    <label class="form-check-label" for="type_eau-potable-retenue-deau">Retenue d&#039;eau</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="type-group mb-3" data-secteur="Agriculture / Elevage" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Agriculture / Elevage</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_agriculture-elevage-perimetre-maraicher"
+                                           value="Périmètre maraîcher" >
+                                    <label class="form-check-label" for="type_agriculture-elevage-perimetre-maraicher">Périmètre maraîcher</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_agriculture-elevage-magasin"
+                                           value="Magasin" >
+                                    <label class="form-check-label" for="type_agriculture-elevage-magasin">Magasin</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_agriculture-elevage-hangar"
+                                           value="Hangar" >
+                                    <label class="form-check-label" for="type_agriculture-elevage-hangar">Hangar</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_agriculture-elevage-packing"
+                                           value="Packing" >
+                                    <label class="form-check-label" for="type_agriculture-elevage-packing">Packing</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="type-group mb-3" data-secteur="Assainissement" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Assainissement</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-latrine-1-cabine"
+                                           value="Latrine 1 cabine" >
+                                    <label class="form-check-label" for="type_assainissement-latrine-1-cabine">Latrine 1 cabine</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-latrine-2-cabines"
+                                           value="Latrine 2 cabines" >
+                                    <label class="form-check-label" for="type_assainissement-latrine-2-cabines">Latrine 2 cabines</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-latrine-3-cabines"
+                                           value="Latrine 3 cabines" >
+                                    <label class="form-check-label" for="type_assainissement-latrine-3-cabines">Latrine 3 cabines</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-latrine-4-cabines"
+                                           value="Latrine 4 cabines" >
+                                    <label class="form-check-label" for="type_assainissement-latrine-4-cabines">Latrine 4 cabines</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-latrine-5-cabines"
+                                           value="Latrine 5 cabines" >
+                                    <label class="form-check-label" for="type_assainissement-latrine-5-cabines">Latrine 5 cabines</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-latrine-6-cabines"
+                                           value="Latrine 6 cabines" >
+                                    <label class="form-check-label" for="type_assainissement-latrine-6-cabines">Latrine 6 cabines</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-latrine-7-cabines"
+                                           value="Latrine 7 cabines" >
+                                    <label class="form-check-label" for="type_assainissement-latrine-7-cabines">Latrine 7 cabines</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-latrine-8-cabines"
+                                           value="Latrine 8 cabines" >
+                                    <label class="form-check-label" for="type_assainissement-latrine-8-cabines">Latrine 8 cabines</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-toilette"
+                                           value="Toilette" >
+                                    <label class="form-check-label" for="type_assainissement-toilette">Toilette</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_assainissement-depotoir"
+                                           value="Dépotoir" >
+                                    <label class="form-check-label" for="type_assainissement-depotoir">Dépotoir</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="type-group mb-3" data-secteur="Marché à bétail" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Marché à bétail</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_marche-a-betail-hangar"
+                                           value="Hangar" >
+                                    <label class="form-check-label" for="type_marche-a-betail-hangar">Hangar</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_marche-a-betail-boutique"
+                                           value="Boutique" >
+                                    <label class="form-check-label" for="type_marche-a-betail-boutique">Boutique</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_marche-a-betail-quai-dembarquement"
+                                           value="Quai d&#039;embarquement" >
+                                    <label class="form-check-label" for="type_marche-a-betail-quai-dembarquement">Quai d&#039;embarquement</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_marche-a-betail-boucherie"
+                                           value="Boucherie" >
+                                    <label class="form-check-label" for="type_marche-a-betail-boucherie">Boucherie</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="type-group mb-3" data-secteur="Culture/Sport/Loisirs" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Culture/Sport/Loisirs</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_culturesportloisirs-maison-des-jeunes"
+                                           value="Maison des jeunes" >
+                                    <label class="form-check-label" for="type_culturesportloisirs-maison-des-jeunes">Maison des jeunes</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_culturesportloisirs-salle-dalphabetisation"
+                                           value="Salle d&#039;alphabétisation" >
+                                    <label class="form-check-label" for="type_culturesportloisirs-salle-dalphabetisation">Salle d&#039;alphabétisation</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_culturesportloisirs-terrain-de-sport"
+                                           value="Terrain de sport" >
+                                    <label class="form-check-label" for="type_culturesportloisirs-terrain-de-sport">Terrain de sport</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="type-group mb-3" data-secteur="Administration" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Administration</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_administration-bloc-administratif"
+                                           value="Bloc administratif" >
+                                    <label class="form-check-label" for="type_administration-bloc-administratif">Bloc administratif</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_administration-logement"
+                                           value="Logement" >
+                                    <label class="form-check-label" for="type_administration-logement">Logement</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="type-group mb-3" data-secteur="Tourisme" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Tourisme</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_tourisme-autre-preciser"
+                                           value="Autre (préciser)" >
+                                    <label class="form-check-label" for="type_tourisme-autre-preciser">Autre (préciser)</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="type-group mb-3" data-secteur="Autre" style="display:none;">
+                        <div class="small text-muted fw-bold mb-2">Autre</div>
+                        <div class="d-flex flex-wrap gap-3">
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_autre-cloture"
+                                           value="Clôture" >
+                                    <label class="form-check-label" for="type_autre-cloture">Clôture</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_autre-piste-a-betail"
+                                           value="Piste à bétail" >
+                                    <label class="form-check-label" for="type_autre-piste-a-betail">Piste à bétail</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_autre-eclairage-public"
+                                           value="Eclairage public" >
+                                    <label class="form-check-label" for="type_autre-eclairage-public">Eclairage public</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_autre-cimetiere"
+                                           value="Cimetière" >
+                                    <label class="form-check-label" for="type_autre-cimetiere">Cimetière</label>
+                                </div>
+                                                            <div class="form-check">
+                                    <input class="form-check-input type-radio" type="radio" name="type_infrastructure"
+                                           id="type_autre-autre-preciser"
+                                           value="Autre (préciser)" >
+                                    <label class="form-check-label" for="type_autre-autre-preciser">Autre (préciser)</label>
+                                </div>
+                                                    </div>
+                    </div>
+                                <div id="type-empty-msg" class="text-muted small">Sélectionnez d'abord un secteur pour afficher les types disponibles.</div>
+            </div>
+            <input type="text" id="type_autre_preciser" class="form-control mt-2" placeholder="Préciser le type d'infrastructure"
+                   value="" style="display:none;max-width:400px;">
+        </div>
+        <div class="form-group mb-4">
+            <label for="nom_infrastructure" class="form-label">
+                <i class="fas fa-tag text-success me-1"></i>
+                Nom de l'infrastructure
+            </label>
+            <input type="text" name="nom_infrastructure" id="nom_infrastructure" class="form-control"
+                   value="">
+        </div>
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
+                <i class="fas fa-arrow-left me-2"></i> Précédent
+            </button>
+            <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                <i class="fas fa-arrow-right me-2"></i> Suivant
+            </button>
+        </div>
+    </div>
+
+    <div class="step" id="step-3" style="display: none;">
+        <h4 class="text-primary mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            Informations Complémentaires
+        </h4>
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <div class="form-group mb-3">
+                    <label for="annee_realisation" class="form-label">
+                        <i class="fas fa-calendar-alt text-success me-1"></i>
+                        Année de réalisation
+                    </label>
+                    <input type="number" min="1900" max="2027" name="annee_realisation" id="annee_realisation" class="form-control"
+                           value="">
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="form-group mb-3">
+                    <label for="bailleur" class="form-label">
+                        <i class="fas fa-handshake text-success me-1"></i>
+                        Bailleur
+                    </label>
+                    <input type="text" name="bailleur" id="bailleur" class="form-control"
+                           value="">
+                </div>
+            </div>
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label">
+                <i class="fas fa-brush text-success me-1"></i>
+                Type de matériaux
+            </label>
+            <div class="d-flex gap-3">
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type_materiaux" id="materiau_0"
+                               value="Définitif" >
+                        <label class="form-check-label" for="materiau_0">Définitif</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type_materiaux" id="materiau_1"
+                               value="Semi-définitif" >
+                        <label class="form-check-label" for="materiau_1">Semi-définitif</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type_materiaux" id="materiau_2"
+                               value="Précaire" >
+                        <label class="form-check-label" for="materiau_2">Précaire</label>
+                    </div>
+                            </div>
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label">
+                <i class="fas fa-heartbeat text-success me-1"></i>
+                État de fonctionnement
+            </label>
+            <div class="d-flex flex-wrap gap-3">
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="etat_fonctionnement" id="etat_0"
+                               value="Fonctionnel" >
+                        <label class="form-check-label" for="etat_0">Fonctionnel</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="etat_fonctionnement" id="etat_1"
+                               value="Fonctionnel avec quelques défaillances" >
+                        <label class="form-check-label" for="etat_1">Fonctionnel avec quelques défaillances</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="etat_fonctionnement" id="etat_2"
+                               value="Partiellement fonctionnel" >
+                        <label class="form-check-label" for="etat_2">Partiellement fonctionnel</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="etat_fonctionnement" id="etat_3"
+                               value="Non fonctionnel" >
+                        <label class="form-check-label" for="etat_3">Non fonctionnel</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="etat_fonctionnement" id="etat_4"
+                               value="Abandonné" >
+                        <label class="form-check-label" for="etat_4">Abandonné</label>
+                    </div>
+                            </div>
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label">
+                <i class="fas fa-exclamation-triangle text-success me-1"></i>
+                Niveau de dégradation
+            </label>
+            <div class="d-flex flex-wrap gap-3">
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="niveau_degradation" id="niveau_0"
+                               value="Aucun" >
+                        <label class="form-check-label" for="niveau_0">Aucun</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="niveau_degradation" id="niveau_1"
+                               value="Faible" >
+                        <label class="form-check-label" for="niveau_1">Faible</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="niveau_degradation" id="niveau_2"
+                               value="Moyen" >
+                        <label class="form-check-label" for="niveau_2">Moyen</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="niveau_degradation" id="niveau_3"
+                               value="Élevé" >
+                        <label class="form-check-label" for="niveau_3">Élevé</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="niveau_degradation" id="niveau_4"
+                               value="Très élevé" >
+                        <label class="form-check-label" for="niveau_4">Très élevé</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="niveau_degradation" id="niveau_5"
+                               value="Ruine" >
+                        <label class="form-check-label" for="niveau_5">Ruine</label>
+                    </div>
+                            </div>
+        </div>
+        <div class="form-group mb-4">
+            <label for="mode_gestion" class="form-label">
+                <i class="fas fa-users-cog text-success me-1"></i>
+                Mode de gestion
+            </label>
+            <small class="form-text text-muted d-block mb-2">REGIE=marché où c'est la mairie qui perçoit directement les taxes</small>
+            <div class="d-flex flex-wrap gap-3 mb-2">
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mode_gestion" id="mode_0"
+                               value="Comité de gestion" >
+                        <label class="form-check-label" for="mode_0">Comité de gestion</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mode_gestion" id="mode_1"
+                               value="Mairie" >
+                        <label class="form-check-label" for="mode_1">Mairie</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mode_gestion" id="mode_2"
+                               value="Régie" >
+                        <label class="form-check-label" for="mode_2">Régie</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mode_gestion" id="mode_3"
+                               value="Affermage" >
+                        <label class="form-check-label" for="mode_3">Affermage</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mode_gestion" id="mode_4"
+                               value="Délégataire" >
+                        <label class="form-check-label" for="mode_4">Délégataire</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mode_gestion" id="mode_5"
+                               value="Association" >
+                        <label class="form-check-label" for="mode_5">Association</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mode_gestion" id="mode_6"
+                               value="Privé" >
+                        <label class="form-check-label" for="mode_6">Privé</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mode_gestion" id="mode_7"
+                               value="Communauté" >
+                        <label class="form-check-label" for="mode_7">Communauté</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mode_gestion" id="mode_8"
+                               value="Autre" >
+                        <label class="form-check-label" for="mode_8">Autre</label>
+                    </div>
+                            </div>
+            <input type="text" name="mode_gestion_preciser" id="mode_gestion_preciser" class="form-control mt-2" placeholder="Préciser"
+                   value="">
+        </div>
+        <div class="form-group mb-4">
+            <label for="defectuosites_relevees" class="form-label">
+                <i class="fas fa-exclamation-circle text-success me-1"></i>
+                DÉFECTUOSITÉS RELEVÉES
+            </label>
+            <small class="form-text text-muted d-block mb-2">
+                Indiquer les défectuosités et préciser les quantités : Fondation, Murs, Armoire de rangement, Fenêtre, Toiture, Portes, Charpente, Cimentage du PTMR, Plafond, Dalle de couverture, Sanitaire/WC, Sanitaire/LAVABO, Sanitaire/DOUCHE, Superstructure (Fissures, Décollage du crépissage, Lessivage/Dégradation de la peinture, Mouille, etc.)
+            </small>
+            <textarea name="defectuosites_relevees" id="defectuosites_relevees" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group mb-4">
+            <label for="mesures_proposees" class="form-label">
+                <i class="fas fa-wrench text-success me-1"></i>
+                MESURES PROPOSÉES
+            </label>
+            <textarea name="mesures_proposees" id="mesures_proposees" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group mb-4">
+            <label for="observation_generale" class="form-label">
+                <i class="fas fa-eye text-success me-1"></i>
+                OBSERVATION GÉNÉRALE
+            </label>
+            <textarea name="observation_generale" id="observation_generale" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label">
+                <i class="fas fa-hammer text-success me-1"></i>
+                Réhabilitation nécessaire ?
+            </label>
+            <div class="d-flex flex-wrap gap-3 mb-2">
+                                    <div class="form-check">
+                        <input class="form-check-input rehab-needed" type="radio" name="rehab_needed" id="rehab_needed_Oui"
+                               value="Oui" >
+                        <label class="form-check-label" for="rehab_needed_Oui">Oui</label>
+                    </div>
+                                    <div class="form-check">
+                        <input class="form-check-input rehab-needed" type="radio" name="rehab_needed" id="rehab_needed_Non"
+                               value="Non" >
+                        <label class="form-check-label" for="rehab_needed_Non">Non</label>
+                    </div>
+                            </div>
+            <div id="nature-travaux-block" style="display:none;">
+                <div class="small text-muted mb-2">Nature des travaux</div>
+                <div class="d-flex flex-wrap gap-3">
+                                            <div class="form-check">
+                            <input class="form-check-input nature-travaux" type="radio" name="rehabilitation" id="nature_0"
+                                   value="Réhabilitation légère" >
+                            <label class="form-check-label" for="nature_0">Réhabilitation légère</label>
+                        </div>
+                                            <div class="form-check">
+                            <input class="form-check-input nature-travaux" type="radio" name="rehabilitation" id="nature_1"
+                                   value="Réhabilitation moyenne" >
+                            <label class="form-check-label" for="nature_1">Réhabilitation moyenne</label>
+                        </div>
+                                            <div class="form-check">
+                            <input class="form-check-input nature-travaux" type="radio" name="rehabilitation" id="nature_2"
+                                   value="Réhabilitation lourde" >
+                            <label class="form-check-label" for="nature_2">Réhabilitation lourde</label>
+                        </div>
+                                            <div class="form-check">
+                            <input class="form-check-input nature-travaux" type="radio" name="rehabilitation" id="nature_3"
+                                   value="Reconstruction" >
+                            <label class="form-check-label" for="nature_3">Reconstruction</label>
+                        </div>
+                                    </div>
+            </div>
+            <input type="hidden" name="rehabilitation" id="rehabilitation_non_input" value="Non"
+                   disabled>
+        </div>
+        <div class="form-group mb-4">
+            <h5 class="text-success mb-3">
+                <i class="fas fa-camera me-2"></i>
+                Photos de l'Infrastructure
+            </h5>
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="upload-tab" data-bs-toggle="tab" href="#upload-section">Importer des Photos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="camera-tab" data-bs-toggle="tab" href="#camera-section">Prendre des Photos</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="upload-section">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Importez des photos depuis votre appareil
+                            </div>
+                            <div class="row g-3">
+                                                                                                        <div class="col-md-6 col-lg-3">
+                                        <div class="card h-100">
+                                            <div class="card-body p-3">
+                                                <div class="text-center mb-3">
+                                                    <div id="upload-preview-container-1" style="display: none;">
+                                                        <img id="upload-preview-1" src="" class="img-fluid rounded" style="max-height: 150px;">
+                                                        <button type="button" class="btn btn-sm btn-danger mt-1" onclick="removeUploadPreview(1)">
+                                                            <i class="fas fa-trash me-1"></i> Supprimer
+                                                        </button>
+                                                    </div>
+                                                    <div id="current-upload-photo-1">
+                                                                                                                    <div class="bg-light p-3 rounded text-center" style="min-height: 150px;">
+                                                                <i class="fas fa-image fa-2x text-muted mb-2"></i>
+                                                                <p class="text-muted mb-0">Aucune photo</p>
+                                                            </div>
+                                                                                                            </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <input type="file" name="photo1" class="form-control form-control-sm" accept="image/*" onchange="previewUploadPhoto(this, 1)">
+                                                </div>
+                                                <small class="text-muted d-block">Importer photo 1</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                                                                                        <div class="col-md-6 col-lg-3">
+                                        <div class="card h-100">
+                                            <div class="card-body p-3">
+                                                <div class="text-center mb-3">
+                                                    <div id="upload-preview-container-2" style="display: none;">
+                                                        <img id="upload-preview-2" src="" class="img-fluid rounded" style="max-height: 150px;">
+                                                        <button type="button" class="btn btn-sm btn-danger mt-1" onclick="removeUploadPreview(2)">
+                                                            <i class="fas fa-trash me-1"></i> Supprimer
+                                                        </button>
+                                                    </div>
+                                                    <div id="current-upload-photo-2">
+                                                                                                                    <div class="bg-light p-3 rounded text-center" style="min-height: 150px;">
+                                                                <i class="fas fa-image fa-2x text-muted mb-2"></i>
+                                                                <p class="text-muted mb-0">Aucune photo</p>
+                                                            </div>
+                                                                                                            </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <input type="file" name="photo2" class="form-control form-control-sm" accept="image/*" onchange="previewUploadPhoto(this, 2)">
+                                                </div>
+                                                <small class="text-muted d-block">Importer photo 2</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                                                                                        <div class="col-md-6 col-lg-3">
+                                        <div class="card h-100">
+                                            <div class="card-body p-3">
+                                                <div class="text-center mb-3">
+                                                    <div id="upload-preview-container-3" style="display: none;">
+                                                        <img id="upload-preview-3" src="" class="img-fluid rounded" style="max-height: 150px;">
+                                                        <button type="button" class="btn btn-sm btn-danger mt-1" onclick="removeUploadPreview(3)">
+                                                            <i class="fas fa-trash me-1"></i> Supprimer
+                                                        </button>
+                                                    </div>
+                                                    <div id="current-upload-photo-3">
+                                                                                                                    <div class="bg-light p-3 rounded text-center" style="min-height: 150px;">
+                                                                <i class="fas fa-image fa-2x text-muted mb-2"></i>
+                                                                <p class="text-muted mb-0">Aucune photo</p>
+                                                            </div>
+                                                                                                            </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <input type="file" name="photo3" class="form-control form-control-sm" accept="image/*" onchange="previewUploadPhoto(this, 3)">
+                                                </div>
+                                                <small class="text-muted d-block">Importer photo 3</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                                                                                        <div class="col-md-6 col-lg-3">
+                                        <div class="card h-100">
+                                            <div class="card-body p-3">
+                                                <div class="text-center mb-3">
+                                                    <div id="upload-preview-container-4" style="display: none;">
+                                                        <img id="upload-preview-4" src="" class="img-fluid rounded" style="max-height: 150px;">
+                                                        <button type="button" class="btn btn-sm btn-danger mt-1" onclick="removeUploadPreview(4)">
+                                                            <i class="fas fa-trash me-1"></i> Supprimer
+                                                        </button>
+                                                    </div>
+                                                    <div id="current-upload-photo-4">
+                                                                                                                    <div class="bg-light p-3 rounded text-center" style="min-height: 150px;">
+                                                                <i class="fas fa-image fa-2x text-muted mb-2"></i>
+                                                                <p class="text-muted mb-0">Aucune photo</p>
+                                                            </div>
+                                                                                                            </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <input type="file" name="photo4" class="form-control form-control-sm" accept="image/*" onchange="previewUploadPhoto(this, 4)">
+                                                </div>
+                                                <small class="text-muted d-block">Importer photo 4</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="camera-section">
+                            <div class="alert alert-success">
+                                <i class="fas fa-camera me-2"></i>
+                                Prenez des photos directement avec votre caméra
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8 mx-auto">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <video id="camera-video" width="320" height="240" autoplay class="border rounded mb-3" style="display: none;"></video>
+                                            <div id="camera-placeholder" class="border rounded p-5 mb-3 text-center" style="display: block;">
+                                                <i class="fas fa-video-slash fa-3x text-muted mb-3"></i>
+                                                <p class="text-muted">Caméra non activée</p>
+                                            </div>
+                                            <div class="d-flex justify-content-center gap-2 mb-3">
+                                                <button type="button" id="start-camera" class="btn btn-primary">
+                                                    <i class="fas fa-video me-2"></i> Activer Caméra
+                                                </button>
+                                                <button type="button" id="take-photo" class="btn btn-success" disabled>
+                                                    <i class="fas fa-camera me-2"></i> Prendre Photo
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-3">Photos prises avec la caméra:</h6>
+                                    <div id="camera-photo-previews" class="d-flex flex-wrap gap-3"></div>
+                                    <input type="hidden" name="photos_data" id="camera-photos-data" value="">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">Toutes les Photos (Importées + Prises avec Caméra)</h6>
+                </div>
+                <div class="card-body">
+                    <div id="combined-photo-previews" class="d-flex flex-wrap gap-3"></div>
+                    <div class="text-center mt-3">
+                        <small class="text-muted">Vous pouvez avoir jusqu'à 4 photos au total (combinaison d'importées et de prises avec caméra)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" onclick="prevStep(3)">
+                <i class="fas fa-arrow-left me-2"></i> Précédent
+            </button>
+            <button type="submit" class="btn btn-success btn-lg px-4">
+                <i class="fas fa-paper-plane me-2"></i> Enregistrer localement
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+    const arrondissements = {"Parakou":["1er arrondissement","2e arrondissement","3e arrondissement"],"Tchaourou":["Beterou","Sanson","Tchatchou","Kika","Tchaourou","Goro","Alafiarou"],"N\u0027Dali":["Bori","Ouenou","N\u0027Dali","Gbegourou","Sirarou"],"Nikki":["Biro","Gnonkourali","Serekale","Nikki","Ouenou","Tasso","Suya"],"Bemb\u00e8r\u00e8k\u00e8":["Beroubouya","Gamia","Bouanri","Bemb\u00e8r\u00e8k\u00e8","Ina"],"Kalal\u00e9":["Dunkassa","Peonga","Kalal\u00e9","Basso","Derassi","Bouka"],"Sinend\u00e9":["Sekere","Sinend\u00e9","Sikki","Do_Boure"],"P\u00e8r\u00e8r\u00e8":["Sontou","Perere","Kpane","Pebie","Gninsy","Guinagourou"]};
+    const previousArrondissements = [];
+
+    function normalizeCommuneName(value) {
+        return (value || '')
+            .toString()
+            .trim()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, ' ')
+            .toLowerCase();
+    }
+
+    function getSelectedCommune() {
+        const checked = document.querySelector('input[name="commune"]:checked');
+        if (checked && checked.value) {
+            return checked.value;
+        }
+
+        const hidden = document.querySelector('input[name="commune"][type="hidden"]');
+        if (hidden && hidden.value) {
+            return hidden.value;
+        }
+
+        return null;
+    }
+
+    function getArrondissementsForCommune(commune) {
+        if (!commune) return [];
+
+        if (arrondissements[commune]) {
+            return arrondissements[commune];
+        }
+
+        const normalizedTarget = normalizeCommuneName(commune);
+        const matchingEntry = Object.entries(arrondissements).find(([name]) => normalizeCommuneName(name) === normalizedTarget);
+        return matchingEntry ? matchingEntry[1] : [];
+    }
+
+    function updateArrondissements() {
+        const selectedCommune = getSelectedCommune();
+        const arrContainer = document.getElementById('arrondissements');
+        if (!selectedCommune || !arrContainer) return;
+
+        arrContainer.innerHTML = '';
+        const communeArrondissements = getArrondissementsForCommune(selectedCommune);
+
+        if (communeArrondissements.length === 0) {
+            arrContainer.innerHTML = '<div class="text-muted small">Aucun arrondissement n\'est disponible pour cette commune.</div>';
+            return;
+        }
+
+        communeArrondissements.forEach(arr => {
+            const div = document.createElement('div');
+            div.className = 'form-check form-check-inline';
+            const isChecked = previousArrondissements.includes(arr) ? 'checked' : '';
+            div.innerHTML = `
+                <input class="form-check-input" type="checkbox" name="arrondissement[]" id="arr_${arr}" value="${arr}" ${isChecked}>
+                <label class="form-check-label" for="arr_${arr}">${arr}</label>
+            `;
+            arrContainer.appendChild(div);
+        });
+    }
+
+    // ==== Filtrage des types par secteur + "Autre à préciser" ====
+    function updateTypesBySecteur() {
+        const checked = document.querySelector('input.secteur-radio:checked');
+        const secteur = checked ? checked.dataset.secteur : null;
+        const groups = document.querySelectorAll('#types-container .type-group');
+        let anyVisible = false;
+        groups.forEach(g => {
+            const show = g.dataset.secteur === secteur;
+            g.style.display = show ? 'block' : 'none';
+            if (show) anyVisible = true;
+            if (!show) g.querySelectorAll('input.type-radio:checked').forEach(i => i.checked = false);
+        });
+        const emptyMsg = document.getElementById('type-empty-msg');
+        if (emptyMsg) emptyMsg.style.display = anyVisible ? 'none' : 'block';
+
+        // Autre secteur : afficher input préciser
+        const secteurAutreInput = document.getElementById('secteur_autre_preciser');
+        if (secteurAutreInput) secteurAutreInput.style.display = (secteur === 'Autre') ? 'block' : 'none';
+
+        // Type "Autre (préciser)" : afficher input préciser
+        toggleTypeAutreInput();
+    }
+    function toggleTypeAutreInput() {
+        const typeChecked = document.querySelector('input.type-radio:checked');
+        const input = document.getElementById('type_autre_preciser');
+        if (!input) return;
+        const isAutre = typeChecked && typeChecked.value === 'Autre (préciser)';
+        input.style.display = isAutre ? 'block' : 'none';
+    }
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('input.secteur-radio')) updateTypesBySecteur();
+        if (e.target.matches('input.type-radio')) toggleTypeAutreInput();
+        if (e.target.matches('input.rehab-needed')) toggleRehabNature();
+    });
+    function toggleRehabNature() {
+        const val = document.querySelector('input.rehab-needed:checked')?.value;
+        const block = document.getElementById('nature-travaux-block');
+        const nonInput = document.getElementById('rehabilitation_non_input');
+        if (val === 'Oui') {
+            block.style.display = 'block';
+            nonInput.disabled = true;
+        } else if (val === 'Non') {
+            block.style.display = 'none';
+            document.querySelectorAll('input.nature-travaux:checked').forEach(i => i.checked = false);
+            nonInput.disabled = false;
+        } else {
+            block.style.display = 'none';
+            nonInput.disabled = true;
+        }
+    }
+
+    // Sur soumission : injecter les valeurs "Autre" personnalisées
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTypesBySecteur();
+        toggleRehabNature();
+        const form = document.getElementById('infraForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const secteurChecked = document.querySelector('input.secteur-radio:checked');
+                const secteurAutre = document.getElementById('secteur_autre_preciser');
+                if (secteurChecked && secteurChecked.value === 'Autre' && secteurAutre && secteurAutre.value.trim()) {
+                    secteurChecked.value = secteurAutre.value.trim();
+                }
+                const typeChecked = document.querySelector('input.type-radio:checked');
+                const typeAutre = document.getElementById('type_autre_preciser');
+                if (typeChecked && typeChecked.value === 'Autre (préciser)' && typeAutre && typeAutre.value.trim()) {
+                    typeChecked.value = typeAutre.value.trim();
+                }
+            });
+        }
+    });
+
+
+    function syncStepper(current) {
+        document.querySelectorAll('#infraStepper .st-item').forEach(el => {
+            const n = parseInt(el.dataset.step, 10);
+            el.classList.remove('active','done');
+            if (n < current) el.classList.add('done');
+            else if (n === current) el.classList.add('active');
+        });
+    }
+
+    function nextStep(step) {
+        const cur = document.getElementById(`step-${step}`);
+        const invalids = cur.querySelectorAll(':invalid');
+        if (invalids.length) {
+            invalids[0].reportValidity();
+            return;
+        }
+        cur.style.display = 'none';
+        document.getElementById(`step-${step + 1}`).style.display = 'block';
+        syncStepper(step + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (step + 1 === 2 && typeof window.invalidateGeoMap === 'function') {
+            setTimeout(() => window.invalidateGeoMap(), 100);
+        }
+    }
+
+    function prevStep(step) {
+        document.getElementById(`step-${step}`).style.display = 'none';
+        document.getElementById(`step-${step - 1}`).style.display = 'block';
+        syncStepper(step - 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    (function(){
+        const form = document.getElementById('infraForm');
+        if (!form) return;
+        const bar = document.getElementById('completionBar');
+        const txt = document.getElementById('completionText');
+        const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
+        function update() {
+            let filled = 0, total = 0;
+            const seen = new Set();
+            fields.forEach(f => {
+                if (f.type === 'hidden' || f.name === '_token') return;
+                if (f.type === 'radio' || f.type === 'checkbox') {
+                    if (seen.has(f.name)) return;
+                    seen.add(f.name);
+                    total++;
+                    if (form.querySelector(`[name="${f.name}"]:checked`)) filled++;
+                    return;
+                }
+                total++;
+                if (f.value && f.value.trim() !== '') filled++;
+            });
+            const pct = total ? Math.round(filled/total*100) : 0;
+            bar.style.width = pct + '%';
+            txt.textContent = pct + ' %';
+        }
+        form.addEventListener('input', update);
+        form.addEventListener('change', update);
+        update();
+    })();
+
+    function previewUploadPhoto(input, photoNumber) {
+        const previewContainer = document.getElementById(`upload-preview-container-${photoNumber}`);
+        const preview = document.getElementById(`upload-preview-${photoNumber}`);
+        const currentPhoto = document.getElementById(`current-upload-photo-${photoNumber}`);
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            if (!file.type.match('image.*')) {
+                alert('Veuillez sélectionner une image (JPG, PNG, etc.)');
+                input.value = '';
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert('L\'image est trop volumineuse (max 10MB)');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentPhoto.style.display = 'none';
+                preview.src = e.target.result;
+                previewContainer.style.display = 'block';
+                updateCombinedPreviews();
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeUploadPreview(photoNumber) {
+        const fileInput = document.querySelector(`input[name="photo${photoNumber}"]`);
+        const previewContainer = document.getElementById(`upload-preview-container-${photoNumber}`);
+        const currentPhoto = document.getElementById(`current-upload-photo-${photoNumber}`);
+        fileInput.value = '';
+        previewContainer.style.display = 'none';
+        currentPhoto.style.display = 'block';
+        updateCombinedPreviews();
+    }
+
+    let stream = null;
+    let cameraPhotos = [];
+    const video = document.getElementById('camera-video');
+    const startCameraButton = document.getElementById('start-camera');
+    const takePhotoButton = document.getElementById('take-photo');
+    const cameraPhotoPreviews = document.getElementById('camera-photo-previews');
+    const cameraPhotosDataInput = document.getElementById('camera-photos-data');
+    const combinedPhotoPreviews = document.getElementById('combined-photo-previews');
+
+    startCameraButton.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            document.getElementById('camera-placeholder').style.display = 'none';
+            takePhotoButton.disabled = false;
+            startCameraButton.disabled = true;
+        } catch (err) {
+            console.error('Erreur caméra:', err);
+            alert('Impossible d\'accéder à la caméra: ' + err.message);
+        }
+    });
+
+    takePhotoButton.addEventListener('click', () => {
+        if (!stream) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        const photoId = 'camera_' + Date.now();
+        cameraPhotos.push({
+            id: photoId,
+            data: dataUrl
+        });
+        cameraPhotosDataInput.value = JSON.stringify(cameraPhotos);
+        addCameraPhotoPreview(photoId, dataUrl);
+        updateCombinedPreviews();
+    });
+
+    function addCameraPhotoPreview(photoId, dataUrl) {
+        const imgContainer = document.createElement('div');
+        imgContainer.className = 'position-relative';
+        imgContainer.id = 'camera-photo-' + photoId;
+        imgContainer.innerHTML = `
+            <img src="${dataUrl}" class="img-fluid rounded shadow-sm" style="max-height: 150px; width: auto; object-fit: cover;">
+            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" 
+                    onclick="removeCameraPhoto('${photoId}')">
+                <i class="fas fa-trash"></i>
+            </button>
+            <div class="text-center mt-1">
+                <small class="text-muted">Photo prise</small>
+            </div>
+        `;
+        cameraPhotoPreviews.appendChild(imgContainer);
+    }
+
+    function removeCameraPhoto(photoId) {
+        cameraPhotos = cameraPhotos.filter(photo => photo.id !== photoId);
+        cameraPhotosDataInput.value = JSON.stringify(cameraPhotos);
+        const photoElement = document.getElementById('camera-photo-' + photoId);
+        if (photoElement) {
+            photoElement.remove();
+        }
+        updateCombinedPreviews();
+    }
+
+    function updateCombinedPreviews() {
+        combinedPhotoPreviews.innerHTML = '';
+        for (let i = 1; i <= 4; i++) {
+            const uploadPreview = document.getElementById(`upload-preview-${i}`);
+            if (uploadPreview && uploadPreview.src) {
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'position-relative';
+                imgContainer.innerHTML = `
+                    <img src="${uploadPreview.src}" class="img-fluid rounded shadow-sm" style="max-height: 150px; width: auto; object-fit: cover;">
+                    <div class="text-center mt-1">
+                        <small class="text-muted">Photo importée ${i}</small>
+                    </div>
+                `;
+                combinedPhotoPreviews.appendChild(imgContainer);
+            }
+        }
+        cameraPhotos.forEach(photo => {
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'position-relative';
+            imgContainer.innerHTML = `
+                <img src="${photo.data}" class="img-fluid rounded shadow-sm" style="max-height: 150px; width: auto; object-fit: cover;">
+                <div class="text-center mt-1">
+                    <small class="text-muted">Photo prise</small>
+                </div>
+            `;
+            combinedPhotoPreviews.appendChild(imgContainer);
+        });
+        const totalPhotos = combinedPhotoPreviews.children.length;
+        if (totalPhotos > 4) {
+            alert(`Vous avez ${totalPhotos} photos, mais le maximum autorisé est 4. Veuillez supprimer ${totalPhotos - 4} photo(s).`);
+        }
+    }
+
+    /* =========================================================
+     * Géolocalisation + carte interactive (Leaflet)
+     * ========================================================= */
+    (function initGeoModule(){
+        const BENIN_CENTER = [9.3077, 2.3158];
+        const latEl = document.getElementById('latitude');
+        const lngEl = document.getElementById('longitude');
+        const altEl = document.getElementById('altitude');
+        const accEl = document.getElementById('precision');
+        const statusEl = document.getElementById('geo-status');
+        const accBadge = document.getElementById('geo-accuracy-indicator');
+        const btn = document.getElementById('get-location');
+        const btnLabel = document.getElementById('geo-btn-label');
+        const watchBtn = document.getElementById('geo-watch');
+        const watchLabel = document.getElementById('geo-watch-label');
+        const clearBtn = document.getElementById('geo-clear');
+        const mapEl = document.getElementById('geo-map');
+
+        let map, marker, accuracyCircle, watchId = null;
+
+        function ensureLeaflet(cb){
+            if (window.L) return cb();
+            const s = document.createElement('script');
+            s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+            s.crossOrigin = '';
+            s.onload = cb;
+            document.head.appendChild(s);
+        }
+
+        function showStatus(kind, html){
+            statusEl.style.display = 'flex';
+            statusEl.className = 'geo-status ' + kind;
+            statusEl.innerHTML = html;
+        }
+        function accuracyClass(acc){
+            if (acc == null) return null;
+            if (acc <= 10) return {c:'excellent', t:'Excellente précision'};
+            if (acc <= 30) return {c:'good', t:'Bonne précision'};
+            if (acc <= 100) return {c:'medium', t:'Précision moyenne'};
+            return {c:'poor', t:'Faible précision'};
+        }
+        function renderAccuracyBadge(acc){
+            const info = accuracyClass(acc);
+            if (!info){ accBadge.innerHTML = ''; return; }
+            accBadge.innerHTML = `<span class="geo-accuracy-badge ${info.c} mt-1">
+                <i class="fas fa-circle-dot"></i> ${info.t} (±${Math.round(acc)} m)
+            </span>`;
+        }
+
+        function setFields(lat, lng, alt, acc){
+            latEl.value = Number(lat).toFixed(6);
+            lngEl.value = Number(lng).toFixed(6);
+            
+            if (acc !== undefined && acc !== null && !isNaN(acc)) {
+                accEl.value = Number(acc).toFixed(2);
+                renderAccuracyBadge(acc);
+            }
+
+            if (alt !== undefined && alt !== null && !isNaN(alt)) {
+                altEl.value = Number(alt).toFixed(2);
+            } else if (!altEl.value && lat && lng) {
+                altEl.placeholder = 'Recherche...';
+                fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.elevation && data.elevation.length > 0) {
+                            altEl.value = Number(data.elevation[0]).toFixed(2);
+                        } else {
+                            altEl.placeholder = 'Altitude';
+                        }
+                    }).catch(e => {
+                        console.error(e);
+                        altEl.placeholder = 'Altitude';
+                    });
+            }
+        }
+
+        window.invalidateGeoMap = function() {
+            if (map) map.invalidateSize();
+        };
+
+        function initMap(){
+            ensureLeaflet(() => {
+                if (map) return;
+                const startLat = parseFloat(latEl.value);
+                const startLng = parseFloat(lngEl.value);
+                const hasStart = !isNaN(startLat) && !isNaN(startLng);
+                map = L.map(mapEl, { zoomControl: true }).setView(
+                    hasStart ? [startLat, startLng] : BENIN_CENTER,
+                    hasStart ? 16 : 6
+                );
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+
+                if (hasStart) placeMarker(startLat, startLng);
+
+                map.on('click', (e) => {
+                    placeMarker(e.latlng.lat, e.latlng.lng);
+                    setFields(e.latlng.lat, e.latlng.lng);
+                    showStatus('info', '<i class="fas fa-hand-pointer"></i> Position ajustée manuellement sur la carte.');
+                });
+
+                setTimeout(() => map.invalidateSize(), 200);
+            });
+        }
+
+        function placeMarker(lat, lng, acc){
+            if (!map) return;
+            if (!marker){
+                marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                marker.on('dragend', () => {
+                    const p = marker.getLatLng();
+                    setFields(p.lat, p.lng);
+                    map.panTo(p);
+                    showStatus('info', '<i class="fas fa-arrows-up-down-left-right"></i> Repère déplacé : coordonnées mises à jour.');
+                });
+            } else {
+                marker.setLatLng([lat, lng]);
+            }
+            if (accuracyCircle) { map.removeLayer(accuracyCircle); accuracyCircle = null; }
+            if (acc && acc > 0){
+                accuracyCircle = L.circle([lat, lng], {
+                    radius: acc, color:'#0b7a3b', fillColor:'#10b981', fillOpacity:.12, weight:1
+                }).addTo(map);
+            }
+            map.setView([lat, lng], Math.max(map.getZoom(), 16));
+        }
+
+        function locateOnce(){
+            if (!navigator.geolocation){
+                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> Géolocalisation non supportée par ce navigateur.');
+                return;
+            }
+            btn.disabled = true;
+            btnLabel.innerHTML = 'Recherche (objectif ≤ 5m)...';
+            btn.classList.add('geo-pulse');
+            showStatus('info', '<i class="fas fa-spinner fa-spin"></i> Ajustement GPS en cours...');
+            
+            let bestPos = null;
+            let tempWatchId = navigator.geolocation.watchPosition(pos => {
+                const acc = pos.coords.accuracy;
+                if (!bestPos || acc < bestPos.coords.accuracy) {
+                    bestPos = pos;
+                    const { latitude, longitude, altitude } = pos.coords;
+                    setFields(latitude, longitude, altitude, acc);
+                    initMap();
+                    const apply = () => placeMarker(latitude, longitude, acc);
+                    if (map) apply(); else ensureLeaflet(() => { initMap(); setTimeout(apply, 250); });
+                    showStatus('info', `<i class="fas fa-spinner fa-spin"></i> Précision actuelle: ±${Math.round(acc)} m...`);
+                }
+                
+                if (acc <= 5) {
+                    navigator.geolocation.clearWatch(tempWatchId);
+                    clearTimeout(timeoutId);
+                    finalizeLocate('ok', `<i class="fas fa-circle-check"></i> Position optimale obtenue (±${Math.round(acc)} m).`);
+                }
+            }, err => {
+                if (!bestPos) {
+                    navigator.geolocation.clearWatch(tempWatchId);
+                    clearTimeout(timeoutId);
+                    finalizeLocate('err', `<i class="fas fa-circle-exclamation"></i> ${err.message}`);
+                }
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+
+            let timeoutId = setTimeout(() => {
+                navigator.geolocation.clearWatch(tempWatchId);
+                if (bestPos) {
+                    finalizeLocate('ok', `<i class="fas fa-circle-check"></i> Meilleure position trouvée (±${Math.round(bestPos.coords.accuracy)} m).`);
+                } else {
+                    finalizeLocate('err', '<i class="fas fa-circle-exclamation"></i> Impossible d\'obtenir une position précise.');
+                }
+            }, 15000);
+
+            function finalizeLocate(status, msg) {
+                btn.disabled = false;
+                btn.classList.remove('geo-pulse');
+                btnLabel.innerHTML = 'Mettre à jour ma position';
+                showStatus(status, msg);
+            }
+        }
+
+        function toggleWatch(){
+            if (watchId !== null){
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                watchLabel.textContent = 'Suivi haute précision';
+                watchBtn.classList.remove('geo-pulse');
+                showStatus('ok', '<i class="fas fa-stop"></i> Suivi arrêté.');
+                return;
+            }
+            if (!navigator.geolocation){
+                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> Géolocalisation non supportée.');
+                return;
+            }
+            initMap();
+            watchLabel.textContent = 'Arrêter le suivi';
+            watchBtn.classList.add('geo-pulse');
+            showStatus('info', '<i class="fas fa-satellite fa-beat"></i> Suivi actif : les coordonnées s\'affinent (objectif ≤ 5m).');
+            watchId = navigator.geolocation.watchPosition(pos => {
+                const { latitude, longitude, altitude, accuracy } = pos.coords;
+                setFields(latitude, longitude, altitude, accuracy);
+                placeMarker(latitude, longitude, accuracy);
+                if (accuracy <= 5){
+                    showStatus('ok', `<i class="fas fa-bullseye"></i> Position optimale atteinte (±${Math.round(accuracy)} m). Suivi arrêté.`);
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                    watchLabel.textContent = 'Suivi haute précision';
+                    watchBtn.classList.remove('geo-pulse');
+                }
+            }, err => {
+                showStatus('err', `<i class="fas fa-circle-exclamation"></i> ${err.message}`);
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                watchLabel.textContent = 'Suivi haute précision';
+                watchBtn.classList.remove('geo-pulse');
+            }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+        }
+
+        function clearAll(){
+            latEl.value = ''; lngEl.value = ''; altEl.value = ''; accEl.value = '';
+            accBadge.innerHTML = '';
+            if (marker && map){ map.removeLayer(marker); marker = null; }
+            if (accuracyCircle && map){ map.removeLayer(accuracyCircle); accuracyCircle = null; }
+            if (map) map.setView(BENIN_CENTER, 7);
+            showStatus('info', '<i class="fas fa-eraser"></i> Coordonnées effacées.');
+        }
+
+        // Sync manuel : si l'utilisateur édite lat/lng à la main, on déplace le repère.
+        function syncFromInputs(){
+            const la = parseFloat(latEl.value), ln = parseFloat(lngEl.value);
+            if (isNaN(la) || isNaN(ln)) return;
+            initMap();
+            const apply = () => placeMarker(la, ln);
+            if (map) apply(); else ensureLeaflet(() => { initMap(); setTimeout(apply, 250); });
+        }
+        [latEl, lngEl].forEach(i => i.addEventListener('change', syncFromInputs));
+
+        btn?.addEventListener('click', locateOnce);
+        watchBtn?.addEventListener('click', toggleWatch);
+        clearBtn?.addEventListener('click', clearAll);
+
+        // Init carte au chargement
+        window.addEventListener('load', () => {
+            initMap();
+            if (accEl.value) renderAccuracyBadge(parseFloat(accEl.value));
+        });
+    })();
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[name="commune"]').forEach(input => {
+            input.addEventListener('change', updateArrondissements);
+        });
+
+        const checkedCommune = getSelectedCommune();
+        if (checkedCommune) {
+            updateArrondissements();
+        }
+        if (cameraPhotosDataInput.value) {
+            try {
+                cameraPhotos = JSON.parse(cameraPhotosDataInput.value);
+                cameraPhotos.forEach(photo => {
+                    addCameraPhotoPreview(photo.id, photo.data);
+                });
+            } catch (e) {
+                console.error('Erreur lecture photos caméra:', e);
+            }
+        }
+        updateCombinedPreviews();
+    });
+
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', updateCombinedPreviews);
+    });
+
+    // Aucune interception hors-ligne (désactivé à la demande de l'utilisateur)
+</script>
+</div>
+<style>
+    /* Masquer la carte en mode hors ligne pur */
+    #map-container { display: none !important; }
+</style>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center">
+        <div class="footer-text">
+            &copy; 2026 <strong>ADECOB Infrastructure Plannification</strong>. Tous droits réservés.<br class="d-md-none">
+            <div class="mt-2">
+                <a href="https://adecob-infrastructure-plateforme.org/pssi" class="text-white-50 mx-2">PSSI</a>
+                <span class="text-white-50">·</span>
+                <a href="https://adecob-infrastructure-plateforme.org/politique-confidentialite" class="text-white-50 mx-2">Politique de confidentialité</a>
+                <span class="text-white-50">·</span>
+                <a href="https://adecob-infrastructure-plateforme.org/cgu" class="text-white-50 mx-2">CGU</a>
+                <span class="text-white-50">·</span>
+                <a href="https://adecob-infrastructure-plateforme.org/registre-traitements" class="text-white-50 mx-2">Registre des traitements</a>
+            </div>
+            <p class="mb-0 opacity-0">Développé par Rufus Akande, développeur web freelance <a href="https://rufusakande.github.io/rufus-akande">Rufus Akande</a></p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://adecob-infrastructure-plateforme.org/js/auth-enhancements.js"></script>
+    
+    <!-- Offline Sync Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="https://adecob-infrastructure-plateforme.org/js/offline-sync.js"></script>
+    
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script><script src="/js/offline-storage.js"></script></body>
+</html>
