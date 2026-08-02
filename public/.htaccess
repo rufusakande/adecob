@@ -19,3 +19,17 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# --- PWA / mode hors-ligne -------------------------------------------------
+# Le service worker et la page hors-ligne ne doivent jamais être servis
+# depuis un cache HTTP obsolète, sinon les mises à jour ne s'appliquent pas.
+<IfModule mod_headers.c>
+    <FilesMatch "^(sw\.js|service-worker\.js|offline\.html|manifest\.json)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Service-Worker-Allowed "/"
+    </FilesMatch>
+</IfModule>
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType application/manifest+json .webmanifest
+</IfModule>
