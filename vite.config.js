@@ -33,7 +33,8 @@ export default defineConfig({
                 cleanupOutdatedCaches: true,
                 clientsClaim: true,
                 skipWaiting: true,
-                navigateFallback: null,
+                navigateFallback: '/offline.html',
+                navigateFallbackDenylist: [/^\/build\//, /^\/storage\//, /\.[a-z0-9]+$/i],
                 runtimeCaching: [
                     {
                         urlPattern: ({ request }) => request.mode === 'navigate',
@@ -42,6 +43,7 @@ export default defineConfig({
                             cacheName: 'adecob-pages',
                             networkTimeoutSeconds: 3,
                             precacheFallback: { fallbackURL: '/offline.html' },
+                            cacheableResponse: { statuses: [0, 200] },
                             expiration: { maxEntries: 20, maxAgeSeconds: 86400 },
                         },
                     },
