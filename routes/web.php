@@ -103,6 +103,11 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     Route::post('/infrastructures/import', [App\Http\Controllers\InfrastructureController::class, 'import'])->name('infrastructures.import');
     Route::get('/infrastructures/export', [App\Http\Controllers\InfrastructureController::class, 'export'])->name('infrastructures.export');
 
+    // Gestion des fiches saisies hors-ligne (stockées dans le navigateur de l'appareil)
+    Route::view('/infrastructures-hors-ligne', 'infrastructures.offline-pending')->name('infrastructures.offline');
+
+
+
     // Liste des saisies en attente / rejetées (admins uniquement — vérifié dans le contrôleur)
     Route::get('/infrastructures/pending', [App\Http\Controllers\InfrastructureController::class, 'pendingIndex'])
         ->middleware('admin.access')->name('infrastructures.pending');
