@@ -57,6 +57,13 @@
     </li>
 @endif
 
+<li class="nav-item">
+    <a class="nav-link" href="{{ route('infrastructures.offline') }}">
+        Fiches hors-ligne
+    </a>
+</li>
+
+
 @if($u->isSuperAdmin())
     <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.pending-registrations') }}">
