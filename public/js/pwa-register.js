@@ -12,8 +12,10 @@ function isPreviewOrDevelopment() {
         hostname === 'beta.lovable.dev' ||
         hostname.endsWith('.beta.lovable.dev');
 
+    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(hostname);
+
     return (
-        window.location.protocol !== 'https:' ||
+        (window.location.protocol !== 'https:' && !isLocalhost) ||
         window.self !== window.top ||
         isPreviewHostname ||
         new URLSearchParams(window.location.search).get('sw') === 'off'
@@ -32,7 +34,7 @@ async function unregisterAppWorkers() {
 }
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
+    const boot = async () => {
         try {
             if (isPreviewOrDevelopment()) {
                 await unregisterAppWorkers();
@@ -44,5 +46,11 @@ if ('serviceWorker' in navigator) {
         } catch (error) {
             console.warn('[PWA] Le mode hors-ligne n’a pas pu être initialisé.', error);
         }
-    });
+    };
+
+    if (document.readyState === 'complete') {
+        boot();
+    } else {
+        window.addEventListener('load', boot);
+    }
 }
