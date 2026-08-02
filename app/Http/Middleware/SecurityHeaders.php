@@ -56,6 +56,8 @@ class SecurityHeaders
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://www.google.com https://www.gstatic.com",
             "connect-src 'self' https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://cdn.jsdelivr.net https://unpkg.com",
             "frame-src https://www.google.com",
+            "worker-src 'self' blob:",
+            "manifest-src 'self'",
             "object-src 'none'",
         ]);
         $headers->set('Content-Security-Policy', $csp);

@@ -12,10 +12,10 @@ function isPreviewOrDevelopment() {
         hostname === 'beta.lovable.dev' ||
         hostname.endsWith('.beta.lovable.dev');
 
-    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(hostname);
-
+    // Le navigateur impose déjà un contexte sécurisé (https ou localhost) pour les
+    // service workers : inutile de re-filtrer sur le protocole, cela empêchait
+    // l'installation sur certains déploiements.
     return (
-        (window.location.protocol !== 'https:' && !isLocalhost) ||
         window.self !== window.top ||
         isPreviewHostname ||
         new URLSearchParams(window.location.search).get('sw') === 'off'
