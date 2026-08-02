@@ -33,8 +33,7 @@ export default defineConfig({
                 cleanupOutdatedCaches: true,
                 clientsClaim: true,
                 skipWaiting: true,
-                navigateFallback: '/offline.html',
-                navigateFallbackDenylist: [/^\/build\//, /^\/storage\//, /\.[a-z0-9]+$/i],
+                navigateFallback: null,
                 runtimeCaching: [
                     {
                         urlPattern: ({ request }) => request.mode === 'navigate',
