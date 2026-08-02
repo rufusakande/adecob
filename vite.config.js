@@ -57,19 +57,14 @@ export default defineConfig({
                         },
                     },
                     {
-                        // CDN tiers : requêtes CORS (leaflet, bootstrap-icons, font-awesome…).
-                        // On force le mode CORS pour éviter les réponses "opaques" refusées
-                        // par le navigateur lors de la lecture depuis le cache.
-                        urlPattern: /^https:\/\/(cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,
-                        handler: 'StaleWhileRevalidate',
+                        urlPattern: /^https:\/\/(cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,
+                        handler: 'CacheFirst',
                         options: {
                             cacheName: 'adecob-third-party',
-                            fetchOptions: { mode: 'cors', credentials: 'omit' },
-                            cacheableResponse: { statuses: [200] },
-                            expiration: { maxEntries: 40, maxAgeSeconds: 2592000 },
+                            cacheableResponse: { statuses: [0, 200] },
+                            expiration: { maxEntries: 30, maxAgeSeconds: 2592000 },
                         },
                     },
-
                 ],
             },
         }),
