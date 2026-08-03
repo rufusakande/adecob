@@ -24,3 +24,7 @@
     ])
 </div>
 @endsection
+
+@push('scripts')
+<script src="{{ asset('js/offline-storage.js') }}"></script>
+@endpush
