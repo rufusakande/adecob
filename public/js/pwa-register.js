@@ -2,6 +2,7 @@ const APP_WORKER_PATHS = ['/sw.js', '/service-worker.js'];
 
 function isPreviewOrDevelopment() {
     const hostname = window.location.hostname;
+    const isLocalDevelopment = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
     const isPreviewHostname =
         hostname.startsWith('id-preview--') ||
         hostname.startsWith('preview--') ||
@@ -12,12 +13,10 @@ function isPreviewOrDevelopment() {
         hostname === 'beta.lovable.dev' ||
         hostname.endsWith('.beta.lovable.dev');
 
-    // Le navigateur impose déjà un contexte sécurisé (https ou localhost) pour les
-    // service workers : inutile de re-filtrer sur le protocole, cela empêchait
-    // l'installation sur certains déploiements.
     return (
         window.self !== window.top ||
         isPreviewHostname ||
+        (isLocalDevelopment && !window.location.search.includes('pwa-test=1')) ||
         new URLSearchParams(window.location.search).get('sw') === 'off'
     );
 }
@@ -42,7 +41,7 @@ if ('serviceWorker' in navigator) {
             }
 
             const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-            registration.update();
+            await registration.update();
         } catch (error) {
             console.warn('[PWA] Le mode hors-ligne n’a pas pu être initialisé.', error);
         }
