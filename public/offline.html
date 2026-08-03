@@ -7,28 +7,31 @@
     <meta name="csrf-token" content="">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/jpeg" href="/logo.jpg">
+    <link rel="icon" type="image/jpeg" href="https://adecob-infrastructure-plateforme.org/logo.jpg">
 
     <!-- PWA Meta Tags & Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="https://adecob-infrastructure-plateforme.org/manifest.json">
     <meta name="theme-color" content="#28a745">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ADECOB">
-    <link rel="apple-touch-icon" href="/logo.jpg">
+    <link rel="apple-touch-icon" href="https://adecob-infrastructure-plateforme.org/logo.jpg">
 
     <!-- Bootstrap 5.3 CSS -->
-    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <!-- Auth Enhancements CSS -->
-    <link rel="stylesheet" href="/css/auth-enhancements.css">
+    <link rel="stylesheet" href="https://adecob-infrastructure-plateforme.org/css/auth-enhancements.css">
 
     <!-- Google Fonts - Poppins (optionnel pour plus d'élégance) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
     .infra-stepper{ display:flex; justify-content:space-between; align-items:center; margin: 0 0 1.5rem;
@@ -116,6 +119,8 @@
     @keyframes geoPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
     .geo-pulse{ animation: geoPulse 1.2s ease-in-out infinite; }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
     <style>
         /* Police moderne */
@@ -350,7 +355,7 @@
             <div class="row align-items-center">
                 <!-- Logo + Texte -->
                 <div class="col-12 col-md-6 d-flex align-items-center mb-2 mb-md-0">
-                    <img src="/logo.jpg" alt="Logo ADECOB" class="me-3" style="height: 50px; border-radius: 8px;">
+                    <img src="https://adecob-infrastructure-plateforme.org/logo.jpg" alt="Logo ADECOB" class="me-3" style="height: 50px; border-radius: 8px;">
                     <div class="logo-text">
                         ASSOCIATION POUR LE DÉVELOPPEMENT<br>
                         DES COMMUNES DU BORGOU
@@ -405,7 +410,7 @@
     <main class="container-fluid px-3 mt-3">
         <div class="container">
     <div class="text-center mb-4">
-        <img src="/logo.jpg" alt="Logo ADECOB" class="img-fluid" style="max-height: 100px;">
+        <img src="https://adecob-infrastructure-plateforme.org/logo.jpg" alt="Logo ADECOB" class="img-fluid" style="max-height: 100px;">
     </div>
     <div class="alert alert-danger text-center shadow-sm" style="border-radius: 12px; border: 2px solid #dc3545;">
         <h4 class="fw-bold mb-1"><i class="bi bi-wifi-off me-2"></i> MODE STRICTEMENT HORS-LIGNE</h4>
@@ -1869,7 +1874,6 @@
         function ensureLeaflet(cb){
             if (window.L) return cb();
             const s = document.createElement('script');
-            if (!navigator.onLine) { reject(new Error('Carte indisponible hors connexion')); return; }
             s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
             s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
             s.crossOrigin = '';
@@ -2151,15 +2155,15 @@
     </footer>
 
     <!-- Bootstrap JS Bundle -->
-    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="/js/auth-enhancements.js"></script>
+    <script src="https://adecob-infrastructure-plateforme.org/js/auth-enhancements.js"></script>
     
     <!-- Offline Sync Scripts -->
-    <script src="/vendor/localforage/localforage.min.js"></script>
-    <script src="/js/offline-sync.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="https://adecob-infrastructure-plateforme.org/js/offline-sync.js"></script>
     
     
     
-    <script src="/js/offline-storage.js"></script></body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script><script src="/js/offline-storage.js"></script></body>
 </html>

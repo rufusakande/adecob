@@ -23,14 +23,11 @@ export default defineConfig({
                 globDirectory: 'public',
                 globPatterns: [
                     'offline.html',
-                    'manifest.json',
                     'logo.jpg',
                     'icon-*.png',
                     'favicon.ico',
                     'css/**/*.css',
                     'js/**/*.js',
-                    'vendor/**/*.css',
-                    'vendor/**/*.js',
                 ],
                 globIgnores: ['service-worker.js', 'sw.js', 'build/**'],
                 cleanupOutdatedCaches: true,
@@ -39,10 +36,7 @@ export default defineConfig({
                 navigateFallback: null,
                 runtimeCaching: [
                     {
-                        urlPattern: ({ request, url }) =>
-                            request.mode === 'navigate' &&
-                            url.origin === self.location.origin &&
-                            !url.pathname.startsWith('/~oauth'),
+                        urlPattern: ({ request }) => request.mode === 'navigate',
                         handler: 'NetworkFirst',
                         options: {
                             cacheName: 'adecob-pages',
@@ -62,6 +56,20 @@ export default defineConfig({
                             expiration: { maxEntries: 80, maxAgeSeconds: 2592000 },
                         },
                     },
+                    {
+                        // CDN tiers : requêtes CORS (leaflet, bootstrap-icons, font-awesome…).
+                        // On force le mode CORS pour éviter les réponses "opaques" refusées
+                        // par le navigateur lors de la lecture depuis le cache.
+                        urlPattern: /^https:\/\/(cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,
+                        handler: 'StaleWhileRevalidate',
+                        options: {
+                            cacheName: 'adecob-third-party',
+                            fetchOptions: { mode: 'cors', credentials: 'omit' },
+                            cacheableResponse: { statuses: [200] },
+                            expiration: { maxEntries: 40, maxAgeSeconds: 2592000 },
+                        },
+                    },
+
                 ],
             },
         }),

@@ -19,7 +19,7 @@
     <link rel="apple-touch-icon" href="{{ asset('logo.jpg') }}">
 
     <!-- Bootstrap 5.3 CSS -->
-    <link href="{{ asset('vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -410,15 +410,17 @@
     </footer>
 
     <!-- Bootstrap JS Bundle -->
-    <script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="{{ asset('js/auth-enhancements.js') }}"></script>
     <script src="{{ asset('js/pwa-register.js') }}"></script>
     
     <!-- Offline Sync Scripts -->
-    <script src="{{ asset('vendor/localforage/localforage.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="{{ asset('js/offline-sync.js') }}"></script>
     
+    @stack('scripts')
+
     @auth
     <!-- Keep-alive ping to prevent session/CSRF timeout -->
     <script>

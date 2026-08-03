@@ -58,12 +58,7 @@ async function pushOfflineItem(data) {
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         });
 
-        const redirectedToLogin = response.redirected && new URL(response.url).pathname === '/login';
-        if (redirectedToLogin || response.status === 401 || response.status === 419) {
-            return { ok: false, message: 'Votre session a expiré. Reconnectez-vous avant de synchroniser.' };
-        }
-
-        if (response.ok) {
+        if (response.ok || response.status === 302) {
             return { ok: true };
         }
 
@@ -133,12 +128,4 @@ document.addEventListener('DOMContentLoaded', async function () {
         '<a href="' + manageUrl + '" class="nav-link btn btn-warning text-dark px-3 py-1 fw-bold" id="offline-sync-badge" title="Gérer les fiches enregistrées hors-ligne">' +
         '<i class="bi bi-cloud-arrow-up-fill me-1"></i> <span class="count">' + pendingData.length + '</span> hors-ligne</a>';
     navbar.appendChild(syncLi);
-});
-
-window.addEventListener('offline', function () {
-    document.documentElement.dataset.networkStatus = 'offline';
-});
-
-window.addEventListener('online', function () {
-    document.documentElement.dataset.networkStatus = 'online';
 });

@@ -1,86 +1,115 @@
+// Configuration de localForage
 localforage.config({
     name: 'ADECOB',
     storeName: 'infrastructures_offline',
-    description: 'Stockage des infrastructures crÃ©Ã©es hors-ligne',
+    description: 'Stockage des infrastructures créées hors-ligne'
 });
 
-function offlineFileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(reader.error || new Error('Lecture du fichier impossible'));
-        reader.readAsDataURL(file);
-    });
-}
-
-async function collectOfflineForm(form) {
-    const data = { local_id: 'offline_' + Date.now(), timestamp: Date.now() };
-    for (const [key, value] of new FormData(form).entries()) {
-        if (key === '_token' || key === '_method') continue;
-        if (value instanceof File && value.size === 0) continue;
-        const storedValue = value instanceof File ? await offlineFileToBase64(value) : value;
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-            data[key] = Array.isArray(data[key]) ? data[key].concat(storedValue) : [data[key], storedValue];
-        } else {
-            data[key] = storedValue;
-        }
-    }
-    return data;
-}
-
-async function renderOfflineFormStatus(container) {
-    if (!container) return;
-    const items = await getOfflineQueue();
-    container.innerHTML = items.length
-        ? '<div class="alert alert-warning text-center fw-bold shadow-sm">Vous avez ' + items.length + ' infrastructure(s) sauvegardÃ©e(s) sur cet appareil, en attente de synchronisation.</div>'
-        : '';
-}
-
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', async function() {
     const form = document.getElementById('infraForm');
-    if (!form || form.dataset.offlineCaptureReady === 'true') return;
-    form.dataset.offlineCaptureReady = 'true';
+    
+    // Create UI for showing pending items and success messages
+    const uiContainer = document.createElement('div');
+    uiContainer.id = 'offline-ui-container';
+    uiContainer.className = 'mb-4';
+    if(form) {
+        form.parentNode.insertBefore(uiContainer, form);
+    }
+    
+    await updatePendingCount();
+    
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Check HTML5 validity
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                // Scroll to the first invalid element
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) firstInvalid.scrollIntoView({behavior: 'smooth', block: 'center'});
+                return;
+            }
+            
+            try {
+                // Show saving state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enregistrement...';
+                submitBtn.disabled = true;
 
-    const container = document.createElement('div');
-    container.id = 'offline-ui-container';
-    container.className = 'mb-4';
-    form.parentNode.insertBefore(container, form);
-    await renderOfflineFormStatus(container);
+                // Generate a unique local ID
+                const localId = 'offline_' + Date.now();
+                const formData = new FormData(form);
+                const data = { local_id: localId, timestamp: Date.now() };
+                
+                // Process all fields
+                for (let [key, value] of formData.entries()) {
+                    if (value instanceof File && value.size > 0) {
+                        data[key] = await fileToBase64(value);
+                    } else if (!(value instanceof File)) {
+                        data[key] = value;
+                    }
+                }
+                
+                // Save to localForage
+                let existingData = await localforage.getItem('pending_infrastructures') || [];
+                existingData.push(data);
+                await localforage.setItem('pending_infrastructures', existingData);
+                
+                // Reset UI
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                form.reset();
+                form.classList.remove('was-validated');
+                window.scrollTo(0, 0);
+                
+                // Show success banner
+                showSuccessBanner();
+                await updatePendingCount();
+                
+            } catch (err) {
+                console.error("Erreur de sauvegarde locale:", err);
+                alert("Erreur lors de la sauvegarde sur l'appareil: " + err.message);
+            }
+        });
+    }
+});
 
-    form.addEventListener('submit', async function (event) {
-        if (navigator.onLine) return;
-        event.preventDefault();
-
-        if (!form.checkValidity()) {
-            form.classList.add('was-validated');
-            const firstInvalid = form.querySelector(':invalid');
-            if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
-
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalLabel = submitButton ? submitButton.innerHTML : '';
-        if (submitButton) {
-            submitButton.disabled = true;
-            submitButton.textContent = 'Enregistrement localâ€¦';
-        }
-
-        try {
-            const items = await getOfflineQueue();
-            items.push(await collectOfflineForm(form));
-            await setOfflineQueue(items);
-            form.reset();
-            form.classList.remove('was-validated');
-            await renderOfflineFormStatus(container);
-            container.insertAdjacentHTML('afterbegin', '<div class="alert alert-success text-center shadow-sm"><strong>Sauvegarde rÃ©ussie.</strong> La fiche reste sur cet appareil jusquâ€™Ã  sa synchronisation.</div>');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (error) {
-            container.insertAdjacentHTML('afterbegin', '<div class="alert alert-danger">Impossible de sauvegarder la fiche sur cet appareil. VÃ©rifiez lâ€™espace de stockage disponible.</div>');
-        } finally {
-            if (submitButton) {
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalLabel;
+async function updatePendingCount() {
+    try {
+        let existingData = await localforage.getItem('pending_infrastructures') || [];
+        const container = document.getElementById('offline-ui-container');
+        if (container) {
+            const existingBadge = document.getElementById('pending-badge');
+            if (existingData.length > 0) {
+                const html = '<div id="pending-badge" class="alert alert-warning text-center fw-bold shadow-sm"><i class="bi bi-hdd-fill me-2"></i> Vous avez ' + existingData.length + ' infrastructure(s) sauvegardée(s) sur cet appareil, en attente de synchronisation.</div>';
+                if (existingBadge) {
+                    existingBadge.outerHTML = html;
+                } else {
+                    container.insertAdjacentHTML('beforeend', html);
+                }
+            } else if (existingBadge) {
+                existingBadge.remove();
             }
         }
+    } catch(e) {}
+}
+
+function showSuccessBanner() {
+    const container = document.getElementById('offline-ui-container');
+    if (container) {
+        const html = '<div class="alert alert-success alert-dismissible fade show text-center shadow-sm" role="alert"><h4 class="alert-heading fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Sauvegarde réussie !</h4><p class="mb-0">L\'infrastructure a bien été enregistrée sur votre téléphone.</p><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        container.insertAdjacentHTML('afterbegin', html);
+    }
+}
+
+// Helper to convert File to Base64
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
     });
-});
+}
