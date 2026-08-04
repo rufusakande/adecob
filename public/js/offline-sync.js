@@ -1,6 +1,16 @@
 // Gestion de la file d'attente hors-ligne (localForage) + synchronisation serveur.
 const OFFLINE_STORE_KEY = 'pending_infrastructures';
 
+// IMPORTANT : doit être identique à la configuration de offline-storage.js,
+// sinon les fiches enregistrées hors-ligne sont écrites dans un autre magasin
+// IndexedDB et n'apparaissent jamais dans la page de gestion.
+if (typeof localforage !== 'undefined') {
+    localforage.config({
+        name: 'ADECOB',
+        storeName: 'infrastructures_offline',
+    });
+}
+
 async function getOfflineQueue() {
     try {
         return (await localforage.getItem(OFFLINE_STORE_KEY)) || [];
