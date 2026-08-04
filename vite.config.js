@@ -28,6 +28,7 @@ export default defineConfig({
                     'favicon.ico',
                     'css/**/*.css',
                     'js/**/*.js',
+                    'vendor/**/*.js',
                 ],
                 globIgnores: ['service-worker.js', 'sw.js', 'build/**'],
                 cleanupOutdatedCaches: true,
