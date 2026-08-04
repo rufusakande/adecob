@@ -416,7 +416,7 @@
     <script src="{{ asset('js/pwa-register.js') }}"></script>
     
     <!-- Offline Sync Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="{{ asset('vendor/localforage.min.js') }}"></script>
     <script src="{{ asset('js/offline-sync.js') }}"></script>
     
     @stack('scripts')
