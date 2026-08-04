@@ -11,9 +11,37 @@ if (typeof localforage !== 'undefined') {
     });
 }
 
+// Récupère aussi les anciennes fiches enregistrées dans le magasin localForage
+// par défaut (avant l'harmonisation de la configuration) et les migre.
+async function getLegacyQueue() {
+    try {
+        if (typeof localforage.createInstance !== 'function') return [];
+        const legacy = localforage.createInstance({ name: 'localforage', storeName: 'keyvaluepairs' });
+        return (await legacy.getItem(OFFLINE_STORE_KEY)) || [];
+    } catch (e) {
+        return [];
+    }
+}
+
+async function clearLegacyQueue() {
+    try {
+        const legacy = localforage.createInstance({ name: 'localforage', storeName: 'keyvaluepairs' });
+        await legacy.removeItem(OFFLINE_STORE_KEY);
+    } catch (e) {}
+}
+
 async function getOfflineQueue() {
     try {
-        return (await localforage.getItem(OFFLINE_STORE_KEY)) || [];
+        const items = (await localforage.getItem(OFFLINE_STORE_KEY)) || [];
+        const legacy = await getLegacyQueue();
+        if (legacy.length > 0) {
+            const ids = new Set(items.map((i) => i.local_id));
+            const merged = items.concat(legacy.filter((i) => !ids.has(i.local_id)));
+            await localforage.setItem(OFFLINE_STORE_KEY, merged);
+            await clearLegacyQueue();
+            return merged;
+        }
+        return items;
     } catch (e) {
         return [];
     }
