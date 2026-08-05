@@ -256,6 +256,9 @@
 
     function boot() {
         if (isStandalone()) return;
+        if (document.querySelector('.adc-tabbar')) {
+            document.body.classList.add('has-mobile-tabbar');
+        }
         // Affiche l'invitation même sans `beforeinstallprompt`
         // (iOS Safari, Firefox, Samsung Internet…), avec instructions manuelles.
         window.setTimeout(showBanner, 2500);

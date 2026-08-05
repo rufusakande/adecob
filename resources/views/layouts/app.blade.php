@@ -423,6 +423,7 @@
     <script src="{{ asset('js/auth-enhancements.js') }}"></script>
     <script src="{{ asset('js/mobile-ui.js') }}"></script>
     <script src="{{ asset('js/pwa-register.js') }}"></script>
+    <script src="{{ asset('js/pwa-install.js') }}"></script>
 
     
     <!-- Offline Sync Scripts -->
