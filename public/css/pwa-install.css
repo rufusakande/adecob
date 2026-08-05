@@ -1,0 +1,167 @@
+/* ADECOB — Bandeau et modale d'installation de l'application (PWA) */
+
+.adecob-install-banner {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e3ebe6;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+    transform: translateY(140%);
+    opacity: 0;
+    transition: transform .28s ease, opacity .28s ease;
+}
+
+/* Laisse de la place à la tabbar mobile si elle est présente */
+body.has-mobile-tabbar .adecob-install-banner {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+
+.adecob-install-banner.is-visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.adecob-install-banner__icon {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #f1f5f2;
+}
+
+.adecob-install-banner__text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.adecob-install-banner__title {
+    font-weight: 700;
+    font-size: .95rem;
+    color: #123227;
+    line-height: 1.2;
+}
+
+.adecob-install-banner__desc {
+    font-size: .8rem;
+    color: #6b7a72;
+    line-height: 1.3;
+    margin-top: 2px;
+}
+
+.adecob-install-banner__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.adecob-install-btn {
+    border: 0;
+    border-radius: 999px;
+    background: #008751;
+    color: #fff;
+    font-weight: 600;
+    font-size: .88rem;
+    padding: 10px 16px;
+    min-height: 44px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.adecob-install-btn:hover { background: #0a6f45; }
+
+.adecob-install-close {
+    border: 0;
+    background: transparent;
+    color: #8a978f;
+    font-size: 1.35rem;
+    line-height: 1;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.adecob-install-close:hover { background: #f1f5f2; color: #45524b; }
+
+@media (max-width: 480px) {
+    .adecob-install-banner { flex-wrap: wrap; }
+    .adecob-install-banner__actions { width: 100%; }
+    .adecob-install-btn { flex: 1 1 auto; }
+}
+
+/* ---- Modale d'instructions ---- */
+.adecob-install-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(6, 20, 15, .55);
+    padding: 0;
+}
+
+.adecob-install-modal.is-open { display: flex; }
+
+.adecob-install-modal__dialog {
+    background: #fff;
+    width: 100%;
+    max-width: 520px;
+    border-radius: 20px 20px 0 0;
+    padding: 22px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, .25);
+    max-height: 86vh;
+    overflow-y: auto;
+}
+
+@media (min-width: 576px) {
+    .adecob-install-modal { align-items: center; }
+    .adecob-install-modal__dialog { border-radius: 20px; }
+}
+
+.adecob-install-modal__title {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #123227;
+    margin-bottom: 6px;
+}
+
+.adecob-install-modal__intro {
+    font-size: .9rem;
+    color: #6b7a72;
+    margin-bottom: 14px;
+}
+
+.adecob-install-steps {
+    margin: 0 0 18px;
+    padding-left: 20px;
+    color: #21372e;
+    font-size: .92rem;
+    line-height: 1.65;
+}
+
+.adecob-install-modal__close {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 12px;
+    border: 1px solid #d8e3dc;
+    background: #f6f9f7;
+    color: #123227;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@media print {
+    .adecob-install-banner,
+    .adecob-install-modal { display: none !important; }
+}
