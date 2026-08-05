@@ -486,3 +486,40 @@ footer {
         padding-top: 0 !important;
     }
 }
+
+/* --------------------- Page publique (landing) --------------------- */
+
+@media (max-width: 767.98px) {
+    .hero-public {
+        padding: 44px 0 56px !important;
+        text-align: center;
+    }
+
+    .hero-public h1 {
+        font-size: 1.6rem;
+    }
+
+    .hero-public .lead {
+        font-size: .98rem;
+    }
+
+    .kpi-card {
+        padding: 18px 14px !important;
+    }
+
+    .kpi-card .kpi-value {
+        font-size: 1.7rem !important;
+    }
+
+    .kpi-card .kpi-label {
+        font-size: .82rem;
+    }
+
+    .section-sub {
+        margin-bottom: 20px !important;
+    }
+
+    .breadcrumb {
+        font-size: .85rem;
+    }
+}
