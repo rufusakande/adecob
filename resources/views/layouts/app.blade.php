@@ -396,8 +396,11 @@
         @yield('content')
     </main>
 
+    @include('layouts.partials.mobile-tabbar')
+
     <!-- Footer -->
     <footer class="text-center">
+
         <div class="footer-text">
             &copy; {{ date('Y') }} <strong>ADECOB Infrastructure Plannification</strong>. Tous droits réservés.<br class="d-md-none">
             <div class="mt-2">
