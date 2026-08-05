@@ -1,0 +1,488 @@
+/* =====================================================================
+   ADECOB — Mobile Premium
+   Couche de design responsive (mobile-first) appliquée globalement.
+   Chargée après Bootstrap : surcharge maîtrisée, aucun !important inutile.
+   ===================================================================== */
+
+:root {
+    --adc-green: #0b6623;
+    --adc-green-dark: #084d1a;
+    --adc-green-light: #128a30;
+    --adc-gold: #ffd100;
+    --adc-ink: #10231a;
+    --adc-body: #3d4a44;
+    --adc-muted: #6b7a73;
+    --adc-surface: #ffffff;
+    --adc-bg: #f4f7f5;
+    --adc-line: #e3eae6;
+
+    --adc-radius-sm: 10px;
+    --adc-radius: 16px;
+    --adc-radius-lg: 22px;
+
+    --adc-shadow-xs: 0 1px 2px rgba(16, 35, 26, .06);
+    --adc-shadow-sm: 0 2px 10px rgba(16, 35, 26, .07);
+    --adc-shadow: 0 8px 24px -12px rgba(16, 35, 26, .28);
+    --adc-shadow-lg: 0 20px 45px -25px rgba(16, 35, 26, .45);
+
+    --adc-header-h: 170px;
+    --adc-safe-b: env(safe-area-inset-bottom, 0px);
+    --adc-tabbar-h: 0px;
+}
+
+/* ------------------------------ Base ------------------------------ */
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    background-color: var(--adc-bg);
+    color: var(--adc-body);
+    padding-top: var(--adc-header-h) !important;
+    padding-bottom: calc(var(--adc-tabbar-h) + var(--adc-safe-b));
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg,
+canvas,
+video {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Empêche tout débordement horizontal des conteneurs applicatifs */
+main.container-fluid {
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+h1, h2, h3, h4, h5 {
+    color: var(--adc-ink);
+    letter-spacing: -.015em;
+}
+
+/* --------------------------- Header / Nav -------------------------- */
+
+.fixed-header {
+    padding-top: env(safe-area-inset-top, 0px);
+    backdrop-filter: saturate(1.4) blur(6px);
+    background: rgba(255, 255, 255, .96);
+}
+
+.fixed-navbar {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    background: linear-gradient(120deg, var(--adc-green) 0%, var(--adc-green-dark) 100%);
+}
+
+.navbar-toggler {
+    border: 1px solid rgba(255, 255, 255, .35);
+    border-radius: 12px;
+    padding: .3rem .55rem;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 .2rem rgba(255, 209, 0, .35);
+}
+
+.fixed-navbar .navbar-collapse {
+    max-height: 65vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+@media (max-width: 991.98px) {
+    .fixed-navbar .nav-link {
+        padding: .7rem .85rem !important;
+        border-radius: 12px;
+    }
+
+    .fixed-navbar .dropdown-menu {
+        border-radius: 14px;
+        margin: .25rem 0 .5rem;
+        box-shadow: none;
+        border: 1px solid rgba(0, 0, 0, .06);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .fixed-header .logo-text {
+        font-size: .74rem;
+        line-height: 1.25;
+    }
+
+    .fixed-header img {
+        height: 38px !important;
+    }
+
+    .navbar-brand {
+        font-size: .95rem;
+        max-width: 72vw;
+        white-space: normal;
+    }
+}
+
+/* ------------------------- Cartes & surfaces ----------------------- */
+
+.card {
+    border: 1px solid var(--adc-line);
+    border-radius: var(--adc-radius);
+    box-shadow: var(--adc-shadow-sm);
+    overflow: hidden;
+}
+
+.card-header {
+    background: #fff;
+    border-bottom: 1px solid var(--adc-line);
+    font-weight: 600;
+}
+
+.shadow, .shadow-sm {
+    box-shadow: var(--adc-shadow-sm) !important;
+}
+
+.list-group-item {
+    border-color: var(--adc-line);
+}
+
+/* ------------------------------ Boutons ---------------------------- */
+
+.btn {
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    transition: transform .15s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+.btn:active {
+    transform: translateY(1px) scale(.99);
+}
+
+.btn-primary,
+.btn-success {
+    background: linear-gradient(135deg, var(--adc-green-light), var(--adc-green));
+    border-color: transparent;
+    box-shadow: 0 8px 18px -12px rgba(11, 102, 35, .9);
+}
+
+.btn-primary:hover,
+.btn-success:hover,
+.btn-primary:focus,
+.btn-success:focus {
+    background: linear-gradient(135deg, var(--adc-green), var(--adc-green-dark));
+    border-color: transparent;
+}
+
+.btn-warning {
+    color: var(--adc-ink);
+}
+
+/* Cibles tactiles confortables */
+@media (max-width: 767.98px) {
+    .btn,
+    .form-control,
+    .form-select,
+    .page-link {
+        min-height: 44px;
+    }
+
+    .btn-sm {
+        min-height: 38px;
+        padding-inline: .75rem;
+    }
+
+    .btn-group-sm > .btn,
+    .table .btn-sm {
+        min-height: 34px;
+    }
+}
+
+/* Rangée d'actions : plein écran sur mobile, en ligne au-delà */
+@media (max-width: 575.98px) {
+    .adc-actions,
+    .page-actions {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+        width: 100%;
+    }
+
+    .adc-actions .btn,
+    .page-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ------------------------------ Formulaires ------------------------ */
+
+.form-control,
+.form-select {
+    border-radius: 12px;
+    border-color: var(--adc-line);
+    padding: .6rem .85rem;
+    /* 16px : empêche le zoom automatique iOS au focus */
+    font-size: 16px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--adc-green-light);
+    box-shadow: 0 0 0 .2rem rgba(18, 138, 48, .15);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--adc-ink);
+    font-size: .9rem;
+}
+
+.input-group > .form-control,
+.input-group > .form-select {
+    min-width: 0;
+}
+
+.form-check-input {
+    width: 1.15em;
+    height: 1.15em;
+}
+
+@media (max-width: 767.98px) {
+    .row > [class*="col-"] + [class*="col-"] {
+        margin-top: 0;
+    }
+}
+
+/* --------------------------- Tableaux mobiles ---------------------- */
+
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--adc-radius-sm);
+    scrollbar-width: thin;
+}
+
+.table {
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+
+.table > :not(caption) > * > * {
+    padding: .7rem .75rem;
+}
+
+.table thead th {
+    white-space: nowrap;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--adc-muted);
+}
+
+@media (max-width: 767.98px) {
+    .table {
+        font-size: .85rem;
+    }
+
+    .table > :not(caption) > * > * {
+        padding: .55rem .5rem;
+    }
+
+    /* Indice visuel de défilement horizontal */
+    .table-responsive {
+        position: relative;
+        background:
+            linear-gradient(90deg, #fff 30%, rgba(255, 255, 255, 0)) left / 28px 100% no-repeat,
+            linear-gradient(-90deg, #fff 30%, rgba(255, 255, 255, 0)) right / 28px 100% no-repeat,
+            radial-gradient(farthest-side at 0 50%, rgba(16, 35, 26, .12), transparent) left / 12px 100% no-repeat,
+            radial-gradient(farthest-side at 100% 50%, rgba(16, 35, 26, .12), transparent) right / 12px 100% no-repeat;
+        background-attachment: local, local, scroll, scroll;
+    }
+}
+
+/* ------------------------------ Badges ----------------------------- */
+
+.badge {
+    border-radius: 999px;
+    font-weight: 600;
+    padding: .38em .7em;
+    letter-spacing: .01em;
+}
+
+/* ------------------------------ Alertes ---------------------------- */
+
+.alert {
+    border: 1px solid var(--adc-line);
+    border-radius: var(--adc-radius-sm);
+    box-shadow: var(--adc-shadow-xs);
+}
+
+/* --------------------------- Stats / KPI --------------------------- */
+
+.stat-card,
+.kpi-card {
+    border-radius: var(--adc-radius);
+    box-shadow: var(--adc-shadow-sm);
+}
+
+@media (max-width: 575.98px) {
+    .display-4, .display-5 {
+        font-size: 1.9rem;
+    }
+
+    h1, .h1 {
+        font-size: 1.45rem;
+    }
+
+    h2, .h2 {
+        font-size: 1.25rem;
+    }
+
+    h3, .h3 {
+        font-size: 1.1rem;
+    }
+
+    .lead {
+        font-size: 1rem;
+    }
+
+    main.container-fluid {
+        padding-left: .85rem !important;
+        padding-right: .85rem !important;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* ------------------------------ Modales ---------------------------- */
+
+@media (max-width: 575.98px) {
+    .modal-dialog {
+        margin: .5rem;
+    }
+
+    .modal-content {
+        border-radius: var(--adc-radius);
+    }
+}
+
+/* ------------------------- Cartes Leaflet -------------------------- */
+
+.leaflet-container {
+    border-radius: var(--adc-radius-sm);
+    z-index: 1;
+}
+
+@media (max-width: 767.98px) {
+    #map, .map-container, .leaflet-container {
+        min-height: 260px;
+    }
+}
+
+/* --------------------------- Barre d'onglets ----------------------- */
+
+.adc-tabbar {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    body.has-tabbar {
+        --adc-tabbar-h: 62px;
+    }
+
+    .adc-tabbar {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1040;
+        background: rgba(255, 255, 255, .97);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--adc-line);
+        box-shadow: 0 -6px 20px -14px rgba(16, 35, 26, .6);
+        padding: .35rem .25rem calc(.35rem + var(--adc-safe-b));
+    }
+
+    .adc-tabbar a {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: .15rem;
+        padding: .3rem .1rem;
+        color: var(--adc-muted);
+        text-decoration: none;
+        font-size: .68rem;
+        font-weight: 600;
+        border-radius: 12px;
+        min-width: 0;
+    }
+
+    .adc-tabbar a i {
+        font-size: 1.15rem;
+        line-height: 1;
+    }
+
+    .adc-tabbar a span {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .adc-tabbar a.active {
+        color: var(--adc-green);
+        background: rgba(11, 102, 35, .08);
+    }
+}
+
+/* ------------------------------ Footer ----------------------------- */
+
+footer {
+    padding-bottom: calc(25px + var(--adc-tabbar-h) + var(--adc-safe-b));
+}
+
+@media (max-width: 575.98px) {
+    footer .footer-text {
+        font-size: .8rem;
+    }
+}
+
+/* ---------------------------- Utilitaires -------------------------- */
+
+.adc-scroll-x {
+    display: flex;
+    gap: .6rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: .35rem;
+}
+
+.adc-scroll-x > * {
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+}
+
+.text-break-anywhere {
+    overflow-wrap: anywhere;
+}
+
+@media print {
+    .fixed-header,
+    .fixed-navbar,
+    .adc-tabbar,
+    footer {
+        display: none !important;
+    }
+
+    body {
+        padding-top: 0 !important;
+    }
+}
