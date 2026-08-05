@@ -30,8 +30,12 @@
     <!-- Auth Enhancements CSS -->
     <link rel="stylesheet" href="{{ asset('css/auth-enhancements.css') }}">
 
+    <!-- Mobile Premium CSS -->
+    <link rel="stylesheet" href="{{ asset('css/mobile-premium.css') }}">
+
     <!-- Google Fonts - Poppins (optionnel pour plus d'élégance) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 
     @stack('styles')
 
@@ -392,8 +396,11 @@
         @yield('content')
     </main>
 
+    @include('layouts.partials.mobile-tabbar')
+
     <!-- Footer -->
     <footer class="text-center">
+
         <div class="footer-text">
             &copy; {{ date('Y') }} <strong>ADECOB Infrastructure Plannification</strong>. Tous droits réservés.<br class="d-md-none">
             <div class="mt-2">
@@ -413,7 +420,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="{{ asset('js/auth-enhancements.js') }}"></script>
+    <script src="{{ asset('js/mobile-ui.js') }}"></script>
     <script src="{{ asset('js/pwa-register.js') }}"></script>
+
     
     <!-- Offline Sync Scripts -->
     <script src="{{ asset('vendor/localforage.min.js') }}"></script>
