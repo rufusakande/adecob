@@ -403,7 +403,7 @@
     <footer class="text-center">
 
         <div class="footer-text">
-            &copy; {{ date('Y') }} <strong>ADECOB Infrastructure Plannification</strong>. Tous droits réservés.<br class="d-md-none">
+            &copy; {{ date('Y') }} <strong>{{ config('app.name') }}</strong>. Tous droits réservés.<br class="d-md-none">
             <div class="mt-2">
                 <a href="{{ route('legal.pssi') }}" class="text-white-50 mx-2">PSSI</a>
                 <span class="text-white-50">·</span>
