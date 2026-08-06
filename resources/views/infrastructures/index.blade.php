@@ -110,7 +110,7 @@
             <!-- Statistiques principales -->
             <div class="row g-4 mb-4">
                 <!-- Total -->
-                <div class="col-md-6 col-lg-3">
+                <div class="col-12 col-md-4">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body text-center">
                             <div class="display-6 text-primary mb-2">{{ $stats['total'] }}</div>
@@ -120,7 +120,7 @@
                 </div>
                 
                 <!-- Planifiées -->
-                <div class="col-md-6 col-lg-3">
+                <div class="col-6 col-md-4">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body text-center">
                             <div class="display-6 text-info mb-2">{{ $stats['planned'] }}</div>
@@ -129,22 +129,13 @@
                     </div>
                 </div>
                 
-                <!-- À Entretenir -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 text-warning mb-2">{{ $stats['to_maintain'] }}</div>
-                            <h6 class="text-warning mb-0">À Entretenir</h6>
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Déjà Entretenues -->
-                <div class="col-md-6 col-lg-3">
+                <div class="col-6 col-md-4">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body text-center">
                             <div class="display-6 text-success mb-2">{{ $stats['maintained'] }}</div>
                             <h6 class="text-success mb-0">Entretenues</h6>
+                            <small class="text-muted">Travaux terminés</small>
                         </div>
                     </div>
                 </div>
