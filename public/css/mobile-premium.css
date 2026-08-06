@@ -590,11 +590,6 @@ nav[role="navigation"] .hidden.sm\:flex-1 {
         min-width: 36px;
         padding: .35rem .5rem;
     }
-
-    /* Masque les numéros lointains pour éviter les retours à la ligne infinis */
-    .pagination .page-item:not(.active):not(:first-child):not(:last-child):not(.disabled) .page-link[aria-label] {
-        display: none;
-    }
 }
 
 /* Stepper du formulaire infrastructure */
