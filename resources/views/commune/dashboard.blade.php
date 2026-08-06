@@ -46,6 +46,7 @@
     <div class="row">
         <!-- Statistiques -->
         <div class="col-md-4 mb-4">
+            <a href="{{ route('infrastructures.index') }}" class="kpi-link" aria-label="Infrastructures">
             <div class="card shadow-sm border-0" style="border-left: 5px solid #2e8b57;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -59,9 +60,11 @@
                     </div>
                 </div>
             </div>
+            </a>
         </div>
 
         <div class="col-md-4 mb-4">
+            <a href="{{ route('infrastructures.planned') }}" class="kpi-link" aria-label="Travaux en cours">
             <div class="card shadow-sm border-0" style="border-left: 5px solid #ffd700;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -75,9 +78,11 @@
                     </div>
                 </div>
             </div>
+            </a>
         </div>
 
         <div class="col-md-4 mb-4">
+            <a href="{{ route('admin.pending-registrations', ['status' => 'approved']) }}" class="kpi-link" aria-label="Agents de mairie">
             <div class="card shadow-sm border-0" style="border-left: 5px solid #dc3545;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -91,6 +96,7 @@
                     </div>
                 </div>
             </div>
+            </a>
         </div>
     </div>
 
