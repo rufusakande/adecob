@@ -289,7 +289,7 @@
                 <ul>
                     <li>Vérification des informations</li>
                     <li>Validation par un administrateur</li>
-                    <li>Accès à la plateforme ADECOB</li>
+                    <li>Accès à la plateforme {{ config('app.name') }}</li>
                 </ul>
             </div>
 

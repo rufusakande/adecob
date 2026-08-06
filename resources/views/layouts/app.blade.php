@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>@yield('title', 'ADECOB Infrastructure Plannification')</title>
+    <title>@yield('title', config('app.name'))</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Favicon -->
@@ -15,7 +15,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ADECOB">
+    <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
     <link rel="apple-touch-icon" href="{{ asset('logo.jpg') }}">
 
     <!-- Bootstrap 5.3 CSS -->
@@ -303,7 +303,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg fixed-navbar">
         <div class="container">
-            <a class="navbar-brand me-3" href="{{ url('/') }}">ADECOB Infrastructure Plannification</a>
+            <a class="navbar-brand me-3" href="{{ url('/') }}">{{ config('app.name') }}</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

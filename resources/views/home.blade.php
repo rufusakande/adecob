@@ -5,7 +5,7 @@
     <!-- Header Section -->
     <div class="header-section">
         <div class="header-content">
-            <h1 class="header-title">Bienvenue sur ADECOB</h1>
+            <h1 class="header-title">Bienvenue sur {{ config('app.name') }}</h1>
             <p class="header-subtitle">Infrastructure Development & Management Platform</p>
             <p class="header-description">Sélectionnez une commune pour accéder aux données des infrastructures</p>
         </div>

@@ -8,7 +8,7 @@
         <div>
             <span class="badge bg-danger text-white mb-2">Super Administrateur</span>
             <h2 class="fw-bold mb-1">Bonjour, {{ auth()->user()->prenom ?? auth()->user()->name }} 👋</h2>
-            <p class="text-muted mb-0">Vue d'ensemble de la plateforme ADECOB Infrastructure Plannification.</p>
+            <p class="text-muted mb-0">Vue d'ensemble de la plateforme {{ config('app.name') }}.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a href="{{ route('admin.pending-registrations') }}" class="btn btn-warning">

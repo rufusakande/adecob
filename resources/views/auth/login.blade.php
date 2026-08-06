@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Connexion — ADECOB')
+@section('title', 'Connexion — ' . config('app.name'))
 
 @section('content')
 <div class="auth-page">
@@ -14,7 +14,7 @@
                     <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
                 </div>
                 <h1 class="auth-title">Connexion</h1>
-                <p class="auth-subtitle">Accédez à votre espace ADECOB</p>
+                <p class="auth-subtitle">Accédez à votre espace {{ config('app.name') }}</p>
             </div>
 
             {{-- Body --}}
@@ -153,7 +153,7 @@
         {{-- Note sécurité --}}
         <p class="security-note">
             <i class="bi bi-shield-check" aria-hidden="true"></i>
-            Connexion sécurisée — HTTPS · ADECOB &copy; {{ date('Y') }}
+            Connexion sécurisée — HTTPS · {{ config('app.name') }} &copy; {{ date('Y') }}
         </p>
 
     </div>

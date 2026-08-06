@@ -20,7 +20,7 @@
                     @else
                         <p class="text-muted">
                             Votre inscription a bien été enregistrée sur la plateforme
-                            <strong>ADECOB Infrastructure Plannification</strong>.
+                            <strong>{{ config('app.name') }}</strong>.
                         </p>
                     @endif
 

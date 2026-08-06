@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Infrastructures publiques — ADECOB')
+@section('title', 'Infrastructures publiques — ' . config('app.name'))
 
 @section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
