@@ -30,25 +30,30 @@
     <div class="row g-3 mb-4">
         @php
             $cards = [
-                ['Utilisateurs', $kpis['total_users'], 'fa-users', '#0b6623'],
-                ['Inscriptions en attente', $kpis['pending_users'], 'fa-user-clock', '#FFD100'],
-                ['Communes', $kpis['total_communes'], 'fa-city', '#0d6efd'],
-                ['Infrastructures', $kpis['total_infrastructures'], 'fa-building', '#6f42c1'],
+                ['Utilisateurs', $kpis['total_users'], 'fa-users', '#0b6623', route('admin.users.index')],
+                ['Inscriptions en attente', $kpis['pending_users'], 'fa-user-clock', '#FFD100', route('admin.pending-registrations')],
+                ['Communes', $kpis['total_communes'], 'fa-city', '#0d6efd', route('admin.communes.index')],
+                ['Infrastructures', $kpis['total_infrastructures'], 'fa-building', '#6f42c1', route('infrastructures.index')],
             ];
         @endphp
-        @foreach($cards as [$label, $value, $icon, $color])
+        @foreach($cards as [$label, $value, $icon, $color, $url])
             <div class="col-6 col-lg-3">
-                <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid {{ $color }} !important;">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <p class="text-muted small mb-1">{{ $label }}</p>
-                                <h3 class="fw-bold mb-0" style="color: {{ $color }};">{{ $value }}</h3>
+                <a href="{{ $url }}" class="kpi-link" aria-label="{{ $label }}">
+                    <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid {{ $color }} !important;">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <p class="text-muted small mb-1">{{ $label }}</p>
+                                    <h3 class="fw-bold mb-0" style="color: {{ $color }};">{{ $value }}</h3>
+                                </div>
+                                <i class="fas {{ $icon }} fa-2x" style="color: {{ $color }}; opacity:.25;"></i>
                             </div>
-                            <i class="fas {{ $icon }} fa-2x" style="color: {{ $color }}; opacity:.25;"></i>
+                            <div class="small mt-2" style="color: {{ $color }};">
+                                Consulter <i class="fas fa-arrow-right ms-1"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
         @endforeach
     </div>
