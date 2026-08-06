@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Infrastructures publiques — ADECOB')
+@section('title', 'Infrastructures publiques — ' . config('app.name'))
 
 @section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -105,8 +105,12 @@
                         @endforeach
                     </div>
 
-                    <div class="mt-3">
-                        {{ $infrastructures->links() }}
+                    <div class="mt-3 d-flex flex-column align-items-center gap-2">
+                        <div class="text-muted small">
+                            {{ $infrastructures->firstItem() }}–{{ $infrastructures->lastItem() }}
+                            sur {{ $infrastructures->total() }} infrastructure(s)
+                        </div>
+                        {{ $infrastructures->onEachSide(0)->links() }}
                     </div>
                 @endif
             </div>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'ADECOB Infrastructure Plannification — Plateforme publique')
+@section('title', config('app.name') . ' — Plateforme publique')
 
 @section('content')
 <style>

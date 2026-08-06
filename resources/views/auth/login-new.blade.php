@@ -10,7 +10,7 @@
         <!-- Header -->
         <div class="auth-header">
             <h1><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px; display: inline-block; margin-right: 0.5rem;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Se Connecter</h1>
-            <p>Accédez à votre espace ADECOB</p>
+            <p>Accédez à votre espace {{ config('app.name') }}</p>
         </div>
 
         <!-- Body -->

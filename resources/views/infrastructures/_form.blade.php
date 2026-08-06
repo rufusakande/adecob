@@ -17,6 +17,23 @@
     .form-hint{ font-size:.78rem; color:#64748b; margin-top:.2rem;}
     .step { padding: 20px; border-radius: 8px; margin-bottom: 20px; background-color: #f8f9fa; }
     .form-check-inline { margin-right: 15px; margin-bottom: 8px; }
+
+    /* ---- Adaptation mobile du stepper et des sections ---- */
+    @media (max-width: 767.98px) {
+        .infra-stepper { padding:.75rem .5rem; border-radius:12px; gap:.2rem; }
+        .infra-stepper .st-item { flex-direction:column; text-align:center; gap:.3rem; font-size:.7rem; min-width:0; }
+        .infra-stepper .st-item span { line-height:1.15; overflow-wrap:anywhere; }
+        .infra-stepper .st-item .st-num { width:30px; height:30px; font-size:.85rem; }
+        .infra-stepper .st-sep { width:14px; margin:0; align-self:flex-start; margin-top:15px; }
+        .step { padding: 14px 12px; }
+        .form-check-inline { margin-right: 10px; }
+    }
+
+    @media (max-width: 575.98px) {
+        .infra-stepper .st-item span { font-size:.66rem; }
+        .infra-stepper .st-sep { width:8px; }
+        .form-check-inline { display:block; margin-right:0; }
+    }
     .form-label { font-weight: 600; color: #495057; }
     .btn { border-radius: 6px; transition: all 0.2s ease; }
     .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }

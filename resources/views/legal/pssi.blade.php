@@ -15,8 +15,7 @@
     définit l'ensemble des règles, responsabilités, mesures techniques et organisationnelles
     mises en œuvre par l'<strong>ADECOB</strong> (Association pour le Développement des Communes
     du Borgou) pour garantir la <strong>confidentialité, l'intégrité, la disponibilité et la
-    traçabilité</strong> des données traitées par la plateforme numérique « ADECOB Infrastructure
-    Plannification ». Elle est opposable à toute personne accédant au système d'information,
+    traçabilité</strong> des données traitées par la plateforme numérique « {{ config('app.name') }} ». Elle est opposable à toute personne accédant au système d'information,
     quel que soit son rôle ou son statut.
 </div>
 

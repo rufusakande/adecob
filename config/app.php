@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'ADECOB Infrastructure Plannification'),
+    'name' => env('APP_NAME', 'ARUMANI'),
 
     /*
     |--------------------------------------------------------------------------

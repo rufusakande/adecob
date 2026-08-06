@@ -127,16 +127,29 @@ class InfrastructureController extends Controller
             'bon_etat' => $infrastructuresWithPriority->where('score_priorite', '<', 21)->count(),
         ];
 
-        // Pour le moment, nous considérons que toutes les infrastructures planifiées sont à entretenir
-        $totalMaintained = 0; // À implémenter avec un champ statut dans une future migration
-        $totalToMaintain = $totalPlanned;
+        // Infrastructures réellement entretenues : au moins un travail terminé
+        // ou une planification marquée « completed », dans le périmètre de l'utilisateur.
+        $maintainedFromWorks = \App\Models\InfrastructureWork::where('status', 'completed')
+            ->whereHas('infrastructure', function ($q) use ($user) {
+                $q->visibleTo($user);
+            })
+            ->pluck('infrastructure_id');
+
+        $maintainedFromPlanning = MairieAgentData::where('maintenance_status', 'completed')
+            ->whereNotNull('infrastructure_id')
+            ->whereHas('infrastructure', function ($q) use ($user) {
+                $q->visibleTo($user);
+            })
+            ->pluck('infrastructure_id');
+
+        $totalMaintained = $maintainedFromWorks->merge($maintainedFromPlanning)
+            ->filter()->unique()->count();
 
         // Statistiques générales filtrées (créer des requêtes indépendantes)
         $stats = [
             'total' => $statsQuery->count(),
             'planned' => $totalPlanned,
             'maintained' => $totalMaintained,
-            'to_maintain' => $totalToMaintain,
             'by_commune' => Infrastructure::query()->visibleTo($user)
                 ->select('commune')->selectRaw('COUNT(*) as count')
                 ->whereNotNull('commune')->groupBy('commune')
@@ -998,9 +1011,23 @@ class InfrastructureController extends Controller
             'bon_etat' => $infrastructuresWithPriority->where('score_priorite', '<', 21)->count(),
         ];
 
-        // Pour le moment, nous considérons que toutes les infrastructures planifiées sont à entretenir
-        $totalMaintained = 0; // À implémenter avec un champ statut dans une future migration
-        $totalToMaintain = $totalPlanned;
+        // Infrastructures réellement entretenues dans la commune
+        $maintainedFromWorks = \App\Models\InfrastructureWork::where('status', 'completed')
+            ->whereHas('infrastructure', function ($q) use ($commune) {
+                $q->where('commune', $commune->name);
+            })
+            ->pluck('infrastructure_id');
+
+        $maintainedFromPlanning = MairieAgentData::where('maintenance_status', 'completed')
+            ->whereNotNull('infrastructure_id')
+            ->whereHas('infrastructure', function ($q) use ($commune) {
+                $q->where('commune', $commune->name);
+            })
+            ->pluck('infrastructure_id');
+
+        $totalMaintained = $maintainedFromWorks->merge($maintainedFromPlanning)
+            ->filter()->unique()->count();
+        $totalToMaintain = max($totalPlanned - $totalMaintained, 0);
 
         // Statistiques générales filtrées (créer des requêtes indépendantes)
         $stats = [

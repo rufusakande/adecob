@@ -1,6 +1,6 @@
 {
-    "name":  "ADECOB Infrastructure Plannification",
-    "short_name":  "ADECOB",
+    "name":  "ARUMANI",
+    "short_name": "ARUMANI",
     "description":  "Plateforme de plannification des infrastructures de l\u0027ADECOB",
     "start_url":  "/",
     "display":  "standalone",
