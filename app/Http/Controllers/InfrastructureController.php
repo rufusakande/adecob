@@ -94,8 +94,7 @@ class InfrastructureController extends Controller
               ->selectRaw(\App\Models\Infrastructure::iprSql() . " as score_priorite");
 
         $infrastructures = $query->with(['works' => fn($q) => $q->where('status', 'planned')])
-                                 ->orderByDesc('score_priorite')
-                                 ->orderByDesc('updated_at')
+                                 ->orderBy('id', 'asc')
                                  ->paginate(15)
                                  ->appends($request->except('page'));
 
@@ -649,6 +648,10 @@ class InfrastructureController extends Controller
 
     public function export(Request $request)
     {
+        // Augmenter la mémoire et le temps d'exécution pour les gros exports (Excel/PDF)
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $format = $request->input('format', 'pdf');
         $selectedIds = $request->input('selected_ids', []);
         $year = $request->input('year');
@@ -731,6 +734,9 @@ class InfrastructureController extends Controller
                 }
             }
 
+            set_time_limit(300);
+            ini_set('memory_limit', '512M');
+            
             $pdf = Pdf::loadView('infrastructures.export_pdf', compact('infrastructures', 'filters', 'year'));
             return $pdf->download($filename . '.pdf');
         }
@@ -924,25 +930,30 @@ class InfrastructureController extends Controller
     }
 
 
-    /** Marquer une infrastructure comme réhabilitée (best-effort) */
+    /** Marquer une infrastructure comme réhabilitée */
     public function markAsRehabilitated(Request $request, Infrastructure $infrastructure)
     {
         $user = auth()->user();
         abort_unless($user && ($user->isSuperAdmin() || $user->isCommuneAdmin()), 403);
 
         if ($user->isCommuneAdmin()) {
-            $same = ((int)$infrastructure->commune_id === (int)$user->commune_id) || (optional($user->commune)->name === $infrastructure->commune);
+            $same = ((int)$infrastructure->commune_id === (int)$user->commune_id)
+                 || (optional($user->commune)->name === $infrastructure->commune);
             abort_unless($same, 403, 'Cette infrastructure n\'appartient pas à votre commune.');
         }
 
         try {
-            $infrastructure->rehabilitation = 'Réhabilitée';
-            $infrastructure->save();
+            // Mise à jour directe en base pour éviter les effets de bord
+            // liés aux casts (arrondissement => array) et au mutator du numéro de téléphone
+            \DB::table('infrastructures')
+                ->where('id', $infrastructure->id)
+                ->update(['rehabilitation' => 'Réhabilitée', 'updated_at' => now()]);
+
             Log::info('Infrastructure marquée réhabilitée', ['id' => $infrastructure->id, 'by' => $user->id]);
-            return redirect()->back()->with('success', 'Infrastructure marquée comme réhabilitée.');
+            return redirect()->back()->with('success', "Infrastructure #{$infrastructure->id} marquée comme réhabilitée avec succès.");
         } catch (\Exception $e) {
-            Log::error('Erreur lors du marquage réhabilitation: '.$e->getMessage());
-            return redirect()->back()->with('error', 'Impossible de marquer comme réhabilitée.');
+            Log::error('Erreur lors du marquage réhabilitation: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
         }
     }
 

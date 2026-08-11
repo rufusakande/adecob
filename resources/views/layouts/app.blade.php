@@ -273,10 +273,10 @@
             <div class="row align-items-center">
                 <!-- Logo + Texte -->
                 <div class="col-12 col-md-6 d-flex align-items-center mb-2 mb-md-0">
-                    <img src="{{ asset('logo.jpg') }}" alt="Logo ADECOB" class="me-3" style="height: 50px; border-radius: 8px;">
+                    <img src="{{ asset('logo.jpg') }}" alt="Logo {{ config('app.name', 'Arumani') }}" class="me-3" style="height: 50px; border-radius: 8px;">
                     <div class="logo-text">
-                        ASSOCIATION POUR LE DÉVELOPPEMENT<br>
-                        DES COMMUNES DU BORGOU
+                        {{ config('app.name', 'Arumani') }}<br>
+                        GESTION DES INFRASTRUCTURES
                     </div>
                 </div>
 

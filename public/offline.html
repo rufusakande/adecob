@@ -7,16 +7,16 @@
     <meta name="csrf-token" content="">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/jpeg" href="https://adecob-infrastructure-plateforme.org/logo.jpg">
+    <link rel="icon" type="image/jpeg" href="http://localhost/logo.jpg">
 
     <!-- PWA Meta Tags & Manifest -->
-    <link rel="manifest" href="https://adecob-infrastructure-plateforme.org/manifest.json">
+    <link rel="manifest" href="http://localhost/manifest.json">
     <meta name="theme-color" content="#28a745">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ADECOB">
-    <link rel="apple-touch-icon" href="https://adecob-infrastructure-plateforme.org/logo.jpg">
+    <meta name="apple-mobile-web-app-title" content="ARUMANI">
+    <link rel="apple-touch-icon" href="http://localhost/logo.jpg">
 
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -28,10 +28,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <!-- Auth Enhancements CSS -->
-    <link rel="stylesheet" href="https://adecob-infrastructure-plateforme.org/css/auth-enhancements.css">
+    <link rel="stylesheet" href="http://localhost/css/auth-enhancements.css">
+
+    <!-- Mobile Premium CSS -->
+    <link rel="stylesheet" href="http://localhost/css/mobile-premium.css">
+    <link rel="stylesheet" href="http://localhost/css/pwa-install.css">
 
     <!-- Google Fonts - Poppins (optionnel pour plus d'élégance) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 
     <style>
     .infra-stepper{ display:flex; justify-content:space-between; align-items:center; margin: 0 0 1.5rem;
@@ -51,6 +56,23 @@
     .form-hint{ font-size:.78rem; color:#64748b; margin-top:.2rem;}
     .step { padding: 20px; border-radius: 8px; margin-bottom: 20px; background-color: #f8f9fa; }
     .form-check-inline { margin-right: 15px; margin-bottom: 8px; }
+
+    /* ---- Adaptation mobile du stepper et des sections ---- */
+    @media (max-width: 767.98px) {
+        .infra-stepper { padding:.75rem .5rem; border-radius:12px; gap:.2rem; }
+        .infra-stepper .st-item { flex-direction:column; text-align:center; gap:.3rem; font-size:.7rem; min-width:0; }
+        .infra-stepper .st-item span { line-height:1.15; overflow-wrap:anywhere; }
+        .infra-stepper .st-item .st-num { width:30px; height:30px; font-size:.85rem; }
+        .infra-stepper .st-sep { width:14px; margin:0; align-self:flex-start; margin-top:15px; }
+        .step { padding: 14px 12px; }
+        .form-check-inline { margin-right: 10px; }
+    }
+
+    @media (max-width: 575.98px) {
+        .infra-stepper .st-item span { font-size:.66rem; }
+        .infra-stepper .st-sep { width:8px; }
+        .form-check-inline { display:block; margin-right:0; }
+    }
     .form-label { font-weight: 600; color: #495057; }
     .btn { border-radius: 6px; transition: all 0.2s ease; }
     .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
@@ -355,10 +377,10 @@
             <div class="row align-items-center">
                 <!-- Logo + Texte -->
                 <div class="col-12 col-md-6 d-flex align-items-center mb-2 mb-md-0">
-                    <img src="https://adecob-infrastructure-plateforme.org/logo.jpg" alt="Logo ADECOB" class="me-3" style="height: 50px; border-radius: 8px;">
+                    <img src="http://localhost/logo.jpg" alt="Logo ARUMANI" class="me-3" style="height: 50px; border-radius: 8px;">
                     <div class="logo-text">
-                        ASSOCIATION POUR LE DÉVELOPPEMENT<br>
-                        DES COMMUNES DU BORGOU
+                        ARUMANI<br>
+                        GESTION DES INFRASTRUCTURES
                     </div>
                 </div>
 
@@ -374,7 +396,7 @@
                             <div>Mail : <strong>secretariatadecob@yahoo.fr</strong></div>
                         </div>
                     </div>
-                    <a href="https://adecob-infrastructure-plateforme.org/contact" class="btn btn-contact">
+                    <a href="http://localhost/contact" class="btn btn-contact">
                         CONTACTEZ-NOUS
                     </a>
                 </div>
@@ -385,7 +407,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg fixed-navbar">
         <div class="container">
-            <a class="navbar-brand me-3" href="https://adecob-infrastructure-plateforme.org">ADECOB Infrastructure Plannification</a>
+            <a class="navbar-brand me-3" href="http://localhost">ARUMANI</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -395,10 +417,10 @@
                 <ul class="navbar-nav ms-auto">
                                             <!-- Guest Links -->
                         <li class="nav-item">
-                            <a class="nav-link" href="https://adecob-infrastructure-plateforme.org/login">Se connecter</a>
+                            <a class="nav-link" href="http://localhost/login">Se connecter</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="https://adecob-infrastructure-plateforme.org/register">
+                            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="http://localhost/register">
                                 S'inscrire
                             </a>
                         </li>
@@ -410,13 +432,13 @@
     <main class="container-fluid px-3 mt-3">
         <div class="container">
     <div class="text-center mb-4">
-        <img src="https://adecob-infrastructure-plateforme.org/logo.jpg" alt="Logo ADECOB" class="img-fluid" style="max-height: 100px;">
+        <img src="http://localhost/logo.jpg" alt="Logo ARUMANI" class="img-fluid" style="max-height: 100px;">
     </div>
     <div class="alert alert-danger text-center shadow-sm" style="border-radius: 12px; border: 2px solid #dc3545;">
         <h4 class="fw-bold mb-1"><i class="bi bi-wifi-off me-2"></i> MODE STRICTEMENT HORS-LIGNE</h4>
-        <p class="mb-0">Vous �tes actuellement d�connect� du r�seau. Vous pouvez saisir les informations de l'infrastructure ici. Elles seront sauvegard�es sur votre appareil.</p>
+        <p class="mb-0">Vous êtes actuellement déconnecté du réseau. Vous pouvez saisir les informations de l'infrastructure ici. Elles seront sauvegardées sur votre appareil.</p>
     </div>
-    <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET �CONOMIQUES/ADECOB</h2>
+    <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/ARUMANI</h2>
     
     <form action="#" method="POST" enctype="multipart/form-data" class="bg-white p-4 rounded shadow-sm" data-loader id="infraForm" novalidate>
     <input type="hidden" name="_token" value="" autocomplete="off">    
@@ -446,7 +468,7 @@
                     <i class="fas fa-calendar-alt text-success me-1"></i>
                     Date
                 </label>
-                <input type="date" name="date" id="date" class="form-control" value="2026-07-22">
+                <input type="date" name="date" id="date" class="form-control" value="2026-08-10">
             </div>
             <div class="col-12 col-md-4">
                 <label for="nom_enqueteur" class="form-label">
@@ -506,10 +528,10 @@
                     </div>
                                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="commune" id="commune_4"
-                               value="Bembéréké" onclick="updateArrondissements()"
+                               value="Bembèrèkè" onclick="updateArrondissements()"
                                
                                >
-                        <label class="form-check-label" for="commune_4">Bembéréké</label>
+                        <label class="form-check-label" for="commune_4">Bembèrèkè</label>
                     </div>
                                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="commune" id="commune_5"
@@ -527,10 +549,10 @@
                     </div>
                                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="commune" id="commune_7"
-                               value="Péréré" onclick="updateArrondissements()"
+                               value="Pèrèrè" onclick="updateArrondissements()"
                                
                                >
-                        <label class="form-check-label" for="commune_7">Péréré</label>
+                        <label class="form-check-label" for="commune_7">Pèrèrè</label>
                     </div>
                                             </div>
         </div>
@@ -2135,20 +2157,23 @@
     /* Masquer la carte en mode hors ligne pur */
     #map-container { display: none !important; }
 </style>
+
     </main>
 
+    
     <!-- Footer -->
     <footer class="text-center">
+
         <div class="footer-text">
-            &copy; 2026 <strong>ADECOB Infrastructure Plannification</strong>. Tous droits réservés.<br class="d-md-none">
+            &copy; 2026 <strong>ARUMANI</strong>. Tous droits réservés.<br class="d-md-none">
             <div class="mt-2">
-                <a href="https://adecob-infrastructure-plateforme.org/pssi" class="text-white-50 mx-2">PSSI</a>
+                <a href="http://localhost/pssi" class="text-white-50 mx-2">PSSI</a>
                 <span class="text-white-50">·</span>
-                <a href="https://adecob-infrastructure-plateforme.org/politique-confidentialite" class="text-white-50 mx-2">Politique de confidentialité</a>
+                <a href="http://localhost/politique-confidentialite" class="text-white-50 mx-2">Politique de confidentialité</a>
                 <span class="text-white-50">·</span>
-                <a href="https://adecob-infrastructure-plateforme.org/cgu" class="text-white-50 mx-2">CGU</a>
+                <a href="http://localhost/cgu" class="text-white-50 mx-2">CGU</a>
                 <span class="text-white-50">·</span>
-                <a href="https://adecob-infrastructure-plateforme.org/registre-traitements" class="text-white-50 mx-2">Registre des traitements</a>
+                <a href="http://localhost/registre-traitements" class="text-white-50 mx-2">Registre des traitements</a>
             </div>
             <p class="mb-0 opacity-0">Développé par Rufus Akande, développeur web freelance <a href="https://rufusakande.github.io/rufus-akande">Rufus Akande</a></p>
         </div>
@@ -2157,13 +2182,25 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="https://adecob-infrastructure-plateforme.org/js/auth-enhancements.js"></script>
+    <script src="http://localhost/js/auth-enhancements.js"></script>
+    <script src="http://localhost/js/mobile-ui.js"></script>
+    <script src="http://localhost/js/pwa-register.js"></script>
+    <script src="http://localhost/js/pwa-install.js"></script>
+
     
     <!-- Offline Sync Scripts -->
+    <script src="http://localhost/vendor/localforage.min.js"></script>
+    <script src="http://localhost/js/offline-sync.js"></script>
+    
+        <!-- Offline Sync Scripts -->
     <script src="/vendor/localforage.min.js"></script>
-    <script src="https://adecob-infrastructure-plateforme.org/js/offline-sync.js"></script>
+    <script src="/js/offline-storage.js"></script>
+    <script src="/js/offline-sync.js"></script>
+
     
-    
-    
-    <script src="/vendor/localforage.min.js"></script><script src="/js/offline-storage.js"></script></body>
+        <!-- Offline Sync Scripts -->
+    <script src="/vendor/localforage.min.js"></script>
+    <script src="/js/offline-storage.js"></script>
+    <script src="/js/offline-sync.js"></script>
+</body>
 </html>

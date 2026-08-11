@@ -21,7 +21,7 @@
         </a>
         <span class="vr d-none d-md-inline"></span>
         <button type="button" class="btn btn-primary btn-sm" id="export-selected-btn"><i class="fas fa-file-excel me-1"></i> Excel (sélection)</button>
-        <a href="{{ request()->fullUrlWithQuery(['format' => 'excel', 'export_scope' => 'filtered']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-excel me-1"></i> Excel (tous filtrés)</a>
+        <a href="{{ route('infrastructures.export', array_merge(request()->query(), ['format' => 'excel', 'export_scope' => 'filtered'])) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-excel me-1"></i> Excel (tous filtrés)</a>
         <span class="ms-auto small text-muted">Le Plan Triennal respecte le modèle MDGL — République du Bénin.</span>
     </div>
 
@@ -89,6 +89,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
@@ -148,16 +154,24 @@
                                 <td>{{ $next ? $next->completion_date->format('d/m/Y') : '—' }}</td>
                                 <td>
                                     <div class="d-flex flex-wrap gap-2">
-                                        <a href="{{ route('infrastructures.show', $infra) }}" class="btn btn-sm btn-info text-white" title="Voir les détails">
+                                        <a href="{{ route('infrastructures.show', $infra) }}" class="btn btn-sm btn-info text-white action-loader-btn" title="Voir les détails">
                                             <i class="fas fa-eye me-1"></i> Voir
                                         </a>
-                                        <a href="{{ route('infrastructures.plan', $infra) }}" class="btn btn-sm btn-success" title="Modifier la planification">
+                                        <a href="{{ route('infrastructures.plan', $infra) }}" class="btn btn-sm btn-success action-loader-btn" title="Modifier la planification">
                                             <i class="fas fa-calendar-plus me-1"></i> Modifier
                                         </a>
-                                        <form method="POST" action="{{ route('infrastructures.mark-rehabilitated', $infra) }}" onsubmit="return confirm('Marquer comme réhabilitée ?');" style="display:inline">
-                                            @csrf
-                                            <button class="btn btn-sm btn-outline-warning" type="submit" title="Marquer réhabilitée"><i class="fas fa-check-double me-1"></i> Réhabilitée</button>
-                                        </form>
+                                        @php
+                                            $isRehabilitated = !empty($infra->rehabilitation) && strtolower($infra->rehabilitation) === 'réhabilitée';
+                                        @endphp
+                                        @if(!$isRehabilitated)
+                                        <button class="btn btn-sm btn-warning text-dark fw-semibold rehab-btn" type="button" title="Marquer réhabilitée" data-url="{{ route('infrastructures.mark-rehabilitated', $infra) }}">
+                                            <i class="fas fa-check-double me-1"></i> Réhabilitée
+                                        </button>
+                                        @else
+                                        <span class="btn btn-sm btn-success disabled" title="Déjà réhabilitée">
+                                            <i class="fas fa-check-double me-1"></i> Réhabilitée
+                                        </span>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -171,6 +185,7 @@
                         @endforelse
                     </tbody>
                 </table>
+                </form>
             </div>
             <div class="card-footer bg-white">
                 {{ $infrastructures->links('pagination::bootstrap-5') }}
@@ -178,6 +193,11 @@
         </div>
     </div>
 </div>
+
+{{-- Formulaire maître caché pour la réhabilitation (hors du formulaire d'export) --}}
+<form id="master-rehab-form" method="POST" style="display:none;">
+    @csrf
+</form>
 
 @push('scripts')
 <script>
@@ -230,6 +250,67 @@
         }
 
         updateExportState();
+        // Confirmation et feedback visuel pour les boutons "Réhabilitée"
+        const masterRehabForm = document.getElementById('master-rehab-form');
+        document.querySelectorAll('.rehab-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const confirmed = confirm('⚠️ Confirmer la réhabilitation ?\n\nCette action marquera définitivement cette infrastructure comme réhabilitée.');
+                if (!confirmed) return;
+                
+                // Modifier le bouton visuellement
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> En cours...';
+                setTimeout(() => { btn.disabled = true; }, 10);
+                
+                // Mettre à jour l'action du formulaire maître et le soumettre
+                if(masterRehabForm) {
+                    masterRehabForm.action = btn.getAttribute('data-url');
+                    masterRehabForm.submit();
+                }
+            });
+        });
+
+        // --- Amélioration UX: Loaders sur les boutons d'action ---
+        document.querySelectorAll('.action-loader-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const originalHtml = this.innerHTML;
+                const originalWidth = this.offsetWidth;
+                this.style.width = originalWidth + 'px'; // Fixer la largeur
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                this.classList.add('disabled');
+            });
+        });
+
+        // --- Amélioration UX: Loaders sur les boutons Excel ---
+        const excelBtnAll = document.querySelector('a[href*="format=excel"]');
+        if(excelBtnAll) {
+            excelBtnAll.addEventListener('click', function() {
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Téléchargement...';
+                this.classList.add('disabled');
+                // Retirer le loader après 4 secondes (le temps moyen de téléchargement) car la page ne recharge pas
+                setTimeout(() => {
+                    this.innerHTML = originalHtml;
+                    this.classList.remove('disabled');
+                }, 4000);
+            });
+        }
+
+        // Le bouton Excel sélection est déjà géré par exportBtn.addEventListener, on y ajoute le loader
+        if(exportBtn) {
+            exportBtn.addEventListener('click', function() {
+                if (rowCheckboxes.some(cb => cb.checked)) {
+                    const originalHtml = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Téléchargement...';
+                    this.disabled = true;
+                    setTimeout(() => {
+                        this.innerHTML = originalHtml;
+                        this.disabled = false;
+                    }, 4000);
+                }
+            });
+        }
+
     });
 </script>
 @endpush

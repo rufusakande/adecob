@@ -404,7 +404,7 @@
 
     <!-- Boutons d'export -->
     @if(!Auth::user()->isPublicUser())
-    <form id="exportForm" method="GET" action="{{ route('infrastructures.export') }}" class="card shadow-sm mb-4 border-0">
+    <form id="exportForm" data-no-loader="true" method="GET" action="{{ route('infrastructures.export') }}" class="card shadow-sm mb-4 border-0">
         <div class="card-body p-4">
             <h5 class="card-title mb-4 text-dark">
                 <i class="fas fa-download me-2 text-success"></i> 
@@ -455,6 +455,22 @@
             </div>
         </div>
     </form>
+    
+    <script>
+        document.getElementById('exportForm')?.addEventListener('submit', function(e) {
+            const btn = e.submitter;
+            if (btn) {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Préparation...';
+                
+                // On remet le bouton à son état normal après quelques secondes
+                // car le téléchargement du fichier ne recharge pas la page
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                }, 4000);
+            }
+        });
+    </script>
     @endif
 
     <!-- Message pour utilisateurs publics -->
@@ -699,14 +715,28 @@
         color: #0f5132;
     }
     
-    /* Style pour masquer les barres de défilement */
+    /* Style personnalisé pour les barres de défilement (Premium) */
     .card-body div[style*="overflow-y: auto"] {
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgba(25, 135, 84, 0.5) rgba(0, 0, 0, 0.02);
     }
     
     .card-body div[style*="overflow-y: auto"]::-webkit-scrollbar {
-        display: none; /* Chrome, Safari and Opera */
+        width: 6px;
+    }
+    
+    .card-body div[style*="overflow-y: auto"]::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 8px;
+    }
+    
+    .card-body div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb {
+        background: rgba(25, 135, 84, 0.5); /* Succès transparent */
+        border-radius: 8px;
+    }
+    
+    .card-body div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb:hover {
+        background: rgba(25, 135, 84, 0.8);
     }
     
     .img-thumbnail {
