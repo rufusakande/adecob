@@ -423,6 +423,10 @@
         const lat = parseFloat("{{ $infrastructure->latitude }}");
         const lng = parseFloat("{{ $infrastructure->longitude }}");
         if (!isFinite(lat) || !isFinite(lng)) return;
+        const container = document.getElementById('map-mini');
+        if (container && container._leaflet_id) {
+            container._leaflet_id = null;
+        }
         const map = L.map('map-mini').setView([lat, lng], 14);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,

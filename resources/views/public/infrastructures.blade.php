@@ -123,6 +123,10 @@
 <script>
 (function () {
     const points = @json($mapPoints);
+    const container = document.getElementById('map');
+    if (container && container._leaflet_id) {
+        container._leaflet_id = null;
+    }
     const map = L.map('map').setView([10.3, 2.6], 7); // Borgou ~
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

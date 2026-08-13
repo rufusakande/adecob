@@ -218,6 +218,10 @@
     const lat = parseFloat("{{ $infrastructure->latitude }}");
     const lng = parseFloat("{{ $infrastructure->longitude }}");
     if(!isFinite(lat) || !isFinite(lng)) return;
+    const container = document.getElementById('plan-map');
+    if (container && container._leaflet_id) {
+        container._leaflet_id = null;
+    }
     const map = L.map('plan-map').setView([lat,lng], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(map);
     L.marker([lat,lng]).addTo(map).bindPopup(@json($infrastructure->nom_infrastructure ?: 'Infrastructure')).openPopup();

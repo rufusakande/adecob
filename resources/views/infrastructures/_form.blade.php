@@ -1110,7 +1110,9 @@
 
         function initMap(){
             ensureLeaflet(() => {
-                if (map) return;
+                if (mapEl && mapEl._leaflet_id) {
+                    mapEl._leaflet_id = null;
+                }
                 const startLat = parseFloat(latEl.value);
                 const startLng = parseFloat(lngEl.value);
                 const hasStart = !isNaN(startLat) && !isNaN(startLng);

@@ -65,7 +65,7 @@
             right: 0;
             background: white;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1030;
+            z-index: 1050;
             border-bottom: 1px solid #e0e0e0;
         }
 
@@ -83,7 +83,7 @@
             left: 0;
             right: 0;
             background-color: #0b6623;
-            z-index: 1020;
+            z-index: 1045;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             padding: 0.35rem 0;
         }
@@ -244,6 +244,30 @@
             .fixed-navbar .nav-link {
                 width: 100%;
             }
+
+            .fixed-navbar .dropdown-menu {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                margin-top: 0.5rem;
+                box-shadow: none;
+            }
+
+            .fixed-navbar .dropdown-item {
+                color: #fff;
+            }
+
+            .fixed-navbar .dropdown-item:hover, .fixed-navbar .dropdown-item:focus {
+                background: rgba(255, 255, 255, 0.2);
+                color: #FFD100;
+            }
+
+            .fixed-navbar .dropdown-divider {
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+
+            .fixed-navbar .dropdown-header {
+                color: rgba(255, 255, 255, 0.8);
+            }
         }
 
         @media (max-width: 768px) {
@@ -275,7 +299,7 @@
                 <div class="col-12 col-md-6 d-flex align-items-center mb-2 mb-md-0">
                     <img src="{{ asset('logo.jpg') }}" alt="Logo {{ config('app.name', 'Arumani') }}" class="me-3" style="height: 50px; border-radius: 8px;">
                     <div class="logo-text">
-                        {{ config('app.name', 'Arumani') }}<br>
+                        {{ config('app.name', 'Armani') }}<br>
                         GESTION DES INFRASTRUCTURES
                     </div>
                 </div>
@@ -325,7 +349,7 @@
                         {{-- Navigation contextuelle selon le rôle --}}
                         @include('layouts.partials.nav-authenticated')
 
-                        <li class="nav-item dropdown">
+                        <li class="nav-item dropdown" style="z-index: 1050;">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
                                 {{ Auth::user()->prenom ?? '' }} {{ Auth::user()->name }}
                                 @php
@@ -447,7 +471,7 @@
                     console.warn('Keep-alive ping failed.');
                 }
             })
-            .catch(error => console.error('Keep-alive error:', error));
+            .catch(() => { /* Silent fail on network error or page unload */ });
         }, 120000); // Ping every 2 minutes
     </script>
     @endauth
