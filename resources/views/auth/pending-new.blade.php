@@ -3,7 +3,7 @@
 @section('title', 'Inscription en Attente de Validation')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/auth-modern.css') }}">
+<link rel="stylesheet" href="{{ asset('css/auth-modern.css?v=2') }}">
 
 <style>
     .pending-container {

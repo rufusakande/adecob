@@ -1,5 +1,5 @@
 /* =====================================================================
-   ADECOB — Mobile Premium
+   Plateforme — Mobile Premium
    Couche de design responsive (mobile-first) appliquée globalement.
    Chargée après Bootstrap : surcharge maîtrisée, aucun !important inutile.
    ===================================================================== */
@@ -25,7 +25,7 @@
     --adc-shadow: 0 8px 24px -12px rgba(16, 35, 26, .28);
     --adc-shadow-lg: 0 20px 45px -25px rgba(16, 35, 26, .45);
 
-    --adc-header-h: 170px;
+    --adc-header-h: 108px; /* legacy — padding-top géré par le layout (app.blade.php) */
     --adc-safe-b: env(safe-area-inset-bottom, 0px);
     --adc-tabbar-h: 0px;
 }
@@ -39,7 +39,7 @@ html {
 body {
     background-color: var(--adc-bg);
     color: var(--adc-body);
-    padding-top: var(--adc-header-h) !important;
+    /* padding-top géré par le layout (app.blade.php) : 108px desktop / 64px mobile */
     padding-bottom: calc(var(--adc-tabbar-h) + var(--adc-safe-b));
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Commune;
 use App\Notifications\RoleChanged;
+use App\Services\UserAccountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -189,6 +190,33 @@ class UserManagementController extends Controller
             $message = "✅ Le rôle Super Admin a été retiré à {$user->prenom} {$user->name}. Il est maintenant agent collecteur. Veuillez vérifier ou assigner sa commune ci-dessous.";
             return redirect()->route('admin.users.edit', $user->id)->with('success', $message);
         }
+    }
+
+    /**
+     * Supprime définitivement un compte utilisateur.
+     *
+     * Règles :
+     * - Impossible de supprimer son propre compte.
+     * - Impossible de supprimer un Super Administrateur (le rétrograder d'abord en agent).
+     * - Un email est envoyé à l'utilisateur supprimé et l'action est journalisée dans l'audit.
+     */
+    public function destroy(User $user)
+    {
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
+        }
+
+        if ($user->isSuperAdmin()) {
+            return back()->with('error',
+                "Impossible de supprimer un Super Administrateur. Rétrogradez d'abord "
+                . "{$user->prenom} {$user->name} en agent collecteur."
+            );
+        }
+
+        $result = UserAccountService::delete($user, auth()->user());
+
+        return redirect()->route('admin.users.index')
+            ->with('success', "Le compte de {$result['identity']} a été supprimé définitivement.");
     }
 
     /**

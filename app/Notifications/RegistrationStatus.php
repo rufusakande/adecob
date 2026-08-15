@@ -26,19 +26,19 @@ class RegistrationStatus extends Notification
     public function toMail($notifiable)
     {
         $message = (new MailMessage)
-            ->subject('Statut de votre inscription - ADECOB');
+            ->subject('Statut de votre inscription - ' . config('app.name'));
 
         switch ($this->status) {
             case 'pending':
                 return $message
                     ->greeting('Bonjour ' . $notifiable->name)
-                    ->line('Votre inscription sur la plateforme ADECOB a été reçue avec succès.')
+                    ->line('Votre inscription sur la plateforme ' . config('app.name') . ' a été reçue avec succès.')
                     ->line('Un administrateur va examiner votre demande dans les plus brefs délais.')
                     ->line('Vous recevrez une notification dès que votre compte sera validé.');
             case 'approved':
                 return $message
                     ->greeting('Félicitations ' . $notifiable->name . ' !')
-                    ->line('Votre inscription sur la plateforme ADECOB a été validée.')
+                    ->line('Votre inscription sur la plateforme ' . config('app.name') . ' a été validée.')
                     ->action('Connectez-vous maintenant', url('/login'))
                     ->line('Vous pouvez désormais accéder à toutes les fonctionnalités de la plateforme.');
             case 'rejected':

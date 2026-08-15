@@ -8,7 +8,7 @@
 @section('doc_content')
 
 <div class="alert alert-light border">
-    <strong>Résumé.</strong> L'<strong>ADECOB</strong> s'engage à protéger la vie privée de
+    <strong>Résumé.</strong> L'<strong>{{ config('app.name') }}</strong> s'engage à protéger la vie privée de
     toutes les personnes dont elle traite les données dans le cadre de la Plateforme de gestion
     des infrastructures communales du Borgou. La présente politique explique quelles données
     sont collectées, pourquoi, comment elles sont protégées et quels droits vous pouvez exercer,
@@ -23,9 +23,9 @@
 
 <p>
     La présente Politique de confidentialité (ci-après « la Politique ») s'applique à la
-    <strong>Plateforme ADECOB de Gestion des Infrastructures Communales</strong>
+    <strong>Plateforme {{ config('app.name') }} de Gestion des Infrastructures Communales</strong>
     (ci-après « la Plateforme »), accessible à l'adresse
-    <strong>https://adecob-infrastructure-plateforme.org</strong>.
+    <strong>{{ url('/') }}</strong>.
 </p>
 <p>
     Elle est établie conformément au <strong>Livre V (articles 334 à 412) de la loi n°2017-20
@@ -45,7 +45,7 @@
 <h2>2. Responsable du traitement</h2>
 
 <table>
-    <tr><th>Dénomination</th><td>Association pour le Développement des Communes du Borgou (ADECOB)</td></tr>
+    <tr><th>Dénomination</th><td>{{ config('app.name') }}</td></tr>
     <tr><th>Siège social</th><td>Parakou, Département du Borgou, République du Bénin</td></tr>
     <tr><th>Mission</th><td>Planification, suivi et gestion des infrastructures communautaires des 8 communes du Borgou (eau potable, assainissement, éducation, santé, marchés, culture)</td></tr>
     <tr><th>Financement</th><td>DDC Suisse (Direction du Développement et de la Coopération) — Coopération Suisse au Développement, Contrat N°81074308</td></tr>
@@ -209,7 +209,7 @@
         <td>Accès scopé à sa commune uniquement ; liste des agents masque les mots de passe et codes MFA</td>
     </tr>
     <tr>
-        <td><strong>Super-administrateur ADECOB</strong></td>
+        <td><strong>Super-administrateur {{ config('app.name') }}</strong></td>
         <td>Toutes les données de toutes les communes ; journaux d'audit complets ; gestion de tous les utilisateurs</td>
         <td>Accès complet avec MFA obligatoire ; toute action journalisée</td>
     </tr>
@@ -339,7 +339,7 @@ des garanties appropriées sont exigées pour tout transfert transfrontalier :</
 ═══════════════════════════════════════════════ --}}
 <h2>8. Sécurité des données</h2>
 
-<p>L'ADECOB met en œuvre des mesures techniques et organisationnelles appropriées
+<p>L'{{ config('app.name') }} met en œuvre des mesures techniques et organisationnelles appropriées
 pour protéger vos données contre tout accès non autorisé, toute altération, divulgation
 ou destruction. Le détail complet est disponible dans la
 <a href="{{ route('legal.pssi') }}">Politique de Sécurité du Système d'Information (PSSI)</a>.</p>
@@ -375,7 +375,7 @@ vous disposez des droits suivants sur vos données personnelles :</p>
     </tr>
     <tr>
         <td><strong>Droit d'accès</strong> (art. 395)</td>
-        <td>Obtenir une copie de l'ensemble de vos données personnelles détenues par l'ADECOB, ainsi que des informations sur les traitements les concernant</td>
+        <td>Obtenir une copie de l'ensemble de vos données personnelles détenues par l'{{ config('app.name') }}, ainsi que des informations sur les traitements les concernant</td>
         <td>Vérification préalable de votre identité requise</td>
     </tr>
     <tr>
@@ -391,7 +391,7 @@ vous disposez des droits suivants sur vos données personnelles :</p>
     <tr>
         <td><strong>Droit d'opposition</strong> (art. 398)</td>
         <td>Vous opposer à un traitement fondé sur l'intérêt légitime, pour des motifs tenant à votre situation particulière</td>
-        <td>L'ADECOB peut refuser si elle démontre des motifs légitimes impérieux prévalant sur vos intérêts</td>
+        <td>L'{{ config('app.name') }} peut refuser si elle démontre des motifs légitimes impérieux prévalant sur vos intérêts</td>
     </tr>
     <tr>
         <td><strong>Droit à la limitation</strong> (art. 399)</td>
@@ -426,7 +426,7 @@ vous disposez des droits suivants sur vos données personnelles :</p>
     </li>
     <li>Une vérification de votre identité pourra être requise avant la communication de données sensibles.</li>
     <li>Vous recevrez une réponse dans un délai d'<strong>un (1) mois</strong> à compter de la réception de votre demande complète. Ce délai peut être prolongé de deux mois supplémentaires pour les demandes complexes, avec information préalable.</li>
-    <li>L'exercice de vos droits est <strong>gratuit</strong>. En cas de demandes manifestement infondées ou excessives (notamment répétitives), l'ADECOB se réserve le droit de facturer un coût raisonnable ou de refuser de donner suite.</li>
+    <li>L'exercice de vos droits est <strong>gratuit</strong>. En cas de demandes manifestement infondées ou excessives (notamment répétitives), l'{{ config('app.name') }} se réserve le droit de facturer un coût raisonnable ou de refuser de donner suite.</li>
 </ol>
 
 <p>Si vous estimez que la réponse apportée est insatisfaisante, vous pouvez introduire une
@@ -486,7 +486,7 @@ et <code>Secure</code> en production (transmission HTTPS uniquement).</p>
 Elle <strong>n'est pas destinée aux personnes âgées de moins de 18 ans</strong> et
 ne collecte pas sciemment de données concernant des mineurs.
 Toute inscription par un mineur sera invalidée dès qu'elle sera portée à la connaissance
-de l'ADECOB.</p>
+de l'{{ config('app.name') }}.</p>
 
 {{-- ═══════════════════════════════════════════════
      13. VIOLATIONS DE DONNÉES PERSONNELLES
@@ -494,7 +494,7 @@ de l'ADECOB.</p>
 <h2>13. Violations de données personnelles</h2>
 
 <p>En cas de violation de données à caractère personnel (accès non autorisé, fuite, destruction,
-altération accidentelle ou illicite), l'ADECOB applique la procédure suivante :</p>
+altération accidentelle ou illicite), l'{{ config('app.name') }} applique la procédure suivante :</p>
 
 <ol>
     <li><strong>Détection et qualification</strong> — l'incident est identifié et évalué dans les plus brefs délais (objectif : sous 24 heures) ;</li>
@@ -513,7 +513,7 @@ altération accidentelle ou illicite), l'ADECOB applique la procédure suivante 
 ═══════════════════════════════════════════════ --}}
 <h2>14. Modifications de la présente politique</h2>
 
-<p>L'ADECOB peut mettre à jour la présente Politique pour refléter les évolutions légales,
+<p>L'{{ config('app.name') }} peut mettre à jour la présente Politique pour refléter les évolutions légales,
 techniques ou organisationnelles. En cas de modification substantielle :</p>
 <ul>
     <li>la date de mise à jour et le numéro de version figurant en tête du document sont actualisés ;</li>

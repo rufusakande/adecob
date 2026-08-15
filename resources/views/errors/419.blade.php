@@ -48,7 +48,7 @@
             <div class="mt-4 text-center">
                 <small class="text-muted">
                     <strong>Besoin d'aide ?</strong><br>
-                    Contactez l'équipe d'ADECOB à 
+                    Contactez l'équipe d'{{ config('app.name') }} à 
                     <a href="mailto:secretariatadecob@yahoo.fr">secretariatadecob@yahoo.fr</a>
                     ou appelez <a href="tel:+22901956473">0195647373</a>
                 </small>

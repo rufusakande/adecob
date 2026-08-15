@@ -23,7 +23,7 @@ class HomeController extends Controller
                 return redirect()->route('commune-admin.dashboard');
             }
             if ($user->isAgent()) {
-                return redirect()->route('mairie-agent.dashboard');
+                return redirect()->route('infrastructures.index');
             }
         }
 

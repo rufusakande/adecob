@@ -154,7 +154,12 @@
                         <i class="bi bi-exclamation-triangle me-2"></i>Zone Dangereuse
                     </h6>
                     <p class="text-muted small mb-3">Supprimer cette commune supprimera toutes les données associées de façon permanente.</p>
-                    <form action="{{ route('admin.communes.destroy', $commune) }}" method="POST" class="d-inline" onsubmit="return confirm('Cette action est irréversible. Êtes-vous absolument sûr de vouloir supprimer la commune ' + '{{ $commune->name }}' + ' ?')">
+                    <form action="{{ route('admin.communes.destroy', $commune) }}" method="POST" class="d-inline js-confirm-submit"
+                          data-confirm-title="Supprimer la commune"
+                          data-confirm-message="Cette action est irréversible. Êtes-vous absolument sûr de vouloir supprimer la commune {{ $commune->name }} ? Toutes les données associées seront supprimées."
+                          data-confirm-icon="danger"
+                          data-confirm-ok="Supprimer"
+                          data-loader-text="Suppression de la commune en cours...">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger rounded-2" style="background-color: #dc2626;">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\RegistrationStatus;
 use App\Notifications\RegistrationActionNotification;
+use App\Services\UserAccountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -175,5 +176,51 @@ class UserValidationController extends Controller
             Log::error('Erreur rejet: ' . $e->getMessage());
             return back()->with('error', 'Une erreur est survenue lors du rejet.');
         }
+    }
+
+    /**
+     * Supprime définitivement un compte utilisateur (page "Inscriptions").
+     *
+     * Accessible au super admin (tous les comptes, sauf lui-même et les super admins)
+     * et aux admins de commune (uniquement les agents / utilisateurs publics de leur commune).
+     */
+    public function destroy(User $user)
+    {
+        $this->authorizeDelete($user);
+
+        $result = UserAccountService::delete($user, auth()->user());
+
+        return back()->with('success', "Le compte de {$result['identity']} a été supprimé définitivement.");
+    }
+
+    /**
+     * Règles de suppression d'un compte selon le rôle de l'administrateur.
+     */
+    protected function authorizeDelete(User $user): void
+    {
+        $admin = auth()->user();
+
+        if ($admin->id === $user->id) {
+            abort(403, 'Vous ne pouvez pas supprimer votre propre compte.');
+        }
+
+        if ($admin->isSuperAdmin()) {
+            if ($user->isSuperAdmin()) {
+                abort(403, 'Impossible de supprimer un Super Administrateur. Rétrogradez-le d\'abord en agent.');
+            }
+            return;
+        }
+
+        if ($admin->isCommuneAdmin()) {
+            if (! in_array($user->role, ['agent', 'public_user'])) {
+                abort(403, 'Vous ne pouvez supprimer que les agents et utilisateurs publics de votre commune.');
+            }
+            if ((int) $user->commune_id !== (int) $admin->commune_id) {
+                abort(403, 'Vous ne pouvez supprimer que les utilisateurs de votre commune.');
+            }
+            return;
+        }
+
+        abort(403, 'Accès refusé.');
     }
 }

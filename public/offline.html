@@ -7,16 +7,16 @@
     <meta name="csrf-token" content="">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/jpeg" href="http://localhost/logo.jpg">
+    <link rel="icon" type="image/jpeg" href="/logo.jpg">
 
     <!-- PWA Meta Tags & Manifest -->
-    <link rel="manifest" href="http://localhost/manifest.json">
-    <meta name="theme-color" content="#28a745">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0b6623">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ARUMANI">
-    <link rel="apple-touch-icon" href="http://localhost/logo.jpg">
+    <meta name="apple-mobile-web-app-title" content="ARMANI">
+    <link rel="apple-touch-icon" href="/logo.jpg">
 
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -28,11 +28,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <!-- Auth Enhancements CSS -->
-    <link rel="stylesheet" href="http://localhost/css/auth-enhancements.css">
+    <link rel="stylesheet" href="/css/auth-enhancements.css">
 
     <!-- Mobile Premium CSS -->
-    <link rel="stylesheet" href="http://localhost/css/mobile-premium.css">
-    <link rel="stylesheet" href="http://localhost/css/pwa-install.css">
+    <link rel="stylesheet" href="/css/mobile-premium.css">
+    <link rel="stylesheet" href="/css/pwa-install.css">
 
     <!-- Google Fonts - Poppins (optionnel pour plus d'élégance) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -169,7 +169,7 @@
             right: 0;
             background: white;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1030;
+            z-index: 1050;
             border-bottom: 1px solid #e0e0e0;
         }
 
@@ -187,7 +187,7 @@
             left: 0;
             right: 0;
             background-color: #0b6623;
-            z-index: 1020;
+            z-index: 1045;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             padding: 0.35rem 0;
         }
@@ -348,6 +348,30 @@
             .fixed-navbar .nav-link {
                 width: 100%;
             }
+
+            .fixed-navbar .dropdown-menu {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                margin-top: 0.5rem;
+                box-shadow: none;
+            }
+
+            .fixed-navbar .dropdown-item {
+                color: #fff;
+            }
+
+            .fixed-navbar .dropdown-item:hover, .fixed-navbar .dropdown-item:focus {
+                background: rgba(255, 255, 255, 0.2);
+                color: #FFD100;
+            }
+
+            .fixed-navbar .dropdown-divider {
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+
+            .fixed-navbar .dropdown-header {
+                color: rgba(255, 255, 255, 0.8);
+            }
         }
 
         @media (max-width: 768px) {
@@ -377,9 +401,9 @@
             <div class="row align-items-center">
                 <!-- Logo + Texte -->
                 <div class="col-12 col-md-6 d-flex align-items-center mb-2 mb-md-0">
-                    <img src="http://localhost/logo.jpg" alt="Logo ARUMANI" class="me-3" style="height: 50px; border-radius: 8px;">
+                    <img src="/logo.jpg" alt="Logo ARMANI" class="me-3" style="height: 50px; border-radius: 8px;">
                     <div class="logo-text">
-                        ARUMANI<br>
+                        ARMANI<br>
                         GESTION DES INFRASTRUCTURES
                     </div>
                 </div>
@@ -396,7 +420,7 @@
                             <div>Mail : <strong>secretariatadecob@yahoo.fr</strong></div>
                         </div>
                     </div>
-                    <a href="http://localhost/contact" class="btn btn-contact">
+                    <a href="/contact" class="btn btn-contact">
                         CONTACTEZ-NOUS
                     </a>
                 </div>
@@ -407,7 +431,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg fixed-navbar">
         <div class="container">
-            <a class="navbar-brand me-3" href="http://localhost">ARUMANI</a>
+            <a class="navbar-brand me-3" href="/">ARMANI</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -417,10 +441,10 @@
                 <ul class="navbar-nav ms-auto">
                                             <!-- Guest Links -->
                         <li class="nav-item">
-                            <a class="nav-link" href="http://localhost/login">Se connecter</a>
+                            <a class="nav-link" href="/login">Se connecter</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="http://localhost/register">
+                            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="/register">
                                 S'inscrire
                             </a>
                         </li>
@@ -432,13 +456,13 @@
     <main class="container-fluid px-3 mt-3">
         <div class="container">
     <div class="text-center mb-4">
-        <img src="http://localhost/logo.jpg" alt="Logo ARUMANI" class="img-fluid" style="max-height: 100px;">
+        <img src="/logo.jpg" alt="Logo ARMANI" class="img-fluid" style="max-height: 100px;">
     </div>
     <div class="alert alert-danger text-center shadow-sm" style="border-radius: 12px; border: 2px solid #dc3545;">
         <h4 class="fw-bold mb-1"><i class="bi bi-wifi-off me-2"></i> MODE STRICTEMENT HORS-LIGNE</h4>
         <p class="mb-0">Vous êtes actuellement déconnecté du réseau. Vous pouvez saisir les informations de l'infrastructure ici. Elles seront sauvegardées sur votre appareil.</p>
     </div>
-    <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/ARUMANI</h2>
+    <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/ARMANI</h2>
     
     <form action="#" method="POST" enctype="multipart/form-data" class="bg-white p-4 rounded shadow-sm" data-loader id="infraForm" novalidate>
     <input type="hidden" name="_token" value="" autocomplete="off">    
@@ -468,7 +492,7 @@
                     <i class="fas fa-calendar-alt text-success me-1"></i>
                     Date
                 </label>
-                <input type="date" name="date" id="date" class="form-control" value="2026-08-10">
+                <input type="date" name="date" id="date" class="form-control" value="2026-08-14">
             </div>
             <div class="col-12 col-md-4">
                 <label for="nom_enqueteur" class="form-label">
@@ -528,10 +552,10 @@
                     </div>
                                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="commune" id="commune_4"
-                               value="Bembèrèkè" onclick="updateArrondissements()"
+                               value="Bembéréké" onclick="updateArrondissements()"
                                
                                >
-                        <label class="form-check-label" for="commune_4">Bembèrèkè</label>
+                        <label class="form-check-label" for="commune_4">Bembéréké</label>
                     </div>
                                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="commune" id="commune_5"
@@ -549,10 +573,10 @@
                     </div>
                                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="commune" id="commune_7"
-                               value="Pèrèrè" onclick="updateArrondissements()"
+                               value="Péréré" onclick="updateArrondissements()"
                                
                                >
-                        <label class="form-check-label" for="commune_7">Pèrèrè</label>
+                        <label class="form-check-label" for="commune_7">Péréré</label>
                     </div>
                                             </div>
         </div>
@@ -1957,7 +1981,9 @@
 
         function initMap(){
             ensureLeaflet(() => {
-                if (map) return;
+                if (mapEl && mapEl._leaflet_id) {
+                    mapEl._leaflet_id = null;
+                }
                 const startLat = parseFloat(latEl.value);
                 const startLng = parseFloat(lngEl.value);
                 const hasStart = !isNaN(startLat) && !isNaN(startLng);
@@ -2165,15 +2191,15 @@
     <footer class="text-center">
 
         <div class="footer-text">
-            &copy; 2026 <strong>ARUMANI</strong>. Tous droits réservés.<br class="d-md-none">
+            &copy; 2026 <strong>ARMANI</strong>. Tous droits réservés.<br class="d-md-none">
             <div class="mt-2">
-                <a href="http://localhost/pssi" class="text-white-50 mx-2">PSSI</a>
+                <a href="/pssi" class="text-white-50 mx-2">PSSI</a>
                 <span class="text-white-50">·</span>
-                <a href="http://localhost/politique-confidentialite" class="text-white-50 mx-2">Politique de confidentialité</a>
+                <a href="/politique-confidentialite" class="text-white-50 mx-2">Politique de confidentialité</a>
                 <span class="text-white-50">·</span>
-                <a href="http://localhost/cgu" class="text-white-50 mx-2">CGU</a>
+                <a href="/cgu" class="text-white-50 mx-2">CGU</a>
                 <span class="text-white-50">·</span>
-                <a href="http://localhost/registre-traitements" class="text-white-50 mx-2">Registre des traitements</a>
+                <a href="/registre-traitements" class="text-white-50 mx-2">Registre des traitements</a>
             </div>
             <p class="mb-0 opacity-0">Développé par Rufus Akande, développeur web freelance <a href="https://rufusakande.github.io/rufus-akande">Rufus Akande</a></p>
         </div>
@@ -2182,15 +2208,15 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="http://localhost/js/auth-enhancements.js"></script>
-    <script src="http://localhost/js/mobile-ui.js"></script>
-    <script src="http://localhost/js/pwa-register.js"></script>
-    <script src="http://localhost/js/pwa-install.js"></script>
+    <script src="/js/auth-enhancements.js"></script>
+    <script src="/js/mobile-ui.js"></script>
+    <script src="/js/pwa-register.js"></script>
+    <script src="/js/pwa-install.js"></script>
 
     
     <!-- Offline Sync Scripts -->
-    <script src="http://localhost/vendor/localforage.min.js"></script>
-    <script src="http://localhost/js/offline-sync.js"></script>
+    <script src="/vendor/localforage.min.js"></script>
+    <script src="/js/offline-sync.js"></script>
     
         <!-- Offline Sync Scripts -->
     <script src="/vendor/localforage.min.js"></script>
@@ -2202,5 +2228,5 @@
     <script src="/vendor/localforage.min.js"></script>
     <script src="/js/offline-storage.js"></script>
     <script src="/js/offline-sync.js"></script>
-</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script><script src="/js/offline-storage.js"></script></body>
 </html>

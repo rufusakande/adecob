@@ -26,8 +26,8 @@ class ContactController extends Controller
             'message' => 'required|string',
         ]);
 
-        // Send email using Mailtrap SMTP via ContactFormMail Mailable
-\Mail::to('contact@agrihealth-foundation.org')->send(new \App\Mail\ContactFormMail($validated));
+        // Envoi de l'email via ContactFormMail Mailable vers le destinataire configuré (.env)
+        \Mail::to(config('mail.contact_recipient'))->send(new \App\Mail\ContactFormMail($validated));
 
         return redirect()->back()->with('success', 'Merci pour votre message. Nous vous contacterons bientôt.');
     }

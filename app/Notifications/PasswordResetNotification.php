@@ -33,7 +33,7 @@ class PasswordResetNotification extends Notification
         ], false));
 
         return (new MailMessage)
-            ->subject('Réinitialisation de votre mot de passe - ADECOB')
+            ->subject('Réinitialisation de votre mot de passe - ' . config('app.name'))
             ->greeting('Bonjour ' . $notifiable->name . ',')
             ->line('Vous avez demandé la réinitialisation de votre mot de passe.')
             ->line('Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe.')

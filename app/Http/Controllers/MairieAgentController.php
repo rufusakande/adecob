@@ -119,7 +119,7 @@ class MairieAgentController extends Controller
 
         MairieAgentData::create($validated);
 
-        return redirect()->route('mairie-agent.dashboard')->with('success', 'Données enregistrées avec succès.');
+        return redirect()->route('infrastructures.index')->with('success', 'Données enregistrées avec succès.');
     }
 
     public function update(Request $request, $id)
@@ -150,7 +150,7 @@ class MairieAgentController extends Controller
 
         $mairieAgentData->update($validated);
 
-        return redirect()->route('mairie-agent.dashboard')->with('success', 'Données mises à jour avec succès.');
+        return redirect()->route('infrastructures.index')->with('success', 'Données mises à jour avec succès.');
     }
 
     public function dashboard(Request $request)

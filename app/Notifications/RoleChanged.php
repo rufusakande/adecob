@@ -34,9 +34,9 @@ class RoleChanged extends Notification
         $salutation = "Bonjour {$notifiable->prenom} {$notifiable->name},";
 
         $mail = (new MailMessage)
-            ->subject('[ADECOB] Votre rôle a été modifié')
+            ->subject('[' . config('app.name') . '] Votre rôle a été modifié')
             ->greeting($salutation)
-            ->line("Votre rôle sur la plateforme **ADECOB** vient d'être mis à jour.")
+            ->line("Votre rôle sur la plateforme **" . config('app.name') . "** vient d'être mis à jour.")
             ->line("**Nouveau rôle :** {$roleLabel}");
 
         // Message contextuel selon le nouveau rôle
@@ -61,7 +61,7 @@ class RoleChanged extends Notification
         $mail
             ->line('---')
             ->line('⚠️ **Votre session précédente a été fermée** pour sécuriser l\'accès à votre nouveau rôle. Veuillez vous reconnecter.')
-            ->action('Se connecter à ADECOB', $loginUrl)
+            ->action('Se connecter à ' . config('app.name'), $loginUrl)
             ->line('Si vous n\'êtes pas à l\'origine de cette demande, contactez immédiatement votre administrateur.');
 
         return $mail;

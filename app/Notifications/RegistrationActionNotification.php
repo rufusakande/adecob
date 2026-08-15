@@ -32,7 +32,7 @@ class RegistrationActionNotification extends Notification implements ShouldQueue
         $action = $this->action === 'approved' ? 'approuvée' : 'rejetée';
         
         return (new MailMessage)
-            ->subject("Inscription $action - ADECOB")
+            ->subject("Inscription $action - " . config('app.name'))
             ->greeting('Bonjour ' . $notifiable->name)
             ->line("L'inscription de {$this->user->name} a été $action par {$this->actionBy->name}.")
             ->line('Détails :')

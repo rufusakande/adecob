@@ -3,7 +3,7 @@
 @section('title', 'Se Connecter')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/auth-modern.css') }}">
+<link rel="stylesheet" href="{{ asset('css/auth-modern.css?v=2') }}">
 
 <div class="auth-container">
     <div class="auth-card">
@@ -147,5 +147,5 @@
     </div>
 </div>
 
-<script src="{{ asset('js/auth-form.js') }}"></script>
+<script src="{{ asset('js/auth-form.js?v=3') }}"></script>
 @endsection

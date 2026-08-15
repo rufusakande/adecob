@@ -1,4 +1,4 @@
-/* ADECOB — Bandeau et modale d'installation de l'application (PWA) */
+/* Plateforme — Bandeau et modale d'installation de l'application (PWA) */
 
 .adecob-install-banner {
     position: fixed;
@@ -67,7 +67,7 @@ body.has-mobile-tabbar .adecob-install-banner {
 .adecob-install-btn {
     border: 0;
     border-radius: 999px;
-    background: #008751;
+    background: linear-gradient(135deg, #0b6623, #0a7a2a);
     color: #fff;
     font-weight: 600;
     font-size: .88rem;
@@ -75,9 +75,10 @@ body.has-mobile-tabbar .adecob-install-banner {
     min-height: 44px;
     cursor: pointer;
     white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(6, 74, 26, 0.25);
 }
 
-.adecob-install-btn:hover { background: #0a6f45; }
+.adecob-install-btn:hover { background: linear-gradient(135deg, #09551e, #0b6623); }
 
 .adecob-install-close {
     border: 0;

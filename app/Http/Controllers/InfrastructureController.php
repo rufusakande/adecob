@@ -29,27 +29,9 @@ class InfrastructureController extends Controller
         $query      = Infrastructure::query()->visibleTo($user);
         $statsQuery = Infrastructure::query()->visibleTo($user);
 
-        if ($request->filled('departement')) {
-            $query->where('departement', $request->departement);
-        }
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('date', [$request->start_date, $request->end_date]);
-        }
-        if ($request->filled('commune')) {
-            $query->where('commune', $request->commune);
-        }
-        if ($request->filled('arrondissement')) {
-            $query->whereJsonContains('arrondissement', $request->arrondissement);
-        }
-        if ($request->filled('village')) {
-            $query->where('village', $request->village);
-        }
-        if ($request->filled('secteur_domaine')) {
-            $query->where('secteur_domaine', $request->secteur_domaine);
-        }
-        if ($request->filled('type_infrastructure')) {
-            $query->where('type_infrastructure', $request->type_infrastructure);
-        }
+        // Application centralisée de tous les filtres (commune, secteur, type,
+        // année, état, dégradation, dates, arrondissement, village...).
+        $this->applyRequestFilters($query, $request);
 
         // Fetch distinct values for filters, scoped to user visibility
         $communes = Infrastructure::query()->visibleTo($user)->select('commune')->distinct()->orderBy('commune')->pluck('commune')->filter()->values();
@@ -98,19 +80,26 @@ class InfrastructureController extends Controller
                                  ->paginate(15)
                                  ->appends($request->except('page'));
 
-        // Get list of infrastructure IDs that are planned (have mairie_agent_data)
-        $plannedInfrastructureIds = MairieAgentData::whereNotNull('infrastructure_id')
+        // IDs des infrastructures planifiées (ayant au moins un travail planifié),
+        // restreints à ce que l'utilisateur peut voir (cohérent avec la page planifiées).
+        $plannedInfrastructureIds = \App\Models\InfrastructureWork::where('status', 'planned')
+            ->whereHas('infrastructure', fn($q) => $q->visibleTo($user))
             ->pluck('infrastructure_id')
+            ->unique()
+            ->values()
             ->toArray();
 
-        // Pour les statistiques, on utilise la même restriction que pour la liste
-        // Calculate statistics with priority scoring
-        $totalPlanned = MairieAgentData::whereHas('infrastructure', function($q) use ($user) {
-            $q->visibleTo($user);
-        })->count();
+        // Nombre EXACT d'infrastructures planifiées : infrastructures DISTINCTES
+        // ayant au moins un travail planifié (InfrastructureWork status='planned').
+        $totalPlanned = \App\Models\InfrastructureWork::where('status', 'planned')
+            ->whereHas('infrastructure', fn($q) => $q->visibleTo($user))
+            ->distinct()
+            ->count('infrastructure_id');
 
-        // Calculate priority scores for infrastructures (requête indépendante)
+        // Scores de priorité (IPR) sur la même base FILTRÉE que la liste,
+        // pour que les cadres de priorité reflètent le filtre actif.
         $priorityQuery = Infrastructure::query()->visibleTo($user);
+        $this->applyRequestFilters($priorityQuery, $request);
 
         $infrastructuresWithPriority = $priorityQuery->select(
             'id', 'commune', 'secteur_domaine', 'type_infrastructure', 
@@ -126,23 +115,16 @@ class InfrastructureController extends Controller
             'bon_etat' => $infrastructuresWithPriority->where('score_priorite', '<', 21)->count(),
         ];
 
-        // Infrastructures réellement entretenues : au moins un travail terminé
-        // ou une planification marquée « completed », dans le périmètre de l'utilisateur.
-        $maintainedFromWorks = \App\Models\InfrastructureWork::where('status', 'completed')
-            ->whereHas('infrastructure', function ($q) use ($user) {
-                $q->visibleTo($user);
-            })
-            ->pluck('infrastructure_id');
+        // Nombre EXACT d'infrastructures entretenues = celles marquées « Réhabilitée ».
+        $totalMaintained = Infrastructure::query()->visibleTo($user)
+            ->whereRaw('LOWER(rehabilitation) = ?', ['réhabilitée'])
+            ->count();
 
-        $maintainedFromPlanning = MairieAgentData::where('maintenance_status', 'completed')
-            ->whereNotNull('infrastructure_id')
-            ->whereHas('infrastructure', function ($q) use ($user) {
-                $q->visibleTo($user);
-            })
-            ->pluck('infrastructure_id');
-
-        $totalMaintained = $maintainedFromWorks->merge($maintainedFromPlanning)
-            ->filter()->unique()->count();
+        // Progression : parmi les infrastructures PLANIFIÉES, combien sont réhabilitées.
+        $plannedRehabilitated = Infrastructure::query()->visibleTo($user)
+            ->whereHas('works', fn($q) => $q->where('status', 'planned'))
+            ->whereRaw('LOWER(rehabilitation) = ?', ['réhabilitée'])
+            ->count();
 
         // Statistiques générales filtrées (créer des requêtes indépendantes)
         $stats = [
@@ -171,7 +153,44 @@ class InfrastructureController extends Controller
                 ->orderBy('count', 'desc')->get(),
         ];
 
-        return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats'));
+        return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats', 'plannedRehabilitated'));
+    }
+
+    /**
+     * Applique les filtres de recherche (hors priorité) à une requête.
+     */
+    private function applyRequestFilters($query, Request $request): void
+    {
+        if ($request->filled('departement')) {
+            $query->where('departement', $request->departement);
+        }
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+        if ($request->filled('commune')) {
+            $query->where('commune', $request->commune);
+        }
+        if ($request->filled('arrondissement')) {
+            $query->whereJsonContains('arrondissement', $request->arrondissement);
+        }
+        if ($request->filled('village')) {
+            $query->where('village', $request->village);
+        }
+        if ($request->filled('secteur_domaine')) {
+            $query->where('secteur_domaine', $request->secteur_domaine);
+        }
+        if ($request->filled('type_infrastructure')) {
+            $query->where('type_infrastructure', $request->type_infrastructure);
+        }
+        if ($request->filled('annee_realisation')) {
+            $query->where('annee_realisation', $request->annee_realisation);
+        }
+        if ($request->filled('etat_fonctionnement')) {
+            $query->where('etat_fonctionnement', $request->etat_fonctionnement);
+        }
+        if ($request->filled('niveau_degradation')) {
+            $query->where('niveau_degradation', $request->niveau_degradation);
+        }
     }
 
     public function import(Request $request)
@@ -655,9 +674,21 @@ class InfrastructureController extends Controller
         $format = $request->input('format', 'pdf');
         $selectedIds = $request->input('selected_ids', []);
         $year = $request->input('year');
+        $commune = $request->input('commune');
+        $isPlannedSource = $request->input('source') === 'planned';
+        $user = auth()->user();
+
+        // Export possible uniquement PAR COMMUNE (ou par sélection précise,
+        // ou pour les exports planifiés déjà limités) — jamais toute la base d'un coup.
+        // Un admin de commune exporte de toute façon uniquement SA commune (scope visibleTo).
+        if ($user && $user->isSuperAdmin() && empty($commune) && empty($selectedIds) && !$isPlannedSource) {
+            return redirect()->back()->with('error',
+                'L\'export se fait par commune : veuillez sélectionner une commune dans le formulaire d\'export.'
+            );
+        }
 
         // Limiter l'export à ce que l'utilisateur a le droit de voir
-        $query = Infrastructure::query()->visibleTo(auth()->user());
+        $query = Infrastructure::query()->visibleTo($user);
 
         // Apply filters
         $filters = [];
@@ -708,7 +739,7 @@ class InfrastructureController extends Controller
             $filename .= '_' . $year;
         }
         if (!empty($filters['commune'])) {
-            $filename .= '_' . $filters['commune'];
+            $filename .= '_' . \Illuminate\Support\Str::slug($filters['commune']);
         }
 
         if ($format === 'excel') {
@@ -717,26 +748,38 @@ class InfrastructureController extends Controller
                 $filename . '.xlsx'
             );
         } else {
-            $infrastructures = $query->get();
-
-            // Mark exported metadata (best-effort) before generating file
-            foreach ($infrastructures as $inf) {
-                try {
-                    if (method_exists($inf, 'incrementExportCount')) {
-                        $inf->incrementExportCount();
-                    } else {
-                        $inf->exported_at = now();
-                        $inf->export_count = ($inf->export_count ?? 0) + 1;
-                        $inf->save();
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Failed to mark exported for infrastructure '.$inf->id.': '.$e->getMessage());
-                }
+            // PDF : garde-fou sur la volumétrie (Dompdf est limité sur les très grands
+            // tableaux — on préfère guider vers un affinage par année ou l'Excel).
+            $pdfCount = (clone $query)->count();
+            if ($pdfCount > 1500) {
+                return redirect()->back()->with('error',
+                    "Cette commune contient {$pdfCount} infrastructures : trop volumineux pour un PDF unique. "
+                    . "Affinez d'abord par année dans le formulaire d'export, ou utilisez l'export Excel."
+                );
             }
 
-            set_time_limit(300);
-            ini_set('memory_limit', '512M');
-            
+            $infrastructures = $query->get();
+
+            // Marquage de l'export en UNE requête groupée.
+            // (L'ancienne boucle faisait 1 UPDATE + 1 log d'audit PAR ligne :
+            //   insoutenable pour des milliers d'enregistrements.)
+            try {
+                $ids = $infrastructures->pluck('id')->filter();
+                if ($ids->isNotEmpty()) {
+                    \DB::table('infrastructures')
+                        ->whereIn('id', $ids)
+                        ->update([
+                            'exported_at'   => now(),
+                            'export_count'  => \DB::raw('COALESCE(export_count, 0) + 1'),
+                        ]);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Échec du marquage d\'export: ' . $e->getMessage());
+            }
+
+            set_time_limit(600);
+            ini_set('memory_limit', '1G');
+
             $pdf = Pdf::loadView('infrastructures.export_pdf', compact('infrastructures', 'filters', 'year'));
             return $pdf->download($filename . '.pdf');
         }
@@ -862,6 +905,10 @@ class InfrastructureController extends Controller
      */
     public function exportPlannedPdf(Request $request)
     {
+        // Optimisation : mémoire et temps suffisants pour les gros exports PDF
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $user = auth()->user();
         abort_unless($user && ($user->isSuperAdmin() || $user->isCommuneAdmin()), 403);
 

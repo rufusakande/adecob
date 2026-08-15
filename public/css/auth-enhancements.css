@@ -39,79 +39,9 @@
 }
 
 /* =============================================
-   STYLES POUR LE LOADER
+   (L'ancien loader #loaderOverlay a été supprimé :
+   le loader global premium #appLoader est géré par ui-components.css)
    ============================================= */
-
-.loader-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-.loader-overlay.show {
-    display: flex;
-}
-
-.loader-container {
-    background: white;
-    border-radius: 12px;
-    padding: 40px 60px;
-    text-align: center;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-/* Spinner circulaire */
-.spinner {
-    display: inline-block;
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #0b6623;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.loader-text {
-    font-size: 1.1rem;
-    color: #333;
-    font-weight: 500;
-    margin: 0;
-}
-
-.loader-text.secondary {
-    font-size: 0.9rem;
-    color: #6c757d;
-    margin-top: 5px;
-}
 
 /* =============================================
    STYLES POUR LES BOUTONS AVEC LOADER
@@ -134,20 +64,5 @@ button[type="submit"]:disabled {
 }
 
 /* =============================================
-   STYLES RESPONSIFS
+   (Anciens styles responsive du loader #loaderOverlay supprimés)
    ============================================= */
-
-@media (max-width: 576px) {
-    .loader-container {
-        padding: 30px 40px;
-    }
-
-    .spinner {
-        width: 40px;
-        height: 40px;
-    }
-
-    .loader-text {
-        font-size: 1rem;
-    }
-}

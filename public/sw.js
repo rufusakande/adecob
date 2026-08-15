@@ -1,1 +1,111 @@
-if(!self.define){let e,s={};const c=(c,n)=>(c=new URL(c+".js",n).href,s[c]||new Promise(s=>{if("document"in self){const e=document.createElement("script");e.src=c,e.onload=s,document.head.appendChild(e)}else e=c,importScripts(c),s()}).then(()=>{let e=s[c];if(!e)throw new Error(`Module ${c} didn’t register its module`);return e}));self.define=(n,i)=>{const o=e||("document"in self?document.currentScript.src:"")||location.href;if(s[o])return;let a={};const r=e=>c(e,o),d={module:{uri:o},exports:a,require:r};s[o]=Promise.all(n.map(e=>d[e]||r(e))).then(e=>(i(...e),a))}}define(["./workbox-73541643"],function(e){"use strict";self.skipWaiting(),e.clientsClaim(),e.precacheAndRoute([{url:"offline.html",revision:"031c533c98e06b3b3970d04811e711e1"},{url:"logo.jpg",revision:"5afc00fae250a0ed032c8ce724644938"},{url:"icon-512x512.png",revision:"5c38d715cbc8dadde770a64c4437be14"},{url:"icon-192x192.png",revision:"64a0ab8e3659e2d3d0b435feff281301"},{url:"favicon.ico",revision:"d41d8cd98f00b204e9800998ecf8427e"},{url:"css/pwa-install.css",revision:"e868673b3454e333eb9725ac3dc2dc8b"},{url:"css/mobile-premium.css",revision:"dd57e265acdd00c0f64e3221a6f48924"},{url:"css/auth-modern.css",revision:"852d9c62cd1c4236405063eafcd5cae1"},{url:"css/auth-enhancements.css",revision:"7026eb4ce8cd6f2a110751b5af9176e0"},{url:"js/pwa-register.js",revision:"21c92e4eed7d1979b4b7008d5f495dba"},{url:"js/pwa-install.js",revision:"0fc9d1c5d5a3c9aaedb0552aa9ab7b52"},{url:"js/offline-sync.js",revision:"9198f0ee522bfbe3366ac4a85f907176"},{url:"js/offline-storage.js",revision:"319e737e20d64ecab345be3b183bb9ee"},{url:"js/offline-manager.js",revision:"885d4de30c542acc11c6c6badd2b2a5c"},{url:"js/mobile-ui.js",revision:"a1530a609da6621ebb728b467eb856c7"},{url:"js/auth-form.js",revision:"aefeee99eac6ee8e1afdbd9c7b0b90e6"},{url:"js/auth-enhancements.js",revision:"a01d430ab6d9bb92e9058210166b03cb"},{url:"vendor/localforage.min.js",revision:"971e2b863ccdb5d43003cdc5f4e0d923"}],{}),e.cleanupOutdatedCaches(),e.registerRoute(({request:e})=>"navigate"===e.mode,new e.NetworkFirst({cacheName:"adecob-pages",networkTimeoutSeconds:3,plugins:[new e.PrecacheFallbackPlugin({fallbackURL:"/offline.html"}),new e.CacheableResponsePlugin({statuses:[0,200]}),new e.ExpirationPlugin({maxEntries:20,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(({request:e,url:s})=>s.origin===self.location.origin&&["style","script","image","font"].includes(e.destination),new e.CacheFirst({cacheName:"adecob-static",plugins:[new e.ExpirationPlugin({maxEntries:80,maxAgeSeconds:2592e3})]}),"GET"),e.registerRoute(/^https:\/\/(cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,new e.StaleWhileRevalidate({cacheName:"adecob-third-party",fetchOptions:{mode:"cors",credentials:"omit"},plugins:[new e.CacheableResponsePlugin({statuses:[200]}),new e.ExpirationPlugin({maxEntries:40,maxAgeSeconds:2592e3})]}),"GET")});
+/**
+ * Service Worker ARMANI — 100 % autonome (vanilla)
+ * ==================================================
+ * Aucune dépendance externe : pas de fichier workbox à importer,
+ * pas d'importScripts. Ce fichier fonctionne sur tout serveur qui
+ * sert public/ (php artisan serve, Apache, Nginx, etc.).
+ *
+ * Comportement :
+ *  - Pré-cache des assets essentiels (offline.html, css, js, logo, icônes).
+ *  - Navigation : réseau d'abord, sinon cache, sinon -> page offline.html.
+ *  - Statiques (css/js/images) : cache d'abord, sinon réseau + mise en cache.
+ */
+const VERSION = '2026-08-15-v2';
+const OFFLINE_URL = '/offline.html';
+const PAGE_CACHE = 'adecob-pages-' + VERSION;
+const STATIC_CACHE = 'adecob-static-' + VERSION;
+
+/* Assets essentiels pré-cachés (doivent exister dans public/) */
+const STATIC_ASSETS = [
+  '/offline.html',
+  '/logo.jpg',
+  '/icon-192x192.png',
+  '/icon-512x512.png',
+  '/favicon.ico',
+  '/css/mobile-premium.css',
+  '/css/auth-modern.css',
+  '/css/auth-enhancements.css',
+  '/css/pwa-install.css',
+  '/css/ui-components.css',
+  '/css/app-design.css',
+  '/js/pwa-register.js',
+  '/js/pwa-install.js',
+  '/js/mobile-ui.js',
+  '/js/auth-form.js',
+  '/js/auth-enhancements.js',
+  '/js/offline-storage.js',
+  '/js/offline-sync.js',
+  '/vendor/localforage.min.js',
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .catch((err) => console.warn('[SW] pré-cache partiel :', err))
+      .then(() => self.skipWaiting()),
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== PAGE_CACHE && key !== STATIC_CACHE)
+            .map((key) => caches.delete(key)),
+        ),
+      )
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  // On ne gère que les requêtes de notre origine (les CDN restent directs)
+  if (url.origin !== self.location.origin) return;
+
+  // --- Navigation (pages) ---
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(PAGE_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches
+            .match(request)
+            .then((cached) => cached || caches.match(OFFLINE_URL) || Response.error()),
+        ),
+    );
+    return;
+  }
+
+  // --- Statiques (css, js, images, polices) ---
+  if (['style', 'script', 'image', 'font'].includes(request.destination)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request)
+          .then((response) => {
+            if (response && response.ok) {
+              const clone = response.clone();
+              caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => Response.error());
+      }),
+    );
+  }
+});

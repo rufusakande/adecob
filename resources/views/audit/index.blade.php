@@ -120,6 +120,7 @@
                         <option value="create" @selected(request('action') === 'create')>Création</option>
                         <option value="update" @selected(request('action') === 'update')>Mise à jour</option>
                         <option value="delete" @selected(request('action') === 'delete')>Suppression</option>
+                        <option value="user_deleted" @selected(request('action') === 'user_deleted')>Suppression de compte</option>
                         <option value="export" @selected(request('action') === 'export')>Export</option>
                         <option value="import" @selected(request('action') === 'import')>Import</option>
                     </select>
@@ -204,6 +205,7 @@
                                         'create' => 'info',
                                         'update' => 'primary',
                                         'delete' => 'danger',
+                                        'user_deleted' => 'danger',
                                         'export' => 'secondary',
                                         'import' => 'secondary',
                                     ];
@@ -276,6 +278,7 @@
                             <option value="create">Création</option>
                             <option value="update">Mise à jour</option>
                             <option value="delete">Suppression</option>
+                            <option value="user_deleted">Suppression de compte</option>
                             <option value="export">Export</option>
                             <option value="import">Import</option>
                         </select>

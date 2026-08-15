@@ -12,7 +12,7 @@ class NewAdminSeeder extends Seeder
     {
         // Affectation directe pour les champs privilégiés (hors $fillable).
         $user = new User([
-            'name'     => 'Adecob Admin',
+            'name'     => config('app.name') . ' Admin',
             'email'    => 'akanderufus51@gmail.com',
             'password' => Hash::make('admin123'),
         ]);

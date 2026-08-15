@@ -114,6 +114,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Contact Form Recipient
+    |--------------------------------------------------------------------------
+    |
+    | Adresse de réception des messages envoyés via le formulaire de contact.
+    | Par défaut, l'adresse de l'expéditeur est utilisée.
+    |
+    */
+
+    'contact_recipient' => env('MAIL_CONTACT_RECIPIENT', env('MAIL_FROM_ADDRESS', 'contact@example.com')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Markdown Mail Settings
     |--------------------------------------------------------------------------
     |

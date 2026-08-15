@@ -11,11 +11,12 @@
 
     <!-- PWA Meta Tags & Manifest -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <meta name="theme-color" content="#28a745">
+    <meta name="theme-color" content="#0b6623">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
+    <meta name="app-name" content="{{ config('app.name') }}">
     <link rel="apple-touch-icon" href="{{ asset('logo.jpg') }}">
 
     <!-- Bootstrap 5.3 CSS -->
@@ -28,14 +29,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <!-- Auth Enhancements CSS -->
-    <link rel="stylesheet" href="{{ asset('css/auth-enhancements.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/auth-enhancements.css?v=3') }}">
 
     <!-- Mobile Premium CSS -->
-    <link rel="stylesheet" href="{{ asset('css/mobile-premium.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/pwa-install.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/mobile-premium.css?v=5') }}">
+    <link rel="stylesheet" href="{{ asset('css/pwa-install.css?v=3') }}">
+
+    <!-- UI Components (modale de confirmation + loader) -->
+    <link rel="stylesheet" href="{{ asset('css/ui-components.css?v=3') }}">
 
     <!-- Google Fonts - Poppins (optionnel pour plus d'élégance) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Design System Premium global (toutes les pages) -->
+    <link rel="stylesheet" href="{{ asset('css/app-design.css?v=2') }}">
 
 
     @stack('styles')
@@ -47,135 +54,229 @@
             background-color: #f8f9fa;
             color: #333;
             min-height: 100vh;
-            padding-top: 170px; /* header (66px) + navbar (60px) + marge */
+            padding-top: 108px; /* header premium : topbar (34px) + navbar (64px) + marge */
             transition: padding 0.3s ease;
         }
 
-        @media (max-width: 768px) {
-            body {
-                padding-top: 150px;
-            }
-        }
-
-        /* Header fixe - Logo et info */
-        .fixed-header {
+        /* ============ HEADER PREMIUM ============ */
+        .app-header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1050;
-            border-bottom: 1px solid #e0e0e0;
         }
 
-        .fixed-header .logo-text {
-            font-size: 0.95rem;
-            line-height: 1.3;
-            color: #0b6623;
+        /* Barre utilitaire (contact) — desktop */
+        .app-topbar {
+            background: linear-gradient(90deg, #064a1a, #0b6623 60%, #0a7a2a);
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 0.78rem;
+        }
+        .app-topbar__inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 34px;
+        }
+        .app-topbar__left, .app-topbar__right {
+            display: flex;
+            align-items: center;
+            gap: 1.4rem;
+        }
+        .app-topbar span, .app-topbar a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+        }
+        .app-topbar i { color: #FFD100; font-size: 0.8rem; }
+        .app-topbar a:hover { color: #FFD100; }
+
+        /* Barre de navigation (glass) */
+        .app-navbar {
+            /* Fond quasi opaque : le backdrop-filter est retiré car il crée un
+               containing-block qui casse le positionnement des dropdowns */
+            background: rgba(255, 255, 255, 0.98);
+            border-bottom: 1px solid #e8eee9;
+            box-shadow: 0 6px 24px rgba(6, 74, 26, 0.08);
+        }
+        .app-navbar__inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 64px;
+        }
+
+        /* Marque */
+        .app-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none !important;
+            flex-shrink: 0; /* la marque ne doit jamais être compressée par les menus */
+        }
+        .app-brand__img {
+            height: 44px;
+            width: 44px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(6, 74, 26, 0.25);
+        }
+        .app-brand__txt { display: flex; flex-direction: column; line-height: 1.15; }
+        .app-brand__name { font-weight: 800; color: #0b6623; font-size: 1.25rem; letter-spacing: 0.4px; }
+        .app-brand__tag { font-size: 0.66rem; color: #6b7a72; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; }
+
+        /* Navigation */
+        .app-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            margin-bottom: 0;
+        }
+        .app-navbar__collapse { min-width: 0; }
+        .app-nav .nav-link {
+            color: #2b3a33 !important;
             font-weight: 600;
-        }
-
-        /* Navbar fixe - Navigation principale */
-        .fixed-navbar {
-            position: fixed;
-            top: 66px;
-            left: 0;
-            right: 0;
-            background-color: #0b6623;
-            z-index: 1045;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            padding: 0.35rem 0;
-        }
-
-        .fixed-navbar .container {
-            align-items: flex-start;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            color: #FFD100 !important;
-            font-size: clamp(1rem, 1.8vw, 1.3rem);
-            letter-spacing: 0.5px;
-            line-height: 1.2;
-            max-width: 100%;
-        }
-
-        .fixed-navbar .navbar-collapse {
-            flex-grow: 1;
-            justify-content: flex-end;
-        }
-
-        .fixed-navbar .navbar-nav {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 0.2rem 0.35rem;
-            width: 100%;
-        }
-
-        .fixed-navbar .nav-item {
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-link {
-            color: #fff !important;
-            font-weight: 500;
-            padding: 0.5rem 0.9rem !important;
-            transition: background 0.3s ease, border-radius 0.3s ease;
+            font-size: 0.9rem;
+            padding: 0.55rem 0.85rem !important;
+            border-radius: 10px;
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
             line-height: 1;
             white-space: nowrap;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
         }
+        .app-nav .nav-link:hover {
+            background: #eef5f0;
+            color: #0b6623 !important;
+        }
+        .app-nav .nav-link i { font-size: 0.85rem; color: #0b6623; }
+        .app-nav .nav-link--cta {
+            background: linear-gradient(135deg, #0b6623, #0a7a2a);
+            color: #fff !important;
+            box-shadow: 0 4px 14px rgba(6, 74, 26, 0.3);
+        }
+        .app-nav .nav-link--cta:hover {
+            color: #fff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(6, 74, 26, 0.35);
+        }
+        .app-nav .nav-link--cta i { color: #fff; }
 
-        .nav-link:hover, .nav-item.dropdown:hover .nav-link {
-            background: rgba(255, 255, 255, 0.1);
+        /* Menus déroulants premium — positionnement maîtrisé (CSS + JS custom, sans Popper) */
+        .app-nav .nav-item.dropdown { position: relative; }
+        .app-nav .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: auto;
+            margin: 0;
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 20px 45px rgba(6, 74, 26, 0.18);
+            padding: 0.5rem;
+            min-width: 250px;
+            max-width: calc(100vw - 24px);
+            display: block;
+            transform: translateY(8px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+            z-index: 1080;
+        }
+        /* Menus proches du bord droit : alignés à droite, jamais coupés à droite */
+        .app-nav .dropdown-menu.dropdown-menu-end {
+            left: auto;
+            right: 0;
+        }
+        .app-nav .dropdown-menu.show {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        @media (hover: hover) and (min-width: 992px) {
+            .app-nav .nav-item.dropdown:hover > .dropdown-menu {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+        }
+        .app-nav .dropdown-item {
+            border-radius: 10px;
+            padding: 0.6rem 0.85rem;
+            font-weight: 500;
+            color: #2b3a33;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .app-nav .dropdown-item i { width: 18px; text-align: center; color: #0b6623; }
+        .app-nav .dropdown-item:hover {
+            background: #eef5f0;
+            color: #0b6623;
+        }
+        .app-nav .dropdown-header {
+            color: #8a978f;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        .app-nav .dropdown-divider { border-color: #eef2ee; }
+
+        /* Menu utilisateur */
+        .app-user {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.35rem 0.7rem 0.35rem 0.35rem;
+            border-radius: 12px;
+        }
+        .app-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0b6623, #0a7a2a);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 8px rgba(6, 74, 26, 0.3);
+            flex-shrink: 0;
+        }
+        .app-user__who { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+        .app-user__name { font-weight: 700; color: #2b3a33; font-size: 0.88rem; }
+        .app-user__role { font-size: 0.7rem; color: #6b7a72; font-weight: 600; }
+
+        /* Bouton hamburger animé */
+        .app-toggler {
+            border: none;
+            background: transparent;
+            display: inline-flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 8px;
             border-radius: 8px;
         }
-
-        .dropdown-menu {
-            border: none;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .dropdown-item {
-            padding: 0.5rem 1rem;
-            transition: background 0.2s ease;
-        }
-
-        .dropdown-item:hover {
+        .app-toggler:focus { box-shadow: none; }
+        .app-toggler__bar {
+            width: 24px;
+            height: 2.5px;
+            border-radius: 3px;
             background: #0b6623;
-            color: white;
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
-
-        .dropdown-item i {
-            width: 20px;
-            text-align: center;
-            margin-right: 8px;
-        }
-
-        /* Boutons dans le header */
-        .btn-contact {
-            background-color: #FFD100;
-            color: #0b6623;
-            font-weight: 600;
-            font-size: 0.85rem;
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-contact:hover {
-            background-color: #e6be00;
-            color: white;
-            transform: translateY(-1px);
-        }
+        .app-toggler[aria-expanded="true"] .app-toggler__bar:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+        .app-toggler[aria-expanded="true"] .app-toggler__bar:nth-child(2) { opacity: 0; }
+        .app-toggler[aria-expanded="true"] .app-toggler__bar:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
 
         /* Footer élégant */
         footer {
@@ -184,20 +285,9 @@
             padding: 25px 0;
             margin-top: auto;
         }
-
-        footer a {
-            color: #FFD100;
-            text-decoration: underline;
-            transition: color 0.3s ease;
-        }
-
-        footer a:hover {
-            color: white;
-        }
-
-        footer .footer-text {
-            font-size: 0.9rem;
-        }
+        footer a { color: #FFD100; text-decoration: underline; transition: color 0.3s ease; }
+        footer a:hover { color: white; }
+        footer .footer-text { font-size: 0.9rem; }
 
         /* Icônes sociales */
         .social-icon {
@@ -209,213 +299,212 @@
             align-items: center;
             justify-content: center;
         }
+        .social-icon:hover { color: white; transform: translateY(-2px); }
 
-        .fixed-header .bi,
-        .fixed-header .fa,
-        .fixed-header .fas,
-        .fixed-navbar .bi,
-        .fixed-navbar .fa,
-        .fixed-navbar .fas {
-            display: inline-block;
-            min-width: 1.1em;
-            text-align: center;
-            line-height: 1;
+        /* Header compact sur écrans intermédiaires (évite le chevauchement marque/menus) */
+        @media (max-width: 1399.98px) and (min-width: 992px) {
+            .app-nav .nav-link { font-size: 0.82rem; padding: 0.5rem 0.62rem !important; gap: 0.35rem; }
+            .app-nav { gap: 0.12rem; }
+            .app-brand__tag { display: none; }
+            .app-user__who { display: none; }
+        }
+        @media (max-width: 1199.98px) and (min-width: 992px) {
+            .app-nav .nav-link { font-size: 0.8rem; padding: 0.45rem 0.5rem !important; }
+            .app-nav .nav-link i { display: none; }
+            .app-brand__name { font-size: 1.08rem; }
         }
 
-        .social-icon:hover {
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        /* Responsive adjustments */
+        /* Responsive */
         @media (max-width: 991.98px) {
-            .fixed-navbar .navbar-collapse {
-                margin-top: 0.6rem;
-                background: rgba(11, 102, 35, 0.97);
-                border-radius: 0.75rem;
-                padding: 0.5rem;
+            body { padding-top: 64px; }
+            .app-topbar { display: none; }
+            /* Menu mobile : overlay fixe sous le header — n'élargit ni ne déplace le header */
+            .app-navbar__collapse {
+                position: fixed;
+                top: 64px;
+                left: 0;
+                right: 0;
+                z-index: 2000;
+                background: #fff;
+                border-radius: 0 0 16px 16px;
+                box-shadow: 0 20px 40px rgba(6, 74, 26, 0.14);
+                padding: 0.5rem 0.5rem 1rem;
+                max-height: calc(100vh - 64px);
+                overflow-y: auto;
+                opacity: 0;
+                transition: opacity 0.2s ease;
+                /* NB : pas de transform ici (créerait un containing-block qui
+                   décale l'ancrage des dropdowns fixes à l'intérieur du menu) */
             }
-
-            .fixed-navbar .navbar-nav {
-                justify-content: flex-start;
-                gap: 0.2rem;
+            .app-navbar__collapse.show {
+                opacity: 1;
             }
-
-            .fixed-navbar .nav-link {
-                width: 100%;
+            .app-nav { flex-direction: column; align-items: stretch; gap: 0.25rem; }
+            .app-nav .nav-link { width: 100%; justify-content: flex-start; }
+            /* Dropdowns mobile : overlay sous le header — n'impacte ni la taille
+               ni la position du header, et passe au-dessus du contenu (z-index haut) */
+            .app-nav .dropdown-menu,
+            .app-nav .dropdown-menu.dropdown-menu-end {
+                position: fixed;
+                top: 76px;
+                left: 12px;
+                right: 12px;
+                min-width: 0;
+                width: auto;
+                max-width: calc(100vw - 24px);
+                max-height: calc(100vh - 96px);
+                overflow-y: auto;
+                margin: 0;
+                background: #fff;
+                box-shadow: 0 20px 45px rgba(6, 74, 26, 0.22);
+                transform: translateY(8px);
+                opacity: 0;
+                visibility: hidden;
+                z-index: 2000;
             }
-
-            .fixed-navbar .dropdown-menu {
-                background: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                margin-top: 0.5rem;
-                box-shadow: none;
-            }
-
-            .fixed-navbar .dropdown-item {
-                color: #fff;
-            }
-
-            .fixed-navbar .dropdown-item:hover, .fixed-navbar .dropdown-item:focus {
-                background: rgba(255, 255, 255, 0.2);
-                color: #FFD100;
-            }
-
-            .fixed-navbar .dropdown-divider {
-                border-color: rgba(255, 255, 255, 0.2);
-            }
-
-            .fixed-navbar .dropdown-header {
-                color: rgba(255, 255, 255, 0.8);
+            .app-nav .dropdown-menu.show,
+            .app-nav .dropdown-menu.dropdown-menu-end.show {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
             }
         }
 
-        @media (max-width: 768px) {
-            .navbar-brand {
-                font-size: 1.05rem;
-            }
-
-            .fixed-header .text-muted {
-                font-size: 0.8rem;
-            }
-
-            .btn-contact {
-                font-size: 0.8rem;
-                padding: 0.3rem 0.6rem;
-            }
-
-            .d-md-inline-flex {
-                display: none !important;
-            }
+        @media (max-width: 575.98px) {
+            .app-brand__tag { display: none; }
+            .app-brand__img { height: 38px; width: 38px; }
+            .app-brand__name { font-size: 1.1rem; }
+            .app-user__who { display: none; }
+            .app-user { padding-right: 0.5rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Fixed Header -->
-    <header class="fixed-header">
-        <div class="container py-2 px-3">
-            <div class="row align-items-center">
-                <!-- Logo + Texte -->
-                <div class="col-12 col-md-6 d-flex align-items-center mb-2 mb-md-0">
-                    <img src="{{ asset('logo.jpg') }}" alt="Logo {{ config('app.name', 'Arumani') }}" class="me-3" style="height: 50px; border-radius: 8px;">
-                    <div class="logo-text">
-                        {{ config('app.name', 'Armani') }}<br>
-                        GESTION DES INFRASTRUCTURES
-                    </div>
+    <!-- Header Premium -->
+    <header class="app-header">
+        <!-- Barre utilitaire (contact) — desktop -->
+        <div class="app-topbar d-none d-lg-block">
+            <div class="container app-topbar__inner">
+                <div class="app-topbar__left">
+                    <span><i class="fas fa-map-marker-alt"></i> Siège : N'DALI</span>
+                    <span class="d-none d-md-inline-flex"><i class="fas fa-envelope"></i> secretariatadecob@yahoo.fr</span>
                 </div>
-
-                <!-- Info + Contact (desktop) -->
-                <div class="col-md-6 d-none d-md-flex justify-content-end align-items-center gap-3">
-                    <div class="d-flex align-items-center text-muted small">
-                        <div>
-                            <div>Siège: <strong>N'DALI</strong></div>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center text-muted small">
-                        <div>
-                            <div>Mail : <strong>secretariatadecob@yahoo.fr</strong></div>
-                        </div>
-                    </div>
-                    <a href="{{ route('contact.form') }}" class="btn btn-contact">
-                        CONTACTEZ-NOUS
-                    </a>
+                <div class="app-topbar__right">
+                    <a href="{{ route('contact.form') }}"><i class="fas fa-headset"></i> Contactez-nous</a>
                 </div>
             </div>
         </div>
+
+        <!-- Barre de navigation principale -->
+        <nav class="app-navbar navbar-expand-lg">
+            <div class="container app-navbar__inner">
+                <a class="app-brand" href="{{ url('/') }}" aria-label="{{ config('app.name') }} — Accueil">
+                    <img src="{{ asset('logo.jpg') }}" alt="Logo {{ config('app.name', 'Armani') }}" class="app-brand__img">
+                    <span class="app-brand__txt">
+                        <strong class="app-brand__name">{{ config('app.name') }}</strong>
+                        <small class="app-brand__tag">Gestion des infrastructures</small>
+                    </span>
+                </a>
+
+                <button class="app-toggler d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Ouvrir le menu">
+                    <span class="app-toggler__bar"></span>
+                    <span class="app-toggler__bar"></span>
+                    <span class="app-toggler__bar"></span>
+                </button>
+
+                <div class="collapse navbar-collapse app-navbar__collapse" id="navbarNav">
+                    <ul class="navbar-nav app-nav ms-auto">
+                        @guest
+                            <!-- Liens invités -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('login.form') }}"><i class="fas fa-sign-in-alt"></i> Se connecter</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link app-nav__link--cta" href="{{ route('register.form') }}"><i class="fas fa-user-plus"></i> S'inscrire</a>
+                            </li>
+                        @else
+                            {{-- Navigation contextuelle selon le rôle --}}
+                            @include('layouts.partials.nav-authenticated')
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link app-user" href="#" id="userDropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="app-avatar">{{ mb_strtoupper(mb_substr(Auth::user()->prenom ?? Auth::user()->name, 0, 1)) }}</span>
+                                    <span class="app-user__who">
+                                        <span class="app-user__name">{{ Auth::user()->prenom ?? '' }} {{ Auth::user()->name }}</span>
+                                        @php
+                                            $roleLabels = [
+                                                'super_admin'   => ['Super Admin', 'danger'],
+                                                'commune_admin' => ['Admin Commune', 'primary'],
+                                                'agent'         => ['Agent', 'success'],
+                                            ];
+                                            [$rLabel, $rColor] = $roleLabels[Auth::user()->role] ?? ['Utilisateur', 'secondary'];
+                                        @endphp
+                                        <span class="app-user__role"><i class="fas fa-circle text-{{ $rColor }}" style="font-size:.4rem;"></i> {{ $rLabel }}</span>
+                                    </span>
+                                    <i class="fas fa-chevron-down" style="font-size:.7rem; color:#8a978f;"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <div class="px-3 py-2">
+                                            <div class="fw-bold">{{ Auth::user()->prenom ?? '' }} {{ Auth::user()->name }}</div>
+                                            <small class="text-muted">{{ Auth::user()->email }}</small>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ auth()->user()->isSuperAdmin() ? route('admin.dashboard') : (auth()->user()->isCommuneAdmin() ? route('commune-admin.dashboard') : route('infrastructures.index')) }}"><i class="fas fa-tachometer-alt"></i> Tableau de bord</a>
+                                    </li>
+                                    @if(auth()->user()->isSuperAdmin() || auth()->user()->isCommuneAdmin())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('infrastructures.planned') }}"><i class="fas fa-calendar-check"></i> Infrastructures planifiées</a>
+                                    </li>
+                                    @endif
+                                    @if(auth()->user()->isSuperAdmin())
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <span class="dropdown-header fw-bold">Administration</span>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.communes.index') }}"><i class="fas fa-city"></i> Gestion des communes</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.users.index') }}"><i class="fas fa-users"></i> Gestion des utilisateurs</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}"><i class="fas fa-user-check"></i> Inscriptions en attente
+                                            <span class="badge bg-warning text-dark ms-auto">{{ \App\Models\User::where('is_approved', false)->count() }}</span>
+                                        </a>
+                                    </li>
+                                    @elseif(auth()->user()->isCommuneAdmin())
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <span class="dropdown-header fw-bold">Gestion Commune</span>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}"><i class="fas fa-user-check"></i> Inscriptions en attente
+                                            <span class="badge bg-warning text-dark ms-auto">{{ \App\Models\User::where('is_approved', false)->count() }}</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('commune-admin.dashboard') }}"><i class="fas fa-building"></i> Tableau de bord commune</a>
+                                    </li>
+                                    @endif
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="{{ route('logout') }}">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endguest
+                    </ul>
+                </div>
+            </div>
+        </nav>
     </header>
-
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg fixed-navbar">
-        <div class="container">
-            <a class="navbar-brand me-3" href="{{ url('/') }}">{{ config('app.name') }}</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    @guest
-                        <!-- Guest Links -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('login.form') }}">Se connecter</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="{{ route('register.form') }}">
-                                S'inscrire
-                            </a>
-                        </li>
-                    @else
-                        {{-- Navigation contextuelle selon le rôle --}}
-                        @include('layouts.partials.nav-authenticated')
-
-                        <li class="nav-item dropdown" style="z-index: 1050;">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
-                                {{ Auth::user()->prenom ?? '' }} {{ Auth::user()->name }}
-                                @php
-                                    $roleLabels = [
-                                        'super_admin'   => ['Super Admin', 'danger'],
-                                        'commune_admin' => ['Admin Commune', 'primary'],
-                                        'agent'         => ['Agent', 'success'],
-                                    ];
-                                    [$rLabel, $rColor] = $roleLabels[Auth::user()->role] ?? ['Utilisateur', 'secondary'];
-                                @endphp
-                                <span class="badge bg-{{ $rColor }} ms-1">{{ $rLabel }}</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item">Déconnexion</button>
-                                    </form>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                @if(auth()->user()->isSuperAdmin() || auth()->user()->isCommuneAdmin())
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('infrastructures.planned') }}">Infrastructures planifiées</a>
-                                </li>
-                                @endif
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('mairie-agent.dashboard') }}">Tableau de bord</a>
-                                </li>
-                                @if(auth()->user()->isSuperAdmin())
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <span class="dropdown-header fw-bold">Administration</span>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('admin.communes.index') }}">Gestion des communes</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('admin.users.index') }}">Gestion des utilisateurs</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}">Inscriptions en attente 
-                                        <span class="badge bg-warning text-dark">{{ \App\Models\User::where('is_approved', false)->count() }}</span>
-                                    </a>
-                                </li>
-                                @elseif(auth()->user()->isCommuneAdmin())
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <span class="dropdown-header fw-bold">Gestion Commune</span>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('admin.pending-registrations') }}">Inscriptions en attente 
-                                        <span class="badge bg-warning text-dark">{{ \App\Models\User::where('is_approved', false)->count() }}</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('commune-admin.dashboard') }}">Tableau de bord commune</a>
-                                </li>
-
-                                @endif
-                            </ul>
-                        </li>
-                    @endguest
-                </ul>
-            </div>
-        </div>
-    </nav>
 
     <main class="container-fluid px-3 mt-3">
         @yield('content')
@@ -441,13 +530,55 @@
         </div>
     </footer>
 
+    <!-- Modale de confirmation globale -->
+    <div id="appConfirmModal" class="app-modal" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle" inert>
+        <div class="app-modal-backdrop" data-app-modal-close></div>
+        <div class="app-modal__dialog" role="document">
+            <div class="app-modal__icon" id="appConfirmIcon"></div>
+            <h3 class="app-modal__title" id="appConfirmTitle">Confirmation</h3>
+            <p class="app-modal__message" id="appConfirmMessage"></p>
+            <div class="app-modal__actions">
+                <button type="button" class="app-modal__btn app-modal__btn--cancel" data-app-modal-close>Annuler</button>
+                <button type="button" class="app-modal__btn app-modal__btn--confirm" id="appConfirmOk">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader global (opérations) -->
+    <div id="appLoader" class="app-loader" aria-hidden="true">
+        <div class="app-loader__spinner"></div>
+        <p class="app-loader__text">Veuillez patienter...</p>
+    </div>
+
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="{{ asset('js/auth-enhancements.js') }}"></script>
-    <script src="{{ asset('js/mobile-ui.js') }}"></script>
-    <script src="{{ asset('js/pwa-register.js') }}"></script>
-    <script src="{{ asset('js/pwa-install.js') }}"></script>
+    <script src="{{ asset('js/auth-enhancements.js?v=3') }}"></script>
+    <script src="{{ asset('js/mobile-ui.js?v=5') }}"></script>
+    <script src="{{ asset('js/header-dropdown.js?v=1') }}"></script>
+    <script src="{{ asset('js/pwa-register.js?v=3') }}"></script>
+    <script src="{{ asset('js/pwa-install.js?v=3') }}"></script>
+    <script src="{{ asset('js/ui-confirm.js?v=3') }}"></script>
+    <script>
+        // Redirection automatique vers le mode hors ligne (enregistrement + synchronisation)
+        (function () {
+            var OFFLINE_PATH = '/infrastructures-hors-ligne';
+            var isOfflinePage = function () {
+                return window.location.pathname === OFFLINE_PATH;
+            };
+            var goOffline = function () {
+                if (!isOfflinePage()) {
+                    window.location.href = OFFLINE_PATH;
+                }
+            };
+            // Détection à l'ouverture de la page
+            if (!navigator.onLine && !isOfflinePage()) {
+                goOffline();
+            }
+            // Détection de perte de connexion en temps réel
+            window.addEventListener('offline', goOffline);
+        })();
+    </script>
 
     
     <!-- Offline Sync Scripts -->

@@ -1,0 +1,156 @@
+/* ============================================================
+   UI Components — Modale de confirmation & Loader global
+   Design premium, animé, responsive (mobile : feuille montante)
+   ============================================================ */
+
+/* ---------- Modale de confirmation ---------- */
+.app-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity .25s ease, visibility .25s ease;
+}
+.app-modal.is-open {
+    visibility: visible;
+    opacity: 1;
+}
+.app-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.app-modal__dialog {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 24px 60px -12px rgba(15, 23, 42, .35);
+    padding: 1.75rem 1.5rem 1.5rem;
+    text-align: center;
+    transform: translateY(12px) scale(.96);
+    opacity: 0;
+    transition: transform .28s cubic-bezier(.22, 1, .36, 1), opacity .28s ease;
+}
+.app-modal.is-open .app-modal__dialog {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+.app-modal__icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    animation: app-pop .35s cubic-bezier(.22, 1, .36, 1) both;
+}
+.app-modal__icon--warning { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 24px -8px rgba(245, 158, 11, .55); }
+.app-modal__icon--danger  { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 24px -8px rgba(239, 68, 68, .55); }
+.app-modal__icon--info    { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 10px 24px -8px rgba(59, 130, 246, .55); }
+.app-modal__icon--success { background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 10px 24px -8px rgba(34, 197, 94, .55); }
+.app-modal__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 .4rem;
+}
+.app-modal__message {
+    font-size: .92rem;
+    color: #475569;
+    line-height: 1.6;
+    margin: 0 0 1.4rem;
+}
+.app-modal__actions {
+    display: flex;
+    gap: .75rem;
+}
+.app-modal__btn {
+    flex: 1;
+    padding: .7rem 1rem;
+    border: 0;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: .92rem;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+.app-modal__btn:hover { transform: translateY(-1px); }
+.app-modal__btn:active { transform: translateY(0) scale(.98); }
+.app-modal__btn:focus-visible { outline: 3px solid rgba(37, 99, 235, .35); outline-offset: 2px; }
+.app-modal__btn--cancel {
+    background: #f1f5f9;
+    color: #334155;
+}
+.app-modal__btn--cancel:hover { filter: brightness(.97); }
+.app-modal__btn--confirm {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    box-shadow: 0 8px 18px -6px rgba(239, 68, 68, .5);
+}
+.app-modal__btn--confirm:hover { filter: brightness(1.05); }
+
+@keyframes app-pop {
+    0%   { transform: scale(.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Mobile : la modale remonte depuis le bas (feuille) */
+@media (max-width: 575.98px) {
+    .app-modal { align-items: flex-end; padding: 0; }
+    .app-modal__dialog {
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+        transform: translateY(100%);
+    }
+    .app-modal.is-open .app-modal__dialog { transform: translateY(0); }
+}
+
+/* ---------- Loader global ---------- */
+.app-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .9rem;
+    background: rgba(255, 255, 255, .82);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity .22s ease, visibility .22s ease;
+}
+.app-loader.is-visible {
+    visibility: visible;
+    opacity: 1;
+}
+.app-loader__spinner {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 4px solid #e2e8f0;
+    border-top-color: #0b7a3b;
+    animation: app-loader-spin .8s linear infinite;
+}
+.app-loader__text {
+    font-size: .9rem;
+    font-weight: 600;
+    color: #475569;
+    margin: 0;
+}
+@keyframes app-loader-spin {
+    to { transform: rotate(360deg); }
+}

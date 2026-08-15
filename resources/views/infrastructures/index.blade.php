@@ -53,54 +53,56 @@
         </div>
     @endif
 
-    <!-- En-tête -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div>
-            <h2 class="h4 mb-1 fw-bold text-dark">
-                <i class="fas fa-building me-2 text-success"></i>
-                Exploitation des Données des Infrastructures
-            </h2>
-            <p class="text-muted mb-0">Gestion complète des équipements publics et suivi des interventions</p>
-        </div>
-        @if(!Auth::user()->isPublicUser())
-        <div class="d-flex flex-wrap gap-2">
-            @if(Auth::user()->isSuperAdmin() || Auth::user()->isCommuneAdmin())
-                @php
-                    $__pendingCount = \App\Models\Infrastructure::query()
-                        ->visibleTo(Auth::user())->pending()->count();
-                    $__plannedCount = \App\Models\Infrastructure::query()
-                        ->visibleTo(Auth::user())
-                        ->whereHas('works', fn($q) => $q->where('status', 'planned'))->count();
-                @endphp
-                <a href="{{ route('infrastructures.pending') }}" class="btn btn-warning position-relative d-flex align-items-center gap-2">
-                    <i class="fas fa-hourglass-half"></i> À valider
-                    @if($__pendingCount > 0)
-                        <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">{{ $__pendingCount }}</span>
-                    @endif
+    <!-- En-tête premium -->
+    <div class="page-hero">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h2 class="h4 mb-1">
+                    <i class="fas fa-building me-2"></i>
+                    Exploitation des Données des Infrastructures
+                </h2>
+                <p class="hero-sub mb-0">Gestion complète des équipements publics et suivi des interventions</p>
+            </div>
+            @if(!Auth::user()->isPublicUser())
+            <div class="hero-actions d-flex flex-wrap gap-2">
+                @if(Auth::user()->isSuperAdmin() || Auth::user()->isCommuneAdmin())
+                    @php
+                        $__pendingCount = \App\Models\Infrastructure::query()
+                            ->visibleTo(Auth::user())->pending()->count();
+                        $__plannedCount = \App\Models\Infrastructure::query()
+                            ->visibleTo(Auth::user())
+                            ->whereHas('works', fn($q) => $q->where('status', 'planned'))->count();
+                    @endphp
+                    <a href="{{ route('infrastructures.pending') }}" class="btn btn-warning d-flex align-items-center gap-2">
+                        <i class="fas fa-hourglass-half"></i> À valider
+                        @if($__pendingCount > 0)
+                            <span class="badge bg-danger rounded-pill">{{ $__pendingCount }}</span>
+                        @endif
+                    </a>
+                    <a href="{{ route('infrastructures.planned') }}" class="btn btn-info text-white d-flex align-items-center gap-2">
+                        <i class="fas fa-calendar-check"></i> Planifiées
+                        @if($__plannedCount > 0)
+                            <span class="badge bg-dark rounded-pill">{{ $__plannedCount }}</span>
+                        @endif
+                    </a>
+                @endif
+                @if(Auth::user()->isSuperAdmin())
+                <button class="btn btn-danger d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="fas fa-file-import"></i> Importer
+                </button>
+                @endif
+                <a href="{{ route('infrastructures.create') }}" class="btn btn-success d-flex align-items-center gap-2">
+                    <i class="fas fa-plus"></i> Nouveau
                 </a>
-                <a href="{{ route('infrastructures.planned') }}" class="btn btn-info text-white position-relative d-flex align-items-center gap-2">
-                    <i class="fas fa-calendar-check"></i> Planifiées
-                    @if($__plannedCount > 0)
-                        <span class="badge bg-dark position-absolute top-0 start-100 translate-middle rounded-pill">{{ $__plannedCount }}</span>
-                    @endif
-                </a>
+            </div>
             @endif
-            @if(Auth::user()->isSuperAdmin())
-            <button class="btn btn-danger d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="fas fa-file-import"></i> Importer
-            </button>
-            @endif
-            <a href="{{ route('infrastructures.create') }}" class="btn btn-success d-flex align-items-center gap-2">
-                <i class="fas fa-plus"></i> Nouveau
-            </a>
         </div>
-        @endif
     </div>
 
 
     <!-- Statistiques -->
     <div class="card shadow-sm mb-4 border-0">
-        <div class="card-header bg-gradient text-white">
+        <div class="card-header text-white" style="background: linear-gradient(135deg,#0b6623,#0a7a2a); border-radius: 15px 15px 0 0;">
             <h5 class="mb-0">
                 <i class="fas fa-chart-line me-2"></i> 
                 Statistiques des Infrastructures
@@ -111,31 +113,33 @@
             <div class="row g-4 mb-4">
                 <!-- Total -->
                 <div class="col-12 col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 text-primary mb-2">{{ $stats['total'] }}</div>
-                            <h6 class="text-primary mb-0">Total Infrastructures</h6>
+                    <div class="stat-card h-100 p-3 d-flex align-items-center gap-3">
+                        <div class="stat-icon"><i class="fas fa-building"></i></div>
+                        <div>
+                            <div class="h3 fw-bold mb-0" style="color:#0b6623">{{ number_format($stats['total'], 0, ',', ' ') }}</div>
+                            <div class="text-muted small fw-semibold">Total Infrastructures</div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Planifiées -->
                 <div class="col-6 col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 text-info mb-2">{{ $stats['planned'] }}</div>
-                            <h6 class="text-info mb-0">Planifiées</h6>
+                    <div class="stat-card h-100 p-3 d-flex align-items-center gap-3">
+                        <div class="stat-icon" style="background: linear-gradient(135deg,#0e7490,#0891b2);"><i class="fas fa-calendar-check"></i></div>
+                        <div>
+                            <div class="h3 fw-bold mb-0" style="color:#0e7490">{{ $stats['planned'] }}</div>
+                            <div class="text-muted small fw-semibold">Planifiées</div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Déjà Entretenues -->
                 <div class="col-6 col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="display-6 text-success mb-2">{{ $stats['maintained'] }}</div>
-                            <h6 class="text-success mb-0">Entretenues</h6>
-                            <small class="text-muted">Travaux terminés</small>
+                    <div class="stat-card h-100 p-3 d-flex align-items-center gap-3">
+                        <div class="stat-icon" style="background: linear-gradient(135deg,#15803d,#16a34a);"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <div class="h3 fw-bold mb-0" style="color:#15803d">{{ $stats['maintained'] }}</div>
+                            <div class="text-muted small fw-semibold">Entretenues <span class="text-muted">(Réhabilitées)</span></div>
                         </div>
                     </div>
                 </div>
@@ -247,7 +251,8 @@
                             </h6>
                             @if($stats['planned'] > 0)
                                 @php
-                                    $progressPercentage = round(($stats['maintained'] / $stats['planned']) * 100);
+                                    $progressDone = $plannedRehabilitated ?? 0;
+                                    $progressPercentage = round(($progressDone / $stats['planned']) * 100);
                                 @endphp
                                 <div class="progress mb-3" style="height: 25px;">
                                     <div class="progress-bar bg-success" role="progressbar" 
@@ -258,7 +263,7 @@
                                     </div>
                                 </div>
                                 <div class="text-center">
-                                    <small class="text-muted">{{ $stats['maintained'] }}/{{ $stats['planned'] }} terminées</small>
+                                    <small class="text-muted">{{ $progressDone }}/{{ $stats['planned'] }} planifiées réhabilitées</small>
                                 </div>
                             @else
                                 <div class="text-center text-muted">
@@ -422,8 +427,8 @@
                 </div>
                 <div class="col-md-4 col-lg-3">
                     <label class="form-label text-muted">Filtrer par commune</label>
-                    <select name="commune" class="form-select">
-                        <option value="">Toutes les communes</option>
+                    <select name="commune" class="form-select" required>
+                        <option value="">-- Sélectionnez une commune (obligatoire) --</option>
                         @foreach($communes as $commune)
                             <option value="{{ $commune }}">{{ $commune }}</option>
                         @endforeach
@@ -451,7 +456,8 @@
             </div>
             <div class="alert alert-info mt-3 mb-0">
                 <i class="fas fa-info-circle me-2"></i>
-                Vous pouvez également sélectionner des lignes spécifiques dans le tableau ci-dessous pour un export personnalisé
+                L'export se fait <strong>par commune</strong> : sélectionnez une commune obligatoirement
+                (ou sélectionnez des lignes précises dans le tableau pour un export personnalisé).
             </div>
         </div>
     </form>
@@ -459,6 +465,11 @@
     <script>
         document.getElementById('exportForm')?.addEventListener('submit', function(e) {
             const btn = e.submitter;
+            // Loader global premium pendant la génération du fichier
+            if (window.adecobUI) {
+                window.adecobUI.showLoader('Téléchargement en cours...');
+                setTimeout(() => { if (window.adecobUI) window.adecobUI.hideLoader(); }, 8000);
+            }
             if (btn) {
                 const originalHtml = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Préparation...';
@@ -573,15 +584,32 @@
 
     document.getElementById('importForm')?.addEventListener('submit', function(e) {
         const overwrite = document.getElementById('overwrite');
+        const showImportFeedback = function() {
+            document.getElementById('importSubmitBtn').disabled = true;
+            document.getElementById('importSubmitBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Importation...';
+            document.getElementById('importProgress').classList.remove('d-none');
+            if (window.adecobUI) window.adecobUI.showLoader('Importation en cours...');
+        };
+
         if (overwrite && overwrite.checked) {
-            if (!confirm('⚠️ ATTENTION : Toutes les infrastructures existantes seront SUPPRIMÉES DÉFINITIVEMENT et remplacées par le contenu du fichier.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
-                e.preventDefault();
-                return false;
+            e.preventDefault();
+            if (window.adecobUI && typeof window.adecobUI.confirm === 'function') {
+                window.adecobUI.confirm({
+                    title: 'Attention : écrasement des données',
+                    message: 'Toutes les infrastructures existantes seront SUPPRIMÉES DÉFINITIVEMENT et remplacées par le contenu du fichier. Êtes-vous absolument sûr de vouloir continuer ?',
+                    icon: 'danger',
+                    okText: 'Importer et écraser',
+                    onConfirm: function() {
+                        showImportFeedback();
+                        document.getElementById('importForm').submit();
+                    }
+                });
             }
+            return false;
         }
-        document.getElementById('importSubmitBtn').disabled = true;
-        document.getElementById('importSubmitBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Importation...';
-        document.getElementById('importProgress').classList.remove('d-none');
+
+        // Pas d'écrasement : soumission native avec feedback visuel
+        showImportFeedback();
     });
 </script>
 @endif

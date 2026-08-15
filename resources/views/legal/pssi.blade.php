@@ -13,7 +13,7 @@
 <div class="alert alert-light border">
     <strong>Objet.</strong> La présente Politique de Sécurité du Système d'Information (PSSI)
     définit l'ensemble des règles, responsabilités, mesures techniques et organisationnelles
-    mises en œuvre par l'<strong>ADECOB</strong> (Association pour le Développement des Communes
+    mises en œuvre par l'<strong>{{ config('app.name') }}</strong> (Association pour le Développement des Communes
     du Borgou) pour garantir la <strong>confidentialité, l'intégrité, la disponibilité et la
     traçabilité</strong> des données traitées par la plateforme numérique « {{ config('app.name') }} ». Elle est opposable à toute personne accédant au système d'information,
     quel que soit son rôle ou son statut.
@@ -37,7 +37,7 @@
 
 <h3>1.1 Contexte et enjeux</h3>
 <p>
-    L'ADECOB gère, pour le compte des huit (8) communes du département du Borgou au Bénin
+    L'{{ config('app.name') }} gère, pour le compte des huit (8) communes du département du Borgou au Bénin
     et avec le soutien financier de la <strong>DDC Suisse</strong> (Direction du Développement
     et de la Coopération), une plateforme numérique centralisant
     <strong>10 402 infrastructures communautaires géo-référencées</strong> : écoles, points
@@ -65,7 +65,7 @@
         critiques et contre-mesures associées ;</li>
     <li><strong>COBIT 2019</strong> — cadre de gouvernance et de gestion du système
         d'information ;</li>
-    <li>Politiques internes de l'ADECOB et exigences contractuelles de la DDC Suisse.</li>
+    <li>Politiques internes de l'{{ config('app.name') }} et exigences contractuelles de la DDC Suisse.</li>
 </ul>
 
 <h3>1.3 Objectifs de la PSSI</h3>
@@ -87,7 +87,7 @@
 <h2>2. Périmètre d'application</h2>
 
 <h3>2.1 Systèmes et composants couverts</h3>
-<p>La PSSI s'applique à l'intégralité du système d'information de la plateforme ADECOB, qui comprend :</p>
+<p>La PSSI s'applique à l'intégralité du système d'information de la plateforme {{ config('app.name') }}, qui comprend :</p>
 <table>
     <tr>
         <th>Composant</th>
@@ -138,7 +138,7 @@
         administrateurs communaux, agents de mairie ;</li>
     <li><strong>Les visiteurs publics</strong> pour ce qui concerne les usages des espaces
         en accès libre ;</li>
-    <li><strong>L'équipe ADECOB</strong> (direction, personnel technique, chargés de suivi) ;</li>
+    <li><strong>L'équipe {{ config('app.name') }}</strong> (direction, personnel technique, chargés de suivi) ;</li>
     <li><strong>Les prestataires et partenaires tiers</strong> : hébergeur, prestataires de
         maintenance, intégrateurs, auditeurs ;</li>
     <li><strong>La DDC Suisse</strong> et ses représentants dans le cadre de leurs droits
@@ -149,7 +149,7 @@
 <p>
     La PSSI ne couvre pas les systèmes d'information internes des communes elles-mêmes
     (mairies, directions techniques locales) sauf dans la mesure où ces systèmes se connectent
-    directement à la plateforme ADECOB.
+    directement à la plateforme {{ config('app.name') }}.
 </p>
 
 
@@ -160,7 +160,7 @@
 
 <h3>3.1 Structure de gouvernance</h3>
 <p>
-    L'ADECOB met en place une gouvernance de la sécurité articulée autour des acteurs
+    L'{{ config('app.name') }} met en place une gouvernance de la sécurité articulée autour des acteurs
     suivants, conformément aux principes du cadre COBIT 2019 :
 </p>
 <table>
@@ -169,7 +169,7 @@
         <th>Rôle et responsabilités</th>
     </tr>
     <tr>
-        <td><strong>Direction de l'ADECOB</strong></td>
+        <td><strong>Direction de l'{{ config('app.name') }}</strong></td>
         <td>
             Approbation de la PSSI et des ressources allouées à la sécurité ;
             arbitrage en cas d'incident critique ; engagement institutionnel.
@@ -209,7 +209,7 @@
 <h3>3.2 Canal de contact sécurité</h3>
 <p>
     Tout incident, vulnérabilité ou question relative à la sécurité doit être signalé
-    via le <a href="{{ route('contact.form') }}">formulaire de contact officiel de l'ADECOB</a>
+    via le <a href="{{ route('contact.form') }}">formulaire de contact officiel de l'{{ config('app.name') }}</a>
     en mentionnant explicitement « Sécurité — PSSI » dans l'objet du message.
     Ce canal est surveillé par le RSSI et le Super-Administrateur technique.
 </p>
@@ -223,7 +223,7 @@
     <li>Chaque révision donne lieu à une montée de version et une mise à jour de la date de
         publication visible en en-tête du présent document ;</li>
     <li>Un <strong>rapport de sécurité annuel</strong> est produit par le RSSI à destination
-        de la direction de l'ADECOB et des bailleurs (DDC Suisse), synthétisant les incidents
+        de la direction de l'{{ config('app.name') }} et des bailleurs (DDC Suisse), synthétisant les incidents
         survenus, les mesures prises et les axes d'amélioration.</li>
 </ul>
 
@@ -288,9 +288,9 @@
     <li>Figurant dans les listes publiques de mots de passe compromis (bases de type
         <em>HaveIBeenPwned</em> ou équivalent) ;</li>
     <li>Constitués de séquences évidentes : <code>123456789</code>, <code>password</code>,
-        <code>azerty</code>, <code>adecob2026</code>, etc. ;</li>
+        <code>azerty</code>, <code>{{ strtolower(config('app.name')) }}2026</code>, etc. ;</li>
     <li>Identiques au code d'accès communal ou à tout autre identifiant de la plateforme ;</li>
-    <li>Contenant le nom « ADECOB » ou « Borgou » seul ou combiné à un chiffre simple.</li>
+    <li>Contenant le nom « {{ config('app.name') }} » ou « Borgou » seul ou combiné à un chiffre simple.</li>
 </ul>
 
 <h3>4.3 Stockage et hachage</h3>
@@ -421,7 +421,7 @@
 
 <h3>5.2 Cycle de vie des comptes</h3>
 <p>
-    Le cycle de vie d'un compte utilisateur sur la plateforme ADECOB suit obligatoirement
+    Le cycle de vie d'un compte utilisateur sur la plateforme {{ config('app.name') }} suit obligatoirement
     les étapes ci-après :
 </p>
 <ol>
@@ -1118,7 +1118,7 @@
                 informées directement dans les meilleurs délais ;
             </li>
             <li>
-                La direction de l'ADECOB et la DDC Suisse sont informées de tout incident
+                La direction de l'{{ config('app.name') }} et la DDC Suisse sont informées de tout incident
                 de niveau Élevé ou Critique dans les 24 heures.
             </li>
         </ul>
@@ -1140,7 +1140,7 @@
 
 <h3>12.1 Politique de divulgation responsable</h3>
 <p>
-    L'ADECOB encourage la divulgation responsable des vulnérabilités. Toute personne
+    L'{{ config('app.name') }} encourage la divulgation responsable des vulnérabilités. Toute personne
     découvrant une vulnérabilité affectant la plateforme est invitée à la signaler
     de manière confidentielle via le <a href="{{ route('contact.form') }}">formulaire de contact</a>
     (mention « DIVULGATION RESPONSABLE — SÉCURITÉ »), en fournissant :
@@ -1152,7 +1152,7 @@
     <li>Les éventuelles preuves de concept (<em>Proof of Concept</em>).</li>
 </ul>
 <p>
-    L'ADECOB s'engage à accuser réception dans un délai de <strong>72 heures</strong>,
+    L'{{ config('app.name') }} s'engage à accuser réception dans un délai de <strong>72 heures</strong>,
     à analyser le signalement dans un délai de <strong>7 jours ouvrables</strong> et à
     informer le déclarant de la suite donnée. En contrepartie, le déclarant s'engage à ne
     pas divulguer publiquement la vulnérabilité avant qu'un correctif ait été déployé ou
@@ -1213,7 +1213,7 @@
 
 <h3>13.1 Infrastructure d'hébergement</h3>
 <p>
-    La plateforme est hébergée chez un prestataire tiers. L'ADECOB exige de son hébergeur
+    La plateforme est hébergée chez un prestataire tiers. L'{{ config('app.name') }} exige de son hébergeur
     les garanties minimales suivantes, formalisées dans un contrat de service :
 </p>
 <ul>
@@ -1223,14 +1223,14 @@
     <li>Surveillance réseau 24h/24 et 7j/7 avec alertes en cas d'anomalie ;</li>
     <li>Sauvegardes indépendantes de niveau hébergeur ;</li>
     <li>Procédures documentées de gestion des incidents physiques ;</li>
-    <li>Notification de l'ADECOB dans un délai de 4 heures en cas d'incident
+    <li>Notification de l'{{ config('app.name') }} dans un délai de 4 heures en cas d'incident
         affectant son environnement.</li>
 </ul>
 
 <h3>13.2 Accords de traitement des données avec les tiers</h3>
 <p>
     Conformément à la loi n°2017-20 du 20 avril 2018, tout prestataire traitant des données
-    personnelles pour le compte de l'ADECOB (hébergeur, mainteneur, auditeur) doit signer
+    personnelles pour le compte de l'{{ config('app.name') }} (hébergeur, mainteneur, auditeur) doit signer
     un <strong>accord de traitement des données</strong> (équivalent DPA — <em>Data Processing
     Agreement</em>), précisant :
 </p>
@@ -1238,9 +1238,9 @@
     <li>La nature et la finalité des traitements sous-traités ;</li>
     <li>Les mesures de sécurité techniques et organisationnelles appliquées ;</li>
     <li>L'obligation de confidentialité du personnel du prestataire ;</li>
-    <li>L'interdiction de sous-traiter sans accord préalable de l'ADECOB ;</li>
-    <li>Les modalités de notification des incidents de sécurité à l'ADECOB ;</li>
-    <li>Les conditions d'audit et de contrôle par l'ADECOB ou un tiers mandaté.</li>
+    <li>L'interdiction de sous-traiter sans accord préalable de l'{{ config('app.name') }} ;</li>
+    <li>Les modalités de notification des incidents de sécurité à l'{{ config('app.name') }} ;</li>
+    <li>Les conditions d'audit et de contrôle par l'{{ config('app.name') }} ou un tiers mandaté.</li>
 </ul>
 
 <h3>13.3 Accès des prestataires à la plateforme</h3>
@@ -1326,7 +1326,7 @@
 <h3>15.2 Sanctions administratives internes</h3>
 <p>
     Tout manquement aux règles de la PSSI peut entraîner, selon la gravité et la nature
-    de la violation, les mesures suivantes décidées par la direction de l'ADECOB :
+    de la violation, les mesures suivantes décidées par la direction de l'{{ config('app.name') }} :
 </p>
 <ul>
     <li>Avertissement écrit ;</li>
@@ -1363,7 +1363,7 @@
     </li>
 </ul>
 <p>
-    L'ADECOB se réserve le droit de porter plainte auprès des autorités compétentes
+    L'{{ config('app.name') }} se réserve le droit de porter plainte auprès des autorités compétentes
     (APDP, CRIET — Cour de Répression des Infractions Économiques et du Terrorisme)
     pour tout acte malveillant avéré.
 </p>
@@ -1388,7 +1388,7 @@
 <h3>16.2 Processus de révision</h3>
 <ol>
     <li>Le RSSI prépare une proposition de révision documentant les changements envisagés ;</li>
-    <li>La direction de l'ADECOB valide les modifications ;</li>
+    <li>La direction de l'{{ config('app.name') }} valide les modifications ;</li>
     <li>La version révisée est publiée sur la plateforme avec un numéro de version incrémenté
         et une nouvelle date d'entrée en vigueur ;</li>
     <li>Les utilisateurs concernés (administrateurs) sont informés des modifications
@@ -1406,13 +1406,13 @@
     <tr>
         <td>1.0</td>
         <td>21/06/2026</td>
-        <td>RSSI ADECOB</td>
+        <td>RSSI {{ config('app.name') }}</td>
         <td>Création initiale de la PSSI</td>
     </tr>
     <tr>
         <td>1.1</td>
         <td>30/06/2026</td>
-        <td>RSSI ADECOB</td>
+        <td>RSSI {{ config('app.name') }}</td>
         <td>
             Extension complète : ajout des sections MFA détaillée, classification des données,
             gestion des vulnérabilités, continuité d'activité (RTO/RPO), sécurité des tiers,

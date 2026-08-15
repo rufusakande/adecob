@@ -20,6 +20,10 @@ class LogAuthenticatedLogout
      */
     public function handle(Logout $event): void
     {
-        AuditService::logLogout($event->user);
+        // L'utilisateur peut être null (compte supprimé ou session expirée) :
+        // on n'audite la déconnexion que s'il existe encore.
+        if ($event->user) {
+            AuditService::logLogout($event->user);
+        }
     }
 }

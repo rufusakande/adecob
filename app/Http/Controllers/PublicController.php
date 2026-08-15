@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 class PublicController extends Controller
 {
     /**
-     * Landing page publique : présentation ADECOB + statistiques agrégées + CTA.
+     * Landing page publique : présentation de la plateforme + statistiques agrégées + CTA.
      * Accessible sans connexion.
      */
     public function landing()

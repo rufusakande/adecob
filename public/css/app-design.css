@@ -1,0 +1,222 @@
+/* =====================================================================
+   ARMANI — Design System Premium global
+   Appliqué à toutes les pages via layouts/app.blade.php.
+   Palette de marque : vert (#0b6623 → #0a7a2a → #064a1a) + or #FFD100.
+   Surcharge maîtrisée des composants Bootstrap pour un rendu premium.
+   ===================================================================== */
+
+/* ---------- Titres ---------- */
+h1, h2, h3, h4, h5, h6 {
+    color: #173a2a;
+    letter-spacing: -0.01em;
+}
+
+/* ---------- Cartes premium ---------- */
+.card {
+    border: 1px solid #e7eeea;
+    border-radius: 16px;
+    box-shadow: 0 6px 22px -10px rgba(16, 60, 35, 0.14);
+}
+.card-header {
+    background: linear-gradient(135deg, #f4f9f5, #eaf3ee);
+    border-bottom: 1px solid #e2ece6;
+    color: #0b6623;
+    font-weight: 600;
+    border-radius: 15px 15px 0 0 !important;
+}
+/* En-têtes de carte sur fond coloré (dégradé vert / danger) : titres en blanc */
+.card-header.text-white h5,
+.card-header.text-white h6,
+.card-header.text-white .card-title,
+.modal-header.text-white .modal-title { color: #fff !important; }
+.card-footer {
+    background: #fafcfa;
+    border-top: 1px solid #eef3ef;
+    border-radius: 0 0 15px 15px !important;
+}
+
+/* ---------- Boutons premium ---------- */
+.btn { border-radius: 10px; font-weight: 500; }
+.btn-primary {
+    background: linear-gradient(135deg, #0b6623, #0a7a2a);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(6, 74, 26, 0.25);
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+    background: linear-gradient(135deg, #09551e, #0b6623) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 18px rgba(6, 74, 26, 0.32);
+    transform: translateY(-1px);
+}
+.btn-outline-primary { color: #0b6623; border-color: #0b6623; }
+.btn-outline-primary:hover, .btn-outline-primary:active {
+    background: #0b6623 !important;
+    border-color: #0b6623 !important;
+    color: #fff !important;
+}
+.btn-success { background: linear-gradient(135deg, #128a30, #0b6623); border: none; }
+.btn-success:hover { background: linear-gradient(135deg, #0b6623, #09551e); }
+.btn-danger { background: linear-gradient(135deg, #e0484f, #b02a37); border: none; }
+.btn-danger:hover { background: linear-gradient(135deg, #c23a41, #8f1f2a); }
+.btn-warning { color: #3a2f00; }
+
+/* ---------- Tableaux premium ---------- */
+.table { --bs-table-hover-bg: #f2f8f4; }
+.table thead th {
+    background: linear-gradient(135deg, #f4f9f5, #eaf3ee);
+    color: #0b6623;
+    font-weight: 600;
+    border-bottom: 2px solid #d9e8dd;
+    white-space: nowrap;
+}
+.table tbody tr { transition: background-color 0.15s ease; }
+
+/* ---------- Badges & étiquettes ---------- */
+.badge { border-radius: 50rem; font-weight: 600; padding: 0.4em 0.7em; }
+
+/* ---------- Pagination ---------- */
+.pagination .page-link { color: #0b6623; border-color: #e0e9e3; }
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #0b6623, #0a7a2a);
+    border-color: #0b6623;
+    color: #fff;
+}
+.pagination .page-item.disabled .page-link { color: #9db0a4; }
+
+/* ---------- Formulaires ---------- */
+.form-control, .form-select {
+    border-radius: 10px;
+    border-color: #d9e2dc;
+    padding: 0.55rem 0.85rem;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #0a7a2a;
+    box-shadow: 0 0 0 0.2rem rgba(11, 102, 35, 0.12);
+}
+.form-check-input:checked { background-color: #0b6623; border-color: #0b6623; }
+.form-label { font-weight: 600; color: #2b4a39; }
+
+/* ---------- Alertes ---------- */
+.alert { border-radius: 12px; border: none; }
+
+/* ---------- Onglets ---------- */
+.nav-pills .nav-link { border-radius: 10px; }
+.nav-pills .nav-link.active {
+    background: linear-gradient(135deg, #0b6623, #0a7a2a);
+    color: #fff;
+}
+.nav-tabs .nav-link { border: none; border-bottom: 2px solid transparent; color: #55695e; }
+.nav-tabs .nav-link.active { color: #0b6623; border-bottom-color: #0b6623; font-weight: 600; }
+
+/* ---------- Listes groupées ---------- */
+.list-group-item { border-color: #e9f0eb; }
+.list-group-item-action { transition: background-color 0.15s ease; }
+.list-group-item-action:hover { background: #f2f8f4; color: #0b6623; }
+
+/* ---------- Modales ---------- */
+.modal-content { border-radius: 18px; border: none; box-shadow: 0 24px 60px rgba(6, 40, 20, 0.3); }
+.modal-header { border-bottom: 1px solid #eef2ef; }
+.modal-footer { border-top: 1px solid #eef2ef; }
+
+/* ---------- Progression ---------- */
+.progress { border-radius: 999px; background: #eaf0ec; }
+.progress-bar { background: linear-gradient(90deg, #0b6623, #0a7a2a); }
+
+/* ---------- Liens ---------- */
+a { color: #0b6623; }
+
+/* ---------- Utilitaires de marque ---------- */
+.text-primary { color: #0b6623 !important; }
+.bg-primary { background-color: #0b6623 !important; }
+.border-primary { border-color: #0b6623 !important; }
+
+/* ---------- Bloc d'en-tête de page (titres + sous-titre) ---------- */
+.page-title { font-weight: 700; color: #173a2a; }
+.page-title-sm { font-weight: 600; color: #173a2a; }
+.text-muted { color: #6b7a72 !important; }
+
+/* ---------- Hero de page premium (en-tête des pages internes) ---------- */
+.page-hero {
+    position: relative;
+    border-radius: 20px;
+    padding: 2rem 2rem 1.9rem;
+    margin-bottom: 1.6rem;
+    background: linear-gradient(135deg, #0b6623 0%, #0a7a2a 55%, #064a1a 100%);
+    color: #fff;
+    overflow: hidden;
+    box-shadow: 0 14px 34px -14px rgba(6, 74, 26, 0.5);
+}
+.page-hero::before {
+    content: '';
+    position: absolute;
+    top: -70px;
+    right: -50px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 209, 0, 0.22), transparent 70%);
+    pointer-events: none;
+}
+.page-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -90px;
+    left: -40px;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%);
+    pointer-events: none;
+}
+.page-hero h1, .page-hero h2, .page-hero h3, .page-hero h4,
+.page-hero .hero-title { color: #fff; font-weight: 800; }
+.page-hero .hero-sub { color: rgba(255, 255, 255, 0.86); }
+.page-hero > .d-flex, .page-hero > div { position: relative; z-index: 1; }
+.page-hero .hero-actions .btn {
+    border-radius: 11px;
+    font-weight: 600;
+    box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.35);
+}
+.page-hero .hero-actions .btn-light { background: #fff; color: #0b6623; }
+.page-hero .hero-actions .btn-light:hover { background: #f0f7f2; }
+.page-hero .hero-actions .btn-outline-light:hover { background: rgba(255,255,255,0.15); }
+.page-hero .hero-actions .btn-warning { color: #4a3800; }
+.page-hero .hero-actions .btn-info { color: #062b33; }
+.page-hero .hero-actions .btn-danger { color: #fff; }
+.page-hero .hero-actions .btn-success { background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.4); color: #fff; }
+.page-hero .hero-actions .btn-success:hover { background: rgba(255,255,255,0.24); }
+.page-hero .hero-actions .badge { position: static !important; transform: none !important; margin-left: 6px; }
+
+/* ---------- Cartes statistiques (KPI) ---------- */
+.stat-card {
+    border-radius: 16px;
+    border: 1px solid #e7eeea;
+    background: #fff;
+    box-shadow: 0 6px 22px -10px rgba(16, 60, 35, 0.14);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px -12px rgba(16, 60, 35, 0.22); }
+.stat-card .stat-icon {
+    width: 46px; height: 46px;
+    border-radius: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #0b6623, #0a7a2a);
+    color: #fff;
+    font-size: 1.25rem;
+}
+
+/* ---------- Liens de navigation interne (rapides) ---------- */
+.quick-link {
+    display: flex; align-items: center; gap: 0.6rem;
+    color: #2b4a39; font-weight: 500; text-decoration: none;
+    padding: 0.7rem 0.9rem; border-radius: 12px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+.quick-link:hover { background: #f2f8f4; color: #0b6623; }
+
+/* ---------- Responsive : garder les tableaux lisibles ---------- */
+@media (max-width: 575.98px) {
+    .card { border-radius: 14px; }
+    .table-responsive { border-radius: 12px; }
+}

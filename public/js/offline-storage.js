@@ -2,7 +2,7 @@
 localforage.config({
     name: 'ADECOB',
     storeName: 'infrastructures_offline',
-    description: 'Stockage des infrastructures créées hors-ligne'
+    description: 'Stockage des infrastructures crï¿½ï¿½es hors-ligne'
 });
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -70,7 +70,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 
             } catch (err) {
                 console.error("Erreur de sauvegarde locale:", err);
-                alert("Erreur lors de la sauvegarde sur l'appareil: " + err.message);
+                if (window.adecobUI) {
+                    window.adecobUI.confirm({
+                        title: 'Erreur de sauvegarde',
+                        message: "Erreur lors de la sauvegarde sur l'appareil : " + (err && err.message ? err.message : 'inconnue'),
+                        okText: 'OK',
+                        icon: 'danger'
+                    });
+                } else {
+                    alert("Erreur lors de la sauvegarde sur l'appareil: " + (err && err.message ? err.message : 'inconnue'));
+                }
             }
         });
     }
@@ -83,7 +92,7 @@ async function updatePendingCount() {
         if (container) {
             const existingBadge = document.getElementById('pending-badge');
             if (existingData.length > 0) {
-                const html = '<div id="pending-badge" class="alert alert-warning text-center fw-bold shadow-sm"><i class="bi bi-hdd-fill me-2"></i> Vous avez ' + existingData.length + ' infrastructure(s) sauvegardée(s) sur cet appareil, en attente de synchronisation.</div>';
+                const html = '<div id="pending-badge" class="alert alert-warning text-center fw-bold shadow-sm"><i class="bi bi-hdd-fill me-2"></i> Vous avez ' + existingData.length + ' infrastructure(s) sauvegardï¿½e(s) sur cet appareil, en attente de synchronisation.</div>';
                 if (existingBadge) {
                     existingBadge.outerHTML = html;
                 } else {
@@ -99,7 +108,7 @@ async function updatePendingCount() {
 function showSuccessBanner() {
     const container = document.getElementById('offline-ui-container');
     if (container) {
-        const html = '<div class="alert alert-success alert-dismissible fade show text-center shadow-sm" role="alert"><h4 class="alert-heading fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Sauvegarde réussie !</h4><p class="mb-0">L\'infrastructure a bien été enregistrée sur votre téléphone.</p><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        const html = '<div class="alert alert-success alert-dismissible fade show text-center shadow-sm" role="alert"><h4 class="alert-heading fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Sauvegarde rï¿½ussie !</h4><p class="mb-0">L\'infrastructure a bien ï¿½tï¿½ enregistrï¿½e sur votre tï¿½lï¿½phone.</p><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
         container.insertAdjacentHTML('afterbegin', html);
     }
 }

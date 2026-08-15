@@ -46,7 +46,7 @@
                         &nbsp;·&nbsp;
                         <i class="bi bi-calendar3"></i> Mise à jour le @yield('doc_date', date('d/m/Y'))
                         &nbsp;·&nbsp;
-                        <strong>ADECOB</strong> — Association pour le Développement des Communes du Borgou
+                        <strong>{{ config('app.name') }}</strong>
                     </p>
                     <p class="text-muted mb-0 small mt-1">
                         <i class="bi bi-geo-alt"></i> Parakou, République du Bénin
@@ -65,7 +65,7 @@
             <div class="row g-3 small text-muted">
                 <div class="col-md-6">
                     <p class="mb-1"><strong><i class="bi bi-envelope"></i> Contact responsable de traitement :</strong></p>
-                    <p class="mb-0">ADECOB — Parakou, Bénin<br>
+                    <p class="mb-0">{{ config('app.name') }} — Parakou, Bénin<br>
                         <a href="{{ route('contact.form') }}">Formulaire de contact officiel</a>
                     </p>
                 </div>
@@ -79,7 +79,7 @@
             <hr class="mt-3">
             <p class="mb-0 text-center small text-muted">
                 Document conforme à la <em>loi n°2017-20 du 20 avril 2018 portant Code du numérique en République du Bénin</em>
-                &nbsp;·&nbsp; <strong>ADECOB</strong> &copy; {{ date('Y') }}
+                &nbsp;·&nbsp; <strong>{{ config('app.name') }}</strong> &copy; {{ date('Y') }}
             </p>
         </footer>
 

@@ -130,7 +130,12 @@
 
             @if($canDelete)
                 <form method="POST" action="{{ route('infrastructures.destroy', $infrastructure) }}"
-                      onsubmit="return confirm('Supprimer définitivement cette infrastructure ?');" class="d-inline">
+                      class="d-inline js-confirm-submit"
+                      data-confirm-title="Supprimer l'infrastructure"
+                      data-confirm-message="Supprimer définitivement cette infrastructure ? Cette action est irréversible."
+                      data-confirm-icon="danger"
+                      data-confirm-ok="Supprimer"
+                      data-loader-text="Suppression en cours...">
                     @csrf @method('DELETE')
                     <button class="btn btn-danger"><i class="fas fa-trash me-1"></i> Supprimer</button>
                 </form>

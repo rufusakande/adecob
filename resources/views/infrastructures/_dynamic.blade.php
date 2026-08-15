@@ -88,6 +88,7 @@
                     @forelse ($infrastructures as $infra)
                     @php
                         $isPlanned = in_array($infra->id, $plannedInfrastructureIds ?? []);
+                        $isRehabilitated = !empty($infra->rehabilitation) && strtolower($infra->rehabilitation) === 'réhabilitée';
                         $score = (float) ($infra->score_priorite ?? 0);
                         $priorityClass = '';
                         $priorityLabel = 'N/A';
@@ -97,7 +98,8 @@
                         elseif ($score >= 41) { $priorityClass = 'table-info'; $priorityLabel = 'Moyenne'; $priorityColor = 'info'; }
                         elseif ($score >= 21) { $priorityClass = 'table-secondary'; $priorityLabel = 'Faible'; $priorityColor = 'secondary'; }
                         else { $priorityClass = 'table-success'; $priorityLabel = 'Bon État'; $priorityColor = 'success'; }
-                        $rowClass = $isPlanned ? 'table-success' : $priorityClass;
+                        // Planifiée = bleu clair, Réhabilitée = vert, sinon couleur de priorité
+                        $rowClass = $isRehabilitated ? 'table-success' : ($isPlanned ? 'table-primary' : $priorityClass);
                     @endphp
                     <tr class="{{ $rowClass }}">
                         <td>
@@ -113,7 +115,12 @@
                             </span>
                             <div class="small text-muted mt-1">Score : {{ number_format($score, 2, '.', '') }}</div>
                         </td>
-                        <td>@include('infrastructures.partials._status-badge', ['status' => $infra->status])</td>
+                        <td>
+                            @include('infrastructures.partials._status-badge', ['status' => $infra->status])
+                            @if($isRehabilitated)
+                                <span class="badge bg-success d-inline-block mt-1"><i class="fas fa-check-double"></i> Réhabilitée</span>
+                            @endif
+                        </td>
                         <td>{{ $infra->nom_enqueteur ?? 'N/A' }}</td>
                         <td>{{ $infra->numero_telephone ?? 'N/A' }}</td>
                         <td>
@@ -235,7 +242,12 @@
                                     </a>
                                 @endif
                                 @if($canManage)
-                                    <form action="{{ route('infrastructures.destroy', $infra->id) }}" method="POST" onsubmit="return confirm('Confirmer la suppression ?');" class="m-0">
+                                    <form action="{{ route('infrastructures.destroy', $infra->id) }}" method="POST" class="m-0 js-confirm-submit"
+                                          data-confirm-title="Supprimer l'infrastructure"
+                                          data-confirm-message="Confirmer la suppression de cette infrastructure ? Cette action est irréversible."
+                                          data-confirm-icon="danger"
+                                          data-confirm-ok="Supprimer"
+                                          data-loader-text="Suppression en cours...">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap" title="Supprimer">

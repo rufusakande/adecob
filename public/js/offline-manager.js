@@ -145,10 +145,19 @@
         if (action === 'edit') return editItem(id);
 
         if (action === 'delete') {
-            if (!confirm('Supprimer définitivement cette fiche de cet appareil ? Elle ne sera pas envoyée au serveur.')) return;
-            await deleteOfflineItem(id);
-            await render();
-            return notify('warning', 'Fiche supprimée de cet appareil.');
+            if (!window.adecobUI) return;
+            window.adecobUI.confirm({
+                title: 'Supprimer la fiche',
+                message: 'Supprimer définitivement cette fiche de cet appareil ? Elle ne sera pas envoyée au serveur.',
+                okText: 'Supprimer',
+                icon: 'danger',
+                onConfirm: async function () {
+                    await deleteOfflineItem(id);
+                    await render();
+                    notify('warning', 'Fiche supprimée de cet appareil.');
+                }
+            });
+            return;
         }
 
         if (action === 'sync') {
@@ -178,17 +187,36 @@
         document.getElementById('offline-sync-all').addEventListener('click', async function () {
             if (!navigator.onLine) return notify('danger', 'Vous devez être connecté à internet pour synchroniser.');
             const items = await getOfflineQueue();
-            if (!items.length || !confirm('Synchroniser ' + items.length + ' fiche(s) avec le serveur ?')) return;
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Synchronisation...';
-            const res = await syncOfflineData();
-            this.innerHTML = '<i class="fas fa-cloud-arrow-up me-1"></i> Tout synchroniser';
-            this.disabled = false;
-            await render();
-            notify(
-                res.failed === 0 ? 'success' : 'warning',
-                res.success + ' fiche(s) synchronisée(s)' + (res.failed ? ', ' + res.failed + ' en échec (voir le détail).' : '.')
-            );
+            if (!items.length) return notify('warning', 'Aucune fiche hors-ligne à synchroniser.');
+            if (!window.adecobUI) return;
+
+            window.adecobUI.confirm({
+                title: 'Synchroniser les fiches',
+                message: 'Synchroniser ' + items.length + ' fiche(s) avec le serveur ? Elles seront envoyées en validation.',
+                okText: 'Synchroniser',
+                icon: 'success',
+                onConfirm: async function () {
+                    const btn = document.getElementById('offline-sync-all');
+                    if (!btn) return;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Synchronisation...';
+                    window.adecobUI.showLoader('Synchronisation en cours...');
+                    try {
+                        const res = await syncOfflineData();
+                        await render();
+                        notify(
+                            res.failed === 0 ? 'success' : 'warning',
+                            res.success + ' fiche(s) synchronisée(s)' + (res.failed ? ', ' + res.failed + ' en échec (voir le détail).' : '.')
+                        );
+                    } catch (err) {
+                        notify('danger', 'Erreur lors de la synchronisation : ' + (err && err.message ? err.message : 'inconnue'));
+                    } finally {
+                        window.adecobUI.hideLoader();
+                        btn.innerHTML = '<i class="fas fa-cloud-arrow-up me-1"></i> Tout synchroniser';
+                        btn.disabled = false;
+                    }
+                }
+            });
         });
     });
 })();

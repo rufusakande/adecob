@@ -3,9 +3,9 @@
 @section('content')
 <div class="container">
     <div class="text-center mb-4">
-        <img src="{{ asset('logo.jpg') }}" alt="Logo ADECOB" class="img-fluid" style="max-height: 100px;">
+        <img src="{{ asset('logo.jpg') }}" alt="Logo {{ config('app.name') }}" class="img-fluid" style="max-height: 100px;">
     </div>
-    <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/ADECOB</h2>
+    <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/{{ config('app.name') }}</h2>
 
     <div class="infra-workflow-banner d-flex align-items-start gap-2">
         <i class="fas fa-info-circle mt-1"></i>

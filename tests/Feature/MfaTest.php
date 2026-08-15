@@ -24,16 +24,21 @@ class MfaTest extends TestCase
             ])->id;
         }
 
-        return User::create([
+        $admin = User::create([
             'name'        => 'Admin',
             'prenom'      => 'Test',
             'email'       => $role.'@example.com',
             'telephone'   => '0102030405',
             'password'    => Hash::make('Password!123'),
+        ]);
+        // role, commune_id et is_approved sont hors $fillable → affectation forcée
+        $admin->forceFill([
             'role'        => $role,
             'commune_id'  => $communeId,
             'is_approved' => true,
-        ]);
+        ])->save();
+
+        return $admin;
     }
 
     /** @test */
@@ -129,16 +134,16 @@ class MfaTest extends TestCase
             'email'       => 'agent@example.com',
             'telephone'   => '0102030405',
             'password'    => Hash::make('Password!123'),
-            'role'        => 'agent',
-            'is_approved' => true,
         ]);
+        // role et is_approved sont hors $fillable → affectation forcée
+        $agent->forceFill(['role' => 'agent', 'is_approved' => true])->save();
 
         $response = $this->post('/login', [
             'email'    => $agent->email,
             'password' => 'Password!123',
         ]);
 
-        $response->assertRedirect(route('mairie-agent.dashboard'));
+        $response->assertRedirect(route('infrastructures.index'));
     }
 
     /** @test */

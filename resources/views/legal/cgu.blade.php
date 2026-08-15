@@ -15,10 +15,10 @@
     <strong>Important — Acceptation des présentes conditions.</strong>
     Les présentes Conditions Générales d'Utilisation (ci-après « <strong>CGU</strong> »)
     constituent le contrat conclu entre l'<strong>Association pour le Développement des
-    Communes du Borgou (ADECOB)</strong>, dont le siège social est établi à Parakou,
+    Communes du Borgou ({{ config('app.name') }})</strong>, dont le siège social est établi à Parakou,
     République du Bénin, et toute personne physique ou morale (ci-après
     « <strong>l'Utilisateur</strong> ») accédant ou utilisant la
-    <strong>Plateforme ADECOB de Gestion des Infrastructures Communales</strong>
+    <strong>Plateforme {{ config('app.name') }} de Gestion des Infrastructures Communales</strong>
     (ci-après « <strong>la Plateforme</strong> »).
     <br><br>
     Tout accès à la Plateforme, qu'il soit public ou authentifié, vaut
@@ -46,16 +46,16 @@
     <tbody>
         <tr>
             <td><strong>Plateforme</strong></td>
-            <td>Application web dénommée « Plateforme ADECOB de Gestion des Infrastructures
-            Communales », hébergée et exploitée par l'ADECOB, permettant la collecte, la
+            <td>Application web dénommée « Plateforme {{ config('app.name') }} de Gestion des Infrastructures
+            Communales », hébergée et exploitée par l'{{ config('app.name') }}, permettant la collecte, la
             gestion, le suivi et la consultation des infrastructures communales
             géo-référencées du département du Borgou (Bénin).</td>
         </tr>
         <tr>
-            <td><strong>ADECOB</strong></td>
-            <td>Association pour le Développement des Communes du Borgou, personne morale
+            <td><strong>{{ config('app.name') }}</strong></td>
+            <td>{{ config('app.name') }}, personne morale
             de droit béninois, éditrice et responsable de traitement de la Plateforme,
-            dont le siège est situé à Parakou, Bénin. L'ADECOB est financée dans le cadre
+            dont le siège est situé à Parakou, Bénin. L'{{ config('app.name') }} est financée dans le cadre
             de ce projet par la Direction du Développement et de la Coopération suisse
             (DDC Suisse).</td>
         </tr>
@@ -98,7 +98,7 @@
             <td><strong>Données métier</strong></td>
             <td>Données relatives aux infrastructures communales saisies dans la Plateforme
             (localisation géographique, type, état, capacité, photos, indicateurs, etc.),
-            propriété des communes concernées, hébergées et traitées par l'ADECOB.</td>
+            propriété des communes concernées, hébergées et traitées par l'{{ config('app.name') }}.</td>
         </tr>
         <tr>
             <td><strong>Infrastructure</strong></td>
@@ -130,7 +130,7 @@
 
 <h3>2.1 Objet et finalités</h3>
 <p>
-    La Plateforme ADECOB de Gestion des Infrastructures Communales est un système
+    La Plateforme {{ config('app.name') }} de Gestion des Infrastructures Communales est un système
     d'information à vocation d'intérêt général, dont les finalités principales sont :
 </p>
 <ul>
@@ -155,10 +155,10 @@
 
 <h3>2.3 Financement et intérêt public</h3>
 <p>
-    La Plateforme est développée et exploitée par l'ADECOB dans le cadre d'un projet
+    La Plateforme est développée et exploitée par l'{{ config('app.name') }} dans le cadre d'un projet
     financé par la <strong>Direction du Développement et de la Coopération suisse
     (DDC Suisse)</strong>. Elle poursuit une mission d'intérêt général et ne génère
-    aucun bénéfice commercial pour l'ADECOB. Les données publiques sont mises à la
+    aucun bénéfice commercial pour l'{{ config('app.name') }}. Les données publiques sont mises à la
     disposition de toute personne intéressée à titre gratuit, dans le respect des
     présentes CGU.
 </p>
@@ -175,7 +175,7 @@
     Toute personne disposant d'une connexion Internet peut accéder librement et gratuitement
     aux sections publiques de la Plateforme, sans création de compte. Cet accès est limité
     à la <strong>consultation en lecture seule</strong> des données et statistiques rendues
-    publiques par les communes et l'ADECOB (cartographie, indicateurs agrégés, tableau de bord
+    publiques par les communes et l'{{ config('app.name') }} (cartographie, indicateurs agrégés, tableau de bord
     public, etc.).
 </p>
 
@@ -184,7 +184,7 @@
     L'accès aux fonctionnalités de saisie, de gestion et d'administration requiert la
     création d'un <strong>Compte utilisateur</strong> préalablement validé. La procédure
     d'inscription est décrite à l'article 4. L'accès authentifié est réservé aux agents
-    des communes du Borgou, aux personnels de l'ADECOB et, le cas échéant, aux partenaires
+    des communes du Borgou, aux personnels de l'{{ config('app.name') }} et, le cas échéant, aux partenaires
     expressément autorisés.
 </p>
 
@@ -200,7 +200,7 @@
         (réseau non restreint).</li>
 </ul>
 <p>
-    L'ADECOB ne garantit pas la compatibilité avec les navigateurs obsolètes ou
+    L'{{ config('app.name') }} ne garantit pas la compatibilité avec les navigateurs obsolètes ou
     les environnements non standards.
 </p>
 
@@ -243,7 +243,7 @@
         de la décision.</li>
 </ol>
 <p>
-    L'ADECOB et les administrateurs communaux se réservent le droit de
+    L'{{ config('app.name') }} et les administrateurs communaux se réservent le droit de
     <strong>refuser toute demande d'inscription</strong> sans avoir à en justifier
     les motifs, notamment si le demandeur ne satisfait pas aux conditions requises
     (appartenance à une commune du Borgou, identité non vérifiable, etc.).
@@ -267,7 +267,7 @@
         quelle qu'en soit la raison ;</li>
     <li>choisir un mot de passe robuste et le renouveler régulièrement conformément
         aux recommandations de la PSSI ;</li>
-    <li><strong>signaler sans délai</strong> à l'ADECOB, via le
+    <li><strong>signaler sans délai</strong> à l'{{ config('app.name') }}, via le
         <a href="{{ route('contact.form') }}">formulaire de contact</a>, tout accès non
         autorisé, perte, vol ou compromission de ses identifiants ;</li>
     <li>mettre à jour ses informations personnelles en cas de changement (notamment
@@ -369,7 +369,7 @@
 </table>
 
 <p>
-    L'ADECOB se réserve le droit de modifier les permissions associées à chaque rôle
+    L'{{ config('app.name') }} se réserve le droit de modifier les permissions associées à chaque rôle
     à tout moment, notamment pour des raisons de sécurité ou d'évolution fonctionnelle.
     Les Utilisateurs concernés en seront informés dans les meilleurs délais.
 </p>
@@ -402,7 +402,7 @@
     <li><strong>Tests d'intrusion non autorisés :</strong> effectuer tout test de
         pénétration, audit de sécurité offensif, fuzzing ou toute autre action
         susceptible de perturber la disponibilité ou la sécurité de la Plateforme,
-        sans <strong>autorisation écrite préalable et explicite</strong> de l'ADECOB
+        sans <strong>autorisation écrite préalable et explicite</strong> de l'{{ config('app.name') }}
         (voir article 13 pour la procédure de divulgation responsable) ;</li>
     <li><strong>Extraction massive de données (<em>scraping</em>) :</strong> procéder
         à toute collecte automatisée, extraction en masse ou aspiration systématique
@@ -416,7 +416,7 @@
         permettre à une autre personne d'utiliser son Compte, ou utiliser le Compte
         d'un autre Utilisateur ;</li>
     <li><strong>Usurpation d'identité :</strong> se faire passer pour un autre
-        Utilisateur, un agent de l'ADECOB, un représentant d'une commune ou tout autre
+        Utilisateur, un agent de l'{{ config('app.name') }}, un représentant d'une commune ou tout autre
         tiers, que ce soit lors de l'inscription ou dans l'utilisation de la
         Plateforme ;</li>
     <li><strong>Contournement des mesures de sécurité :</strong> tenter de désactiver,
@@ -436,18 +436,18 @@
     portant Code du numérique en République du Bénin</strong>, toute atteinte portée à un
     système d'information, à l'intégrité, la confidentialité ou la disponibilité des données
     informatiques est constitutive d'une infraction pénale passible de poursuites judiciaires,
-    de peines d'emprisonnement et d'amendes. L'ADECOB se réserve le droit de porter plainte
+    de peines d'emprisonnement et d'amendes. L'{{ config('app.name') }} se réserve le droit de porter plainte
     contre tout Utilisateur contrevenant à ces dispositions.
 </p>
 
 
 {{-- ══════════════════════════════════════════════════════════════════════════
-     ARTICLE 7 — OBLIGATIONS DE L'ADECOB
+     ARTICLE 7 — OBLIGATIONS DE L'{{ config('app.name') }}
 ═══════════════════════════════════════════════════════════════════════════ --}}
 
-<h2>Article 7 — Obligations de l'ADECOB</h2>
+<h2>Article 7 — Obligations de l'{{ config('app.name') }}</h2>
 
-<p>Dans le cadre de l'exploitation de la Plateforme, l'ADECOB s'engage à :</p>
+<p>Dans le cadre de l'exploitation de la Plateforme, l'{{ config('app.name') }} s'engage à :</p>
 <ul>
     <li><strong>Maintenir la disponibilité du service</strong> dans les conditions
         définies à l'article 10, en mettant en œuvre les moyens techniques et humains
@@ -480,18 +480,18 @@
 
 <h2>Article 8 — Propriété intellectuelle</h2>
 
-<h3>8.1 Droits de l'ADECOB</h3>
+<h3>8.1 Droits de l'{{ config('app.name') }}</h3>
 <p>
     L'ensemble des éléments constitutifs de la Plateforme — notamment le code source
     applicatif, l'architecture logicielle, la charte graphique, le logo, les pictogrammes,
     les maquettes, les textes, la documentation et les algorithmes de traitement —
-    est la <strong>propriété exclusive de l'ADECOB</strong> ou fait l'objet d'une licence
-    d'utilisation accordée à l'ADECOB par ses partenaires.
+    est la <strong>propriété exclusive de l'{{ config('app.name') }}</strong> ou fait l'objet d'une licence
+    d'utilisation accordée à l'{{ config('app.name') }} par ses partenaires.
 </p>
 <p>
     Toute reproduction, représentation, adaptation, traduction, diffusion, commercialisation
     ou extraction, totale ou partielle, par quelque procédé et sur quelque support que ce
-    soit, sans l'<strong>autorisation écrite préalable de l'ADECOB</strong>, est strictement
+    soit, sans l'<strong>autorisation écrite préalable de l'{{ config('app.name') }}</strong>, est strictement
     interdite et constitue une contrefaçon susceptible d'engager la responsabilité civile
     et pénale de son auteur.
 </p>
@@ -500,12 +500,12 @@
 <p>
     Les <strong>Données métier</strong> saisies dans la Plateforme (fiches d'infrastructures,
     coordonnées GPS, indicateurs, photos, etc.) <strong>restent la propriété des communes
-    concernées</strong>. L'ADECOB en assure l'hébergement, la conservation et la valorisation
+    concernées</strong>. L'{{ config('app.name') }} en assure l'hébergement, la conservation et la valorisation
     dans le cadre exclusif de sa mission d'intérêt général, sans en revendiquer aucune
     propriété commerciale.
 </p>
 <p>
-    L'ADECOB dispose d'une <strong>licence non exclusive, gratuite et irrévocable</strong>
+    L'{{ config('app.name') }} dispose d'une <strong>licence non exclusive, gratuite et irrévocable</strong>
     sur ces données aux seules fins de l'exploitation de la Plateforme, de la production
     de rapports et de statistiques, et de la mise à disposition au public, dans les limites
     prévues par les présentes CGU et la politique de confidentialité.
@@ -515,7 +515,7 @@
 <p>
     En saisissant des données dans la Plateforme, l'Utilisateur garantit qu'il dispose
     de l'ensemble des droits nécessaires sur ces contenus (notamment les photographies)
-    et accorde à l'ADECOB le droit de les utiliser dans le cadre de la Plateforme.
+    et accorde à l'{{ config('app.name') }} le droit de les utiliser dans le cadre de la Plateforme.
     L'Utilisateur est seul responsable de l'exactitude et de la légalité des contenus
     qu'il saisit.
 </p>
@@ -529,7 +529,7 @@
 
 <p>
     La Plateforme traite des données à caractère personnel dans le cadre de la gestion
-    des comptes Utilisateurs et du suivi des activités de saisie. L'ADECOB agit en qualité
+    des comptes Utilisateurs et du suivi des activités de saisie. L'{{ config('app.name') }} agit en qualité
     de <strong>responsable de traitement</strong> au sens de la réglementation applicable.
 </p>
 <p>
@@ -555,7 +555,7 @@
 
 <h3>10.1 Engagement de disponibilité</h3>
 <p>
-    L'ADECOB s'efforce d'assurer la disponibilité de la Plateforme <strong>24 heures sur 24,
+    L'{{ config('app.name') }} s'efforce d'assurer la disponibilité de la Plateforme <strong>24 heures sur 24,
     7 jours sur 7</strong>, dans la limite des moyens techniques dont elle dispose (<em>best
     effort</em>). Cet engagement ne constitue pas une obligation de résultat.
 </p>
@@ -563,7 +563,7 @@
 <h3>10.2 Maintenances planifiées</h3>
 <p>
     Des interruptions temporaires de service peuvent être programmées pour les besoins de
-    maintenance, de mise à jour ou d'amélioration de la Plateforme. L'ADECOB s'engage à
+    maintenance, de mise à jour ou d'amélioration de la Plateforme. L'{{ config('app.name') }} s'engage à
     en informer les Utilisateurs authentifiés <strong>au moins 48 heures à l'avance</strong>,
     sauf en cas d'urgence technique ou de menace de sécurité nécessitant une intervention
     immédiate.
@@ -571,7 +571,7 @@
 
 <h3>10.3 Incidents non planifiés et force majeure</h3>
 <p>
-    L'ADECOB ne saurait être tenue responsable des interruptions ou dégradations du
+    L'{{ config('app.name') }} ne saurait être tenue responsable des interruptions ou dégradations du
     service résultant de :
 </p>
 <ul>
@@ -584,7 +584,7 @@
         les mesures de protection mises en place.</li>
 </ul>
 <p>
-    En cas d'incident majeur, l'ADECOB communiquera dans les meilleurs délais sur
+    En cas d'incident majeur, l'{{ config('app.name') }} communiquera dans les meilleurs délais sur
     l'état du service et les mesures prises pour rétablir la disponibilité.
 </p>
 
@@ -601,12 +601,12 @@
     l'exhaustivité et de la mise à jour</strong> des données qu'il saisit dans la
     Plateforme. Il doit s'assurer que les informations renseignées correspondent à la
     réalité de terrain et sont conformes aux référentiels et nomenclatures définis par
-    l'ADECOB.
+    l'{{ config('app.name') }}.
 </p>
 
-<h3>11.2 Contrôle et correction par l'ADECOB</h3>
+<h3>11.2 Contrôle et correction par l'{{ config('app.name') }}</h3>
 <p>
-    L'ADECOB et les Administrateurs communaux se réservent le droit de :
+    L'{{ config('app.name') }} et les Administrateurs communaux se réservent le droit de :
 </p>
 <ul>
     <li>corriger les <strong>erreurs manifestes</strong> (fautes de saisie évidentes,
@@ -629,7 +629,7 @@
 
 <h3>11.4 Absence de garantie sur les données publiques</h3>
 <p>
-    L'ADECOB met en œuvre les contrôles raisonnables pour assurer la qualité des données
+    L'{{ config('app.name') }} met en œuvre les contrôles raisonnables pour assurer la qualité des données
     publiées, mais ne garantit pas l'exactitude, l'exhaustivité ou la mise à jour en temps
     réel de l'ensemble des données disponibles sur la Plateforme. Toute décision fondée
     sur les données publiées relève de la seule responsabilité de l'utilisateur de ces données.
@@ -655,24 +655,24 @@
     Les données exportées ne peuvent être utilisées qu'à des fins :
 </p>
 <ul>
-    <li>de rapportage interne aux communes ou à l'ADECOB ;</li>
+    <li>de rapportage interne aux communes ou à l'{{ config('app.name') }} ;</li>
     <li>d'aide à la décision et de planification des investissements communaux ;</li>
     <li>de production de documents officiels dans le cadre des missions des communes
-        et de l'ADECOB ;</li>
+        et de l'{{ config('app.name') }} ;</li>
     <li>de recherche et d'études académiques, sous réserve de citer la source
-        (« Plateforme ADECOB de Gestion des Infrastructures Communales ») ;</li>
+        (« Plateforme {{ config('app.name') }} de Gestion des Infrastructures Communales ») ;</li>
     <li>de communication institutionnelle des communes et partenaires autorisés.</li>
 </ul>
 
 <h3>12.3 Usages interdits</h3>
 <p>Il est expressément interdit d'utiliser les données exportées pour :</p>
 <ul>
-    <li>toute finalité commerciale sans autorisation écrite préalable de l'ADECOB ;</li>
+    <li>toute finalité commerciale sans autorisation écrite préalable de l'{{ config('app.name') }} ;</li>
     <li>la constitution de bases de données concurrentes ou substituables à la
         Plateforme ;</li>
     <li>la revente, la cession ou la mise à disposition à titre onéreux à des tiers ;</li>
     <li>toute publication décontextualisée susceptible de nuire à l'image des
-        communes, de l'ADECOB ou de ses partenaires.</li>
+        communes, de l'{{ config('app.name') }} ou de ses partenaires.</li>
 </ul>
 
 <h3>12.4 Extraction automatisée — interdiction</h3>
@@ -694,7 +694,7 @@
 
 <h3>13.1 Politique de divulgation responsable</h3>
 <p>
-    L'ADECOB encourage toute personne identifiant une vulnérabilité de sécurité sur la
+    L'{{ config('app.name') }} encourage toute personne identifiant une vulnérabilité de sécurité sur la
     Plateforme à la signaler de manière <strong>responsable et confidentielle</strong>,
     selon la procédure décrite au présent article, plutôt que de l'exploiter ou de la
     divulguer publiquement.
@@ -715,8 +715,8 @@
     <li>les coordonnées du déclarant pour permettre le suivi.</li>
 </ul>
 
-<h3>13.3 Engagements de l'ADECOB</h3>
-<p>En réponse à un signalement conforme à la procédure définie ci-dessus, l'ADECOB
+<h3>13.3 Engagements de l'{{ config('app.name') }}</h3>
+<p>En réponse à un signalement conforme à la procédure définie ci-dessus, l'{{ config('app.name') }}
 s'engage à :</p>
 <ul>
     <li>accuser réception du signalement dans un délai de <strong>5 jours ouvrés</strong>
@@ -745,8 +745,8 @@ s'engage à :</p>
 
 <h2>Article 14 — Suspension et résiliation du compte</h2>
 
-<h3>14.1 Motifs de suspension ou de résiliation par l'ADECOB</h3>
-<p>L'ADECOB peut <strong>suspendre ou résilier</strong> un Compte, sans préavis ni
+<h3>14.1 Motifs de suspension ou de résiliation par l'{{ config('app.name') }}</h3>
+<p>L'{{ config('app.name') }} peut <strong>suspendre ou résilier</strong> un Compte, sans préavis ni
 indemnité, dans les cas suivants :</p>
 <ul>
     <li>violation des présentes CGU, notamment des interdictions listées à
@@ -759,13 +759,13 @@ indemnité, dans les cas suivants :</p>
     <li>inactivité du compte pendant une durée supérieure à <strong>deux (2) ans</strong>
         consécutifs, après notification préalable de l'Utilisateur ;</li>
     <li>décision judiciaire ou injonction d'une autorité compétente ;</li>
-    <li>cessation des activités de l'ADECOB ou arrêt définitif de la Plateforme.</li>
+    <li>cessation des activités de l'{{ config('app.name') }} ou arrêt définitif de la Plateforme.</li>
 </ul>
 
 <h3>14.2 Suspension préventive</h3>
 <p>
     En cas de suspicion sérieuse de violation des CGU ou d'atteinte à la sécurité de
-    la Plateforme, l'ADECOB peut procéder à une <strong>suspension immédiate et
+    la Plateforme, l'{{ config('app.name') }} peut procéder à une <strong>suspension immédiate et
     conservatoire</strong> du Compte dans l'attente des résultats d'une investigation.
     L'Utilisateur en est informé dans les meilleurs délais, sauf si cette notification
     est susceptible de compromettre l'investigation.
@@ -805,7 +805,7 @@ indemnité, dans les cas suivants :</p>
 <h2>Article 15 — Limitation de responsabilité</h2>
 
 <p>Dans les limites autorisées par le droit de la République du Bénin,
-l'ADECOB ne saurait être tenue responsable :</p>
+l'{{ config('app.name') }} ne saurait être tenue responsable :</p>
 <ul>
     <li>des <strong>dommages indirects</strong>, immatériels, consécutifs ou accessoires
         résultant de l'utilisation ou de l'impossibilité d'utiliser la Plateforme,
@@ -819,17 +819,17 @@ l'ADECOB ne saurait être tenue responsable :</p>
         externes, intrusions, actes malveillants) malgré les mesures de sécurité
         mises en place ;</li>
     <li>de l'<strong>inexactitude ou de l'obsolescence</strong> des données saisies par
-        les Utilisateurs, l'ADECOB n'étant pas en mesure de vérifier en temps réel
+        les Utilisateurs, l'{{ config('app.name') }} n'étant pas en mesure de vérifier en temps réel
         l'ensemble des données de terrain ;</li>
     <li>des <strong>décisions prises</strong> par des tiers sur la base des données
         consultées ou exportées depuis la Plateforme.</li>
 </ul>
 <p>
-    La responsabilité de l'ADECOB ne peut en aucun cas excéder le montant des sommes
-    effectivement versées par l'Utilisateur à l'ADECOB dans les douze (12) mois précédant
+    La responsabilité de l'{{ config('app.name') }} ne peut en aucun cas excéder le montant des sommes
+    effectivement versées par l'Utilisateur à l'{{ config('app.name') }} dans les douze (12) mois précédant
     le fait générateur du dommage. Compte tenu de la gratuité de la Plateforme, cette
     limitation s'entend comme une <strong>exclusion totale de la responsabilité
-    financière</strong> de l'ADECOB envers les Utilisateurs du domaine public.
+    financière</strong> de l'{{ config('app.name') }} envers les Utilisateurs du domaine public.
 </p>
 
 
@@ -841,7 +841,7 @@ l'ADECOB ne saurait être tenue responsable :</p>
 
 <h3>16.1 Droit de modification</h3>
 <p>
-    L'ADECOB se réserve le droit de modifier les présentes CGU à tout moment, notamment
+    L'{{ config('app.name') }} se réserve le droit de modifier les présentes CGU à tout moment, notamment
     pour tenir compte de l'évolution de la Plateforme, des réglementations applicables,
     ou des recommandations des autorités compétentes.
 </p>
@@ -905,8 +905,8 @@ l'ADECOB ne saurait être tenue responsable :</p>
 <h3>17.2 Résolution amiable</h3>
 <p>
     En cas de litige relatif à l'interprétation ou à l'exécution des présentes CGU,
-    l'Utilisateur est invité à adresser en premier lieu une réclamation à l'ADECOB via
-    le <a href="{{ route('contact.form') }}">formulaire de contact</a>. L'ADECOB s'engage
+    l'Utilisateur est invité à adresser en premier lieu une réclamation à l'{{ config('app.name') }} via
+    le <a href="{{ route('contact.form') }}">formulaire de contact</a>. L'{{ config('app.name') }} s'engage
     à examiner toute réclamation et à apporter une réponse dans un délai de
     <strong>30 jours ouvrés</strong>. Les parties s'efforceront de bonne foi de
     trouver une <strong>résolution amiable</strong> avant tout recours judiciaire.
@@ -929,12 +929,12 @@ l'ADECOB ne saurait être tenue responsable :</p>
 <h3>18.1 Contact général</h3>
 <p>
     Pour toute question relative aux présentes CGU, à l'utilisation de la Plateforme
-    ou à l'exercice de droits, l'Utilisateur peut contacter l'ADECOB via le
+    ou à l'exercice de droits, l'Utilisateur peut contacter l'{{ config('app.name') }} via le
     <a href="{{ route('contact.form') }}"><strong>formulaire de contact</strong></a>
     disponible sur la Plateforme.
 </p>
 <p>
-    <strong>ADECOB — Association pour le Développement des Communes du Borgou</strong><br>
+    <strong>{{ config('app.name') }}</strong><br>
     Siège social : Parakou, Département du Borgou, République du Bénin
 </p>
 
@@ -944,7 +944,7 @@ l'ADECOB ne saurait être tenue responsable :</p>
     rectification, effacement, opposition, portabilité), l'Utilisateur peut :
 </p>
 <ol>
-    <li>adresser sa demande à l'ADECOB via le
+    <li>adresser sa demande à l'{{ config('app.name') }} via le
         <a href="{{ route('contact.form') }}">formulaire de contact</a>, en précisant
         dans l'objet : <code>[DONNÉES PERSONNELLES - EXERCICE DE DROITS]</code> ;</li>
     <li>en cas d'absence de réponse satisfaisante dans le délai d'un mois, former
@@ -965,7 +965,7 @@ accessibles sur la Plateforme :</p>
     <li><a href="{{ route('legal.pssi') }}">Politique de Sécurité des Systèmes
         d'Information (PSSI)</a> — mesures de sécurité techniques et organisationnelles ;</li>
     <li><a href="{{ route('legal.registre') }}">Registre des traitements</a>
-        — liste des traitements de données opérés par l'ADECOB.</li>
+        — liste des traitements de données opérés par l'{{ config('app.name') }}.</li>
 </ul>
 
 @endsection

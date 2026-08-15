@@ -117,10 +117,6 @@
                             <span><i class="fas fa-list"></i> Voir les infrastructures</span>
                             <i class="fas fa-chevron-right text-muted"></i>
                         </a>
-                        <a href="{{ route('mairie-agent.dashboard') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            <span><i class="fas fa-chart-bar"></i> Tableau de bord agents</span>
-                            <i class="fas fa-chevron-right text-muted"></i>
-                        </a>
                     </div>
                 </div>
             </div>

@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -21,6 +21,11 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Accès aux journaux d'audit : réservé aux Super Administrateurs.
+        // (Les routes /admin/audit sont déjà protégées par le middleware super.admin ;
+        //  cette Gate assure la défense en profondeur au niveau contrôleur.)
+        Gate::define('viewAuditLogs', function ($user) {
+            return $user->isSuperAdmin();
+        });
     }
 }

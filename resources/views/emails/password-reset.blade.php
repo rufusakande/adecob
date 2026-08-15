@@ -149,7 +149,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p><strong>ADECOB - Plateforme d'Infrastructures</strong></p>
+            <p><strong>{{ config('app.name') }} - Plateforme d'Infrastructures</strong></p>
             <p>Cet email a été envoyé à {{ $email }}</p>
             <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
                 Si vous continuez à avoir des problèmes, contactez le support: <strong>support@adecob.org</strong>

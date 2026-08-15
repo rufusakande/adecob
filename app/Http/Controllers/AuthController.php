@@ -143,7 +143,7 @@ class AuthController extends Controller
             return redirect()->route('mfa.show');
         }
         if ($user->isAgent()) {
-            return redirect()->intended(route('mairie-agent.dashboard'));
+            return redirect()->intended(route('infrastructures.index'));
         }
         return redirect()->intended('/home');
     }
@@ -186,7 +186,7 @@ class AuthController extends Controller
 
         if (!$user) {
             return redirect()->route('register.form')
-                ->withErrors(['email' => 'Aucun compte ADECOB n\'est associé à cet email Google. Veuillez vous inscrire d\'abord.']);
+                ->withErrors(['email' => 'Aucun compte ' . config('app.name') . ' n\'est associé à cet email Google. Veuillez vous inscrire d\'abord.']);
         }
 
         if (!$user->isSuperAdmin() && !$user->isApproved()) {

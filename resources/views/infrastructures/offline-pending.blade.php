@@ -59,5 +59,5 @@
 
 @push('scripts')
 <script>window.OFFLINE_MANAGE_URL = "{{ route('infrastructures.offline') }}";</script>
-<script src="{{ asset('js/offline-manager.js') }}"></script>
+<script src="{{ asset('js/offline-manager.js?v=2') }}"></script>
 @endpush

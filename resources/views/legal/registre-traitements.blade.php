@@ -11,7 +11,7 @@
     <strong>Document à usage réglementaire.</strong> Ce registre est tenu en application des
     <strong>articles 412 et suivants de la loi n°2017-20 portant Code du numérique en République
     du Bénin</strong>. Il recense l'ensemble des traitements de données à caractère personnel mis
-    en œuvre par l'ADECOB dans le cadre de l'exploitation de la Plateforme de gestion des
+    en œuvre par l'{{ config('app.name') }} dans le cadre de l'exploitation de la Plateforme de gestion des
     infrastructures communales du Borgou. Il doit être déclaré à l'<strong>Autorité de Protection
     des Données Personnelles (APDP)</strong> et tenu à la disposition de toute autorité de
     contrôle compétente.
@@ -26,7 +26,7 @@
 <table>
     <tr>
         <th style="width:35%">Dénomination</th>
-        <td><strong>ADECOB</strong> — Association pour le Développement des Communes du Borgou</td>
+        <td><strong>{{ config('app.name') }}</strong></td>
     </tr>
     <tr>
         <th>Siège social</th>
@@ -46,7 +46,7 @@
     </tr>
     <tr>
         <th>Référent Protection des Données (RSSI)</th>
-        <td>Responsable Sécurité du Système d'Information désigné par l'ADECOB —
+        <td>Responsable Sécurité du Système d'Information désigné par l'{{ config('app.name') }} —
             joignable via <a href="{{ route('contact.form') }}">le formulaire de contact</a></td>
     </tr>
     <tr>
@@ -85,7 +85,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>ADECOB — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — Parakou, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -112,7 +112,7 @@
                 <li>Agents enquêteurs de terrain (rôle <code>agent_enquêteur</code>)</li>
                 <li>Agents de mairie (rôle <code>agent_mairie</code>)</li>
                 <li>Administrateurs communaux (rôle <code>admin_commune</code>)</li>
-                <li>Super-administrateurs ADECOB (rôle <code>super_admin</code>)</li>
+                <li>Super-administrateurs {{ config('app.name') }} (rôle <code>super_admin</code>)</li>
             </ul>
         </td>
     </tr>
@@ -138,7 +138,7 @@
         <th>Destinataires internes</th>
         <td>
             <ul class="mb-0">
-                <li>Super-administrateurs ADECOB (accès complet en lecture sur toutes les communes)</li>
+                <li>Super-administrateurs {{ config('app.name') }} (accès complet en lecture sur toutes les communes)</li>
                 <li>Administrateurs de la commune concernée (accès aux comptes de leur commune uniquement)</li>
                 <li>Composant d'authentification Laravel (Guard <code>web</code>)</li>
             </ul>
@@ -202,7 +202,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>ADECOB — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — Parakou, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -301,7 +301,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>ADECOB — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — Parakou, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -352,8 +352,8 @@
         <td>
             <ul class="mb-0">
                 <li>Agents et administrateurs de la commune concernée (accès scopé par commune)</li>
-                <li>Super-administrateurs ADECOB (accès toutes communes)</li>
-                <li>Équipe technique ADECOB pour la production de rapports et de cartographies</li>
+                <li>Super-administrateurs {{ config('app.name') }} (accès toutes communes)</li>
+                <li>Équipe technique {{ config('app.name') }} pour la production de rapports et de cartographies</li>
             </ul>
         </td>
     </tr>
@@ -373,7 +373,7 @@
             OSMF en Europe) ne contiennent que des coordonnées GPS ou des noms de lieux, sans
             donnée nominative. Les rapports transmis à DDC Suisse sont agrégés et ne permettent
             pas l'identification d'enquêteurs individuels. Garanties : politique d'utilisation OSMF,
-            accord de coopération DDC/ADECOB.</td>
+            accord de coopération DDC/{{ config('app.name') }}.</td>
     </tr>
     <tr>
         <th>Durée de conservation</th>
@@ -417,7 +417,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>ADECOB — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — Parakou, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -468,7 +468,7 @@
         <td>
             <ul class="mb-0">
                 <li>Agents de mairie et administrateurs de la commune concernée</li>
-                <li>Super-administrateurs ADECOB</li>
+                <li>Super-administrateurs {{ config('app.name') }}</li>
             </ul>
         </td>
     </tr>
@@ -520,7 +520,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>ADECOB — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — Parakou, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -529,7 +529,7 @@
                 <li>Centralisation des données de planification budgétaire et infrastructurelle des 8 communes du Borgou pour les périodes 2023–2030</li>
                 <li>Suivi des priorités d'investissement et des sources de financement par commune et par secteur</li>
                 <li>Identification des agents responsables de la planification et de la validation des projets communaux</li>
-                <li>Production de tableaux de bord et de rapports de suivi à destination de l'ADECOB et de DDC Suisse</li>
+                <li>Production de tableaux de bord et de rapports de suivi à destination de l'{{ config('app.name') }} et de DDC Suisse</li>
             </ul>
         </td>
     </tr>
@@ -566,8 +566,8 @@
         <td>
             <ul class="mb-0">
                 <li>Agents de mairie et administrateurs de la commune concernée</li>
-                <li>Super-administrateurs ADECOB</li>
-                <li>Équipe technique ADECOB pour les rapports de suivi</li>
+                <li>Super-administrateurs {{ config('app.name') }}</li>
+                <li>Équipe technique {{ config('app.name') }} pour les rapports de suivi</li>
             </ul>
         </td>
     </tr>
@@ -579,7 +579,7 @@
     <tr>
         <th>Transferts hors Bénin</th>
         <td><strong>Oui — rapports agrégés uniquement</strong> vers DDC Suisse (Berne, Suisse).
-            Garanties : accord de coopération DDC/ADECOB, données agrégées ne permettant pas
+            Garanties : accord de coopération DDC/{{ config('app.name') }}, données agrégées ne permettant pas
             l'identification individuelle des agents de mairie.</td>
     </tr>
     <tr>
@@ -618,13 +618,13 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>ADECOB — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — Parakou, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
         <td>
             <ul class="mb-0">
-                <li>Réception et traitement des demandes d'information, de support technique et de signalement adressées à l'ADECOB par les visiteurs et utilisateurs de la Plateforme</li>
+                <li>Réception et traitement des demandes d'information, de support technique et de signalement adressées à l'{{ config('app.name') }} par les visiteurs et utilisateurs de la Plateforme</li>
                 <li>Protection contre le spam et les soumissions automatisées (reCAPTCHA v3)</li>
                 <li>Traçabilité des échanges pour assurer le suivi et la clôture des demandes</li>
             </ul>
@@ -660,14 +660,14 @@
     </tr>
     <tr>
         <th>Destinataires internes</th>
-        <td>Service communication / responsable de la Plateforme ADECOB désigné pour
+        <td>Service communication / responsable de la Plateforme {{ config('app.name') }} désigné pour
             la lecture et le traitement des messages entrants</td>
     </tr>
     <tr>
         <th>Destinataires externes / sous-traitants</th>
         <td>
             <ul class="mb-0">
-                <li>Fournisseur SMTP : acheminement de la notification interne par e-mail à l'équipe ADECOB</li>
+                <li>Fournisseur SMTP : acheminement de la notification interne par e-mail à l'équipe {{ config('app.name') }}</li>
                 <li>Google reCAPTCHA v3 : score anti-bot calculé côté client et serveur Google (voir section Sous-traitants)</li>
             </ul>
         </td>
@@ -691,7 +691,7 @@
                 <li>Rate-limiting sur la route de soumission (3 envois par heure par adresse IP)</li>
                 <li>Transmission HTTPS (TLS 1.2+)</li>
                 <li>Validation et assainissement (sanitization) de tous les champs côté serveur</li>
-                <li>Accès aux messages restreint aux responsables ADECOB expressément habilités</li>
+                <li>Accès aux messages restreint aux responsables {{ config('app.name') }} expressément habilités</li>
             </ul>
         </td>
     </tr>
@@ -713,7 +713,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>ADECOB — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — Parakou, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -758,7 +758,7 @@
     </tr>
     <tr>
         <th>Destinataires internes</th>
-        <td>Super-administrateurs ADECOB uniquement (accès en lecture seule à l'interface d'audit) —
+        <td>Super-administrateurs {{ config('app.name') }} uniquement (accès en lecture seule à l'interface d'audit) —
             la table <code>audit_logs</code> est en lecture seule pour tous les autres rôles</td>
     </tr>
     <tr>
@@ -814,7 +814,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>ADECOB — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — Parakou, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -908,14 +908,14 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>ADECOB — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — Parakou, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
         <td>
             <ul class="mb-0">
-                <li>Permettre aux utilisateurs disposant d'un compte Google de s'authentifier sur la Plateforme sans saisir leur mot de passe ADECOB</li>
-                <li>Vérifier que l'adresse e-mail Google correspond à un compte ADECOB existant, actif et validé</li>
+                <li>Permettre aux utilisateurs disposant d'un compte Google de s'authentifier sur la Plateforme sans saisir leur mot de passe {{ config('app.name') }}</li>
+                <li>Vérifier que l'adresse e-mail Google correspond à un compte {{ config('app.name') }} existant, actif et validé</li>
                 <li>Simplifier l'expérience de connexion pour les agents disposant d'une adresse Google professionnelle</li>
             </ul>
         </td>
@@ -937,7 +937,7 @@
             <ul class="mb-0">
                 <li><strong>Reçues de Google (en mémoire uniquement) :</strong> adresse e-mail Google, nom d'affichage Google (prénom / nom), URL de la photo de profil Google</li>
                 <li><strong>Données utilisées pour la vérification locale :</strong> adresse e-mail uniquement, mise en correspondance avec la colonne <code>users.email</code></li>
-                <li><strong>Non stockées en base de données ADECOB :</strong> identifiant Google (<code>sub</code>), jeton d'accès OAuth, jeton de rafraîchissement, photo de profil</li>
+                <li><strong>Non stockées en base de données {{ config('app.name') }} :</strong> identifiant Google (<code>sub</code>), jeton d'accès OAuth, jeton de rafraîchissement, photo de profil</li>
             </ul>
         </td>
     </tr>
@@ -960,12 +960,12 @@
         <th>Transferts hors Bénin</th>
         <td><strong>Oui</strong> — vers les serveurs Google (USA / UE selon le routage).
             Garanties : Google adhère au Data Privacy Framework (DPF) UE–USA ;
-            les données transitant vers ADECOB se limitent à l'e-mail pour la vérification locale ;
+            les données transitant vers {{ config('app.name') }} se limitent à l'e-mail pour la vérification locale ;
             politique de confidentialité Google applicable au flux OAuth.</td>
     </tr>
     <tr>
         <th>Durée de conservation</th>
-        <td>Aucune donnée spécifique à Google OAuth n'est persistée en base de données ADECOB.
+        <td>Aucune donnée spécifique à Google OAuth n'est persistée en base de données {{ config('app.name') }}.
             Après authentification réussie, la session Laravel standard est créée
             (durée d'inactivité : 120 minutes par défaut).</td>
     </tr>
@@ -973,7 +973,7 @@
         <th>Mesures de sécurité techniques et organisationnelles</th>
         <td>
             <ul class="mb-0">
-                <li><strong>Absence de création automatique de compte :</strong> si l'e-mail Google ne correspond pas à un compte ADECOB existant, actif et validé, la connexion est refusée sans révéler d'information</li>
+                <li><strong>Absence de création automatique de compte :</strong> si l'e-mail Google ne correspond pas à un compte {{ config('app.name') }} existant, actif et validé, la connexion est refusée sans révéler d'information</li>
                 <li>Aucun stockage du jeton OAuth, du <code>sub</code> Google ou de la photo de profil en base de données</li>
                 <li>Vérification du paramètre <code>state</code> OAuth (protection CSRF conforme à RFC 6749)</li>
                 <li>Communication exclusivement en HTTPS avec les endpoints Google</li>
@@ -985,7 +985,7 @@
         <th>Droit d'opposition / opt-out</th>
         <td>L'utilisateur peut révoquer l'accès Google à tout moment depuis les paramètres de son
             compte Google (Sécurité › Applications tierces). Sur la Plateforme, il peut continuer
-            à se connecter avec son identifiant et son mot de passe ADECOB. La révocation OAuth
+            à se connecter avec son identifiant et son mot de passe {{ config('app.name') }}. La révocation OAuth
             n'entraîne aucune perte de données ni de droits sur la Plateforme.</td>
     </tr>
 </table>
@@ -996,8 +996,8 @@
 
 <h2>Sous-traitants et prestataires techniques</h2>
 
-<p>Les prestataires ci-dessous interviennent dans le cadre de la Plateforme ADECOB. Conformément
-aux articles 412 et suivants de la loi n°2017-20, chaque sous-traitant est lié à l'ADECOB par des
+<p>Les prestataires ci-dessous interviennent dans le cadre de la Plateforme {{ config('app.name') }}. Conformément
+aux articles 412 et suivants de la loi n°2017-20, chaque sous-traitant est lié à l'{{ config('app.name') }} par des
 engagements contractuels garantissant un niveau de protection adéquat des données personnelles.
 Aucun sous-traitant n'est autorisé à utiliser les données personnelles auxquelles il accède à des
 fins autres que celles définies par contrat.</p>
@@ -1045,7 +1045,7 @@ fins autres que celles définies par contrat.</p>
         <td>
             <ul class="mb-0">
                 <li><em>reCAPTCHA :</em> adresse IP du visiteur, empreinte du navigateur (user-agent, cookies Google), interactions sur la page — Google retourne un score de risque</li>
-                <li><em>OAuth :</em> adresse e-mail Google, nom d'affichage (traitement en mémoire uniquement côté ADECOB)</li>
+                <li><em>OAuth :</em> adresse e-mail Google, nom d'affichage (traitement en mémoire uniquement côté {{ config('app.name') }})</li>
             </ul>
         </td>
         <td>USA / UE (infrastructure Google Cloud)</td>
@@ -1171,7 +1171,7 @@ ce registre, permettant une lecture rapide à des fins de contrôle interne ou d
 <p>Conformément aux <strong>articles 412 et suivants de la loi n°2017-20 portant Code du numérique
 en République du Bénin</strong>, tout responsable de traitement de données à caractère personnel
 est tenu de notifier ses traitements à l'<strong>Autorité de Protection des Données Personnelles
-du Bénin (APDP)</strong>. L'ADECOB s'engage à déclarer l'ensemble des traitements recensés dans
+du Bénin (APDP)</strong>. L'{{ config('app.name') }} s'engage à déclarer l'ensemble des traitements recensés dans
 le présent registre auprès de l'APDP, et à tenir ce registre à jour à chaque évolution
 significative de la Plateforme, de ses finalités ou de ses sous-traitants.</p>
 
@@ -1197,8 +1197,8 @@ conformément aux <strong>articles 393 et suivants de la loi n°2017-20</strong>
     <li><strong>Droit à la portabilité</strong> — recevoir ses données dans un format structuré et lisible par machine, pour les traitements fondés sur le consentement</li>
 </ul>
 
-<p>Ces droits s'exercent par voie de demande écrite adressée à l'ADECOB via le
-<a href="{{ route('contact.form') }}">formulaire de contact</a>. L'ADECOB s'engage à accuser réception
+<p>Ces droits s'exercent par voie de demande écrite adressée à l'{{ config('app.name') }} via le
+<a href="{{ route('contact.form') }}">formulaire de contact</a>. L'{{ config('app.name') }} s'engage à accuser réception
 et à apporter une réponse dans un délai de <strong>30 jours ouvrables</strong> à compter de la
 réception de la demande. En cas de réponse jugée insatisfaisante, la personne concernée peut
 saisir l'<strong>APDP</strong> aux coordonnées indiquées ci-dessus.</p>

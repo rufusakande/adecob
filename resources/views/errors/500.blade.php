@@ -57,7 +57,7 @@
                     <strong>Si le problème persiste :</strong>
                 </p>
                 <small class="text-muted">
-                    Contactez l'équipe d'ADECOB à 
+                    Contactez l'équipe d'{{ config('app.name') }} à 
                     <a href="mailto:secretariatadecob@yahoo.fr">secretariatadecob@yahoo.fr</a>
                     ou appelez <a href="tel:+22901956473">0195647373</a><br>
                     <strong>Horaires :</strong> Lun - Ven : 08h - 12h30 et 15h - 17h30

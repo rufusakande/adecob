@@ -3,7 +3,7 @@
 @section('title', 'Validation des Utilisateurs')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/auth-modern.css') }}">
+<link rel="stylesheet" href="{{ asset('css/auth-modern.css?v=2') }}">
 
 <style>
     .admin-container {
@@ -445,18 +445,28 @@
                 </div>
                 <div class="user-actions">
                     @if(!$user->is_approved && !$user->rejected_at)
-                        <form method="POST" action="{{ route('admin.approve-user', $user->id) }}" style="display: inline;">
+                        <form method="POST" action="{{ route('admin.approve-user', $user->id) }}" style="display: inline;" class="js-confirm-submit"
+                              data-confirm-title="Approuver l'inscription"
+                              data-confirm-message="Approuver l'inscription de {{ $user->prenom }} {{ $user->name }} ? Il pourra se connecter immédiatement."
+                              data-confirm-icon="success"
+                              data-confirm-ok="Approuver"
+                              data-loader-text="Approbation en cours...">
                             @csrf
-                            <button type="submit" class="btn-action btn-approve" onclick="return confirm('Approuver cet utilisateur ?')">
+                            <button type="submit" class="btn-action btn-approve">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
                                 Approuver
                             </button>
                         </form>
-                        <form method="POST" action="{{ route('admin.reject-user', $user->id) }}" style="display: inline;">
+                        <form method="POST" action="{{ route('admin.reject-user', $user->id) }}" style="display: inline;" class="js-confirm-submit"
+                              data-confirm-title="Rejeter l'inscription"
+                              data-confirm-message="Rejeter l'inscription de {{ $user->prenom }} {{ $user->name }} ?"
+                              data-confirm-icon="warning"
+                              data-confirm-ok="Rejeter"
+                              data-loader-text="Traitement en cours...">
                             @csrf
-                            <button type="submit" class="btn-action btn-reject" onclick="return confirm('Rejeter cet utilisateur ?')">
+                            <button type="submit" class="btn-action btn-reject">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
@@ -466,7 +476,12 @@
                     @else
                         @if($user->is_approved && auth()->user()->isCommuneAdmin() && $user->commune_id === auth()->user()->commune_id && $user->id !== auth()->id())
                             @if($user->role === 'agent')
-                                <form method="POST" action="{{ route('commune-admin.promote-agent', $user->id) }}" style="display: inline;" onsubmit="return confirm('Attention : Cet agent aura les pleins pouvoirs sur la commune (gestion des agents, validation, modification du logo, etc.). Voulez-vous vraiment le nommer Administrateur de la commune ?');">
+                                <form method="POST" action="{{ route('commune-admin.promote-agent', $user->id) }}" style="display: inline;" class="js-confirm-submit"
+                                      data-confirm-title="Nommer Administrateur de la commune"
+                                      data-confirm-message="Attention : {{ $user->prenom }} {{ $user->name }} aura les pleins pouvoirs sur la commune (gestion des agents, validation, modification du logo, etc.). Voulez-vous vraiment le nommer Administrateur de la commune ?"
+                                      data-confirm-icon="info"
+                                      data-confirm-ok="Nommer Admin"
+                                      data-loader-text="Promotion en cours...">
                                     @csrf
                                     @method('PUT')
                                     <button type="submit" class="btn-action btn-approve" style="background: linear-gradient(135deg, #2196F3, #1976D2);">
@@ -477,7 +492,12 @@
                                     </button>
                                 </form>
                             @elseif($user->role === 'commune_admin')
-                                <form method="POST" action="{{ route('commune-admin.promote-agent', $user->id) }}" style="display: inline;" onsubmit="return confirm('Attention : Cet utilisateur perdra tous ses droits d\'administration sur la commune. Voulez-vous vraiment le rétrograder au rang de simple agent ?');">
+                                <form method="POST" action="{{ route('commune-admin.promote-agent', $user->id) }}" style="display: inline;" class="js-confirm-submit"
+                                      data-confirm-title="Retirer les droits d'administration"
+                                      data-confirm-message="Attention : {{ $user->prenom }} {{ $user->name }} perdra tous ses droits d'administration sur la commune. Voulez-vous vraiment le rétrograder au rang de simple agent ?"
+                                      data-confirm-icon="warning"
+                                      data-confirm-ok="Rétrograder"
+                                      data-loader-text="Mise à jour des droits en cours...">
                                     @csrf
                                     @method('PUT')
                                     <button type="submit" class="btn-action btn-reject" style="background: linear-gradient(135deg, #ff9800, #f57c00);">
@@ -494,6 +514,27 @@
                             </button>
                         @endif
                     @endif
+
+                    @if(
+                        (auth()->user()->isSuperAdmin() && $user->id !== auth()->id() && !$user->isSuperAdmin())
+                        || (auth()->user()->isCommuneAdmin() && $user->id !== auth()->id() && in_array($user->role, ['agent', 'public_user']) && $user->commune_id === auth()->user()->commune_id)
+                    )
+                        <form method="POST" action="{{ route('admin.pending-registrations.destroy', $user->id) }}" style="display: inline;" class="js-confirm-submit"
+                              data-confirm-title="Supprimer le compte"
+                              data-confirm-message="Supprimer définitivement le compte de {{ $user->prenom }} {{ $user->name }} ? Cette action est irréversible et un email sera envoyé à l'utilisateur."
+                              data-confirm-icon="danger"
+                              data-confirm-ok="Supprimer"
+                              data-loader-text="Suppression du compte en cours...">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-action btn-reject" style="background: linear-gradient(135deg, #ef4444, #dc2626);" title="Supprimer définitivement le compte">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                Supprimer
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
         @empty
@@ -508,5 +549,5 @@
     </div>
 </div>
 
-<script src="{{ asset('js/auth-form.js') }}"></script>
+<script src="{{ asset('js/auth-form.js?v=3') }}"></script>
 @endsection

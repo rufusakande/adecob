@@ -28,9 +28,9 @@ class NewUserRegistration extends Notification implements ShouldQueue
         $url = url('/admin/pending-registrations');
         
         return (new MailMessage)
-            ->subject('Nouvelle inscription en attente - ADECOB')
+            ->subject('Nouvelle inscription en attente - ' . config('app.name'))
             ->greeting('Bonjour ' . $notifiable->name)
-            ->line('Un nouvel utilisateur vient de s\'inscrire sur la plateforme ADECOB.')
+            ->line('Un nouvel utilisateur vient de s\'inscrire sur la plateforme ' . config('app.name') . '.')
             ->line('Informations de l\'utilisateur :')
             ->line('Nom : ' . $this->newUser->name)
             ->line('Email : ' . $this->newUser->email)

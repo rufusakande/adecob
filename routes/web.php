@@ -167,7 +167,6 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     })->name('mairie-agent.form');
     Route::post('/mairie-agent/form', [MairieAgentController::class, 'store'])->name('mairie-agent.store');
     Route::put('/mairie-agent/form/{id}', [MairieAgentController::class, 'update'])->name('mairie-agent.update');
-    Route::get('/mairie-agent/dashboard', [MairieAgentController::class, 'dashboard'])->name('mairie-agent.dashboard');
     Route::get('/mairie-agent/monitoring-dashboard', [MairieAgentController::class, 'monitoringDashboard'])->name('mairie-agent.monitoring-dashboard');
     Route::get('/mairie-agent/export-pdf', [MairieAgentController::class, 'exportPdf'])->name('mairie-agent.export-pdf');
 });
@@ -188,6 +187,7 @@ Route::middleware(['auth', 'admin.access', 'mfa.verified'])->group(function () {
     Route::get('/admin/pending-registrations', [App\Http\Controllers\Admin\UserValidationController::class, 'index'])->name('admin.pending-registrations');
     Route::post('/admin/approve-user/{user}', [App\Http\Controllers\Admin\UserValidationController::class, 'approve'])->name('admin.approve-user');
     Route::post('/admin/reject-user/{user}', [App\Http\Controllers\Admin\UserValidationController::class, 'reject'])->name('admin.reject-user');
+    Route::delete('/admin/pending-registrations/{user}', [App\Http\Controllers\Admin\UserValidationController::class, 'destroy'])->name('admin.pending-registrations.destroy');
 });
 
 // Routes admin - réservées au super admin
@@ -201,6 +201,7 @@ Route::middleware(['auth', 'super.admin', 'mfa.verified'])->group(function () {
     Route::get('/admin/users/{user}/edit', [App\Http\Controllers\Admin\UserManagementController::class, 'edit'])->name('admin.users.edit');
     Route::put('/admin/users/{user}', [App\Http\Controllers\Admin\UserManagementController::class, 'update'])->name('admin.users.update');
     Route::put('/admin/users/{user}/toggle-admin', [App\Http\Controllers\Admin\UserManagementController::class, 'toggleSuperAdmin'])->name('admin.users.toggle-admin');
+    Route::delete('/admin/users/{user}', [App\Http\Controllers\Admin\UserManagementController::class, 'destroy'])->name('admin.users.destroy');
 
     // Routes pour la gestion des communes
     Route::resource('/admin/communes', CommuneAdminController::class, ['as' => 'admin']);

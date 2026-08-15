@@ -1,11 +1,11 @@
 {
-    "name":  "ARUMANI",
-    "short_name": "ARUMANI",
-    "description":  "Plateforme de plannification des infrastructures de l\u0027ADECOB",
+    "name":  "ARMANI",
+    "short_name": "ARMANI",
+    "description":  "Plateforme de plannification des infrastructures de l\u0027ARMANI",
     "start_url":  "/",
     "display":  "standalone",
     "background_color":  "#ffffff",
-    "theme_color":  "#28a745",
+    "theme_color":  "#0b6623",
     "icons":  [
                   {
                       "purpose":  "any maskable",

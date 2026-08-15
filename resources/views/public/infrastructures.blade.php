@@ -7,28 +7,32 @@
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
 <style>
-    .public-toolbar { background:#f6f9f7; border:1px solid #e3ebe6; border-radius:14px; padding:18px; }
-    .infra-card { border:1px solid #eef2ee; border-radius:14px; padding:18px; height:100%; background:#fff; transition:transform .15s ease, box-shadow .15s ease;}
-    .infra-card:hover { transform: translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.06); }
+    .public-toolbar { background:#fff; border:1px solid #e7eeea; border-radius:16px; padding:20px; box-shadow:0 6px 20px -10px rgba(16,60,35,.12); }
+    .infra-card { border:1px solid #eef2ee; border-radius:16px; padding:18px; height:100%; background:#fff; box-shadow:0 6px 20px -10px rgba(16,60,35,.1); transition:transform .2s ease, box-shadow .2s ease;}
+    .infra-card:hover { transform: translateY(-3px); box-shadow:0 14px 30px -12px rgba(6,74,26,.2); }
     .infra-card .meta { font-size:.82rem; color:#6b7a72; }
     .badge-etat { font-size:.72rem; padding:5px 10px; border-radius:999px; font-weight:600; }
     .etat-Bon, .etat-bon { background:#e6f5ec; color:#0a7a3d; }
     .etat-Moyen, .etat-moyen { background:#fff5d6; color:#8a6d00; }
     .etat-Mauvais, .etat-mauvais, .etat-Defectueux { background:#fde7e7; color:#a4242a; }
-    #map { height: 460px; border-radius: 14px; border: 1px solid #e3ebe6; }
+    #map { height: 460px; border-radius: 16px; border: 1px solid #e7eeea; box-shadow:0 6px 20px -10px rgba(16,60,35,.12); }
     .page-title { font-weight: 800; }
 </style>
 
 <section class="py-4 py-md-5">
     <div class="container">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <div>
-                <h1 class="page-title h2 mb-1">Infrastructures du Borgou</h1>
-                <p class="text-muted mb-0">Données publiques — consultation libre, sans inscription.</p>
+        <div class="page-hero">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <h1 class="h2 mb-1">Infrastructures du Borgou</h1>
+                    <p class="hero-sub mb-0">Données publiques — consultation libre, sans inscription.</p>
+                </div>
+                <div class="hero-actions">
+                    <a href="{{ route('public.landing') }}" class="btn btn-light">
+                        <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                    </a>
+                </div>
             </div>
-            <a href="{{ route('public.landing') }}" class="btn btn-outline-success">
-                <i class="fas fa-arrow-left"></i> Retour à l'accueil
-            </a>
         </div>
 
         <form method="GET" action="{{ route('public.infrastructures') }}" class="public-toolbar mb-4">

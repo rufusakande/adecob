@@ -31,7 +31,7 @@
                             Votre demande va être examinée par&nbsp;:</p>
                         <ul class="mb-3 ps-4">
                             <li>l'<strong>administrateur de votre commune</strong>, ou</li>
-                            <li>un <strong>super administrateur</strong> de l'ADECOB.</li>
+                            <li>un <strong>super administrateur</strong> de l'{{ config('app.name') }}.</li>
                         </ul>
                         <p class="mb-0"><i class="fas fa-envelope text-primary me-2"></i>
                             Vous recevrez un email dès que votre compte sera approuvé ou rejeté.</p>

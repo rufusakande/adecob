@@ -20,12 +20,12 @@ class MfaCodeNotification extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('Code de vérification ADECOB')
+            ->subject('Code de vérification ' . config('app.name'))
             ->greeting('Bonjour ' . ($notifiable->prenom ?? $notifiable->name))
-            ->line('Une connexion à votre espace administrateur ADECOB nécessite une vérification supplémentaire.')
+            ->line('Une connexion à votre espace administrateur ' . config('app.name') . ' nécessite une vérification supplémentaire.')
             ->line('Votre code de vérification est :')
             ->line('**' . $this->code . '**')
             ->line('Ce code est valable ' . $this->ttlMinutes . ' minutes.')
-            ->line("Si vous n'êtes pas à l'origine de cette connexion, changez immédiatement votre mot de passe et contactez l'équipe ADECOB.");
+            ->line("Si vous n'êtes pas à l'origine de cette connexion, changez immédiatement votre mot de passe et contactez l'équipe " . config('app.name') . ".");
     }
 }

@@ -30,7 +30,7 @@ class ContactFormMail extends Mailable
      */
     public function build()
     {
-        return $this->subject('Nouveau message de contact')
+        return $this->subject('Nouveau message de contact - ' . config('app.name'))
                     ->view('emails.contact_form');
     }
 }

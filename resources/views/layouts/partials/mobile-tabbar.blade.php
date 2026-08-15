@@ -22,7 +22,6 @@
         ];
     } else {
         $tabs = [
-            ['route' => route('mairie-agent.dashboard'), 'icon' => 'bi-speedometer2', 'label' => 'Tableau', 'active' => $is('mairie-agent.dashboard')],
             ['route' => url('/infrastructures'), 'icon' => 'bi-buildings', 'label' => 'Mes fiches', 'active' => $is('infrastructures.index')],
             ['route' => route('infrastructures.create'), 'icon' => 'bi-plus-circle', 'label' => 'Ajouter', 'active' => $is('infrastructures.create')],
             ['route' => route('infrastructures.offline'), 'icon' => 'bi-cloud-arrow-up', 'label' => 'Hors-ligne', 'active' => $is('infrastructures.offline')],

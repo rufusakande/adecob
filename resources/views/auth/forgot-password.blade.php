@@ -4,7 +4,7 @@
 
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/custom-auth.css') }}">
-<link rel="stylesheet" href="{{ asset('css/auth-enhancements.css') }}">
+<link rel="stylesheet" href="{{ asset('css/auth-enhancements.css?v=3') }}">
 <div class="row justify-content-center">
     <div class="col-md-6">
         <h1 class="mb-4">Mot de passe oublié</h1>

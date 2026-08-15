@@ -1,4 +1,4 @@
-/* ADECOB — Invitation à installer l'application (tous navigateurs / tous écrans) */
+/* Plateforme — Invitation à installer l'application (tous navigateurs / tous écrans) */
 (function () {
     'use strict';
 
@@ -7,6 +7,13 @@
     var deferredPrompt = null;
     var banner = null;
     var modal = null;
+
+    // Nom de l'application — injecté par le layout via <meta name="app-name"> (variable .env)
+    var APP_NAME = 'ARMANI';
+    try {
+        var metaApp = document.querySelector('meta[name="app-name"]');
+        if (metaApp && metaApp.content) { APP_NAME = metaApp.content; }
+    } catch (e) { /* meta indisponible : on garde le fallback */ }
 
     function isStandalone() {
         return (
@@ -53,7 +60,7 @@
         'ios-safari': [
             'Appuyez sur le bouton <strong>Partager</strong> (carré avec une flèche) en bas de Safari.',
             'Faites défiler puis choisissez <strong>« Sur l’écran d’accueil »</strong>.',
-            'Confirmez avec <strong>Ajouter</strong> : l’icône ADECOB apparaît sur votre écran d’accueil.'
+            'Confirmez avec <strong>Ajouter</strong> : l’icône ' + APP_NAME + ' apparaît sur votre écran d’accueil.'
         ],
         'ios-chrome': [
             'Appuyez sur le bouton <strong>Partager</strong> dans la barre d’adresse.',
@@ -79,13 +86,13 @@
         ],
         'desktop-chromium': [
             'Cliquez sur l’icône <strong>d’installation</strong> (écran avec une flèche) à droite de la barre d’adresse.',
-            'Sinon : menu <strong>⋮</strong> → <strong>« Installer ADECOB… »</strong>.',
+            'Sinon : menu <strong>⋮</strong> → <strong>« Installer ' + APP_NAME + '… »</strong>.',
             'Confirmez avec <strong>Installer</strong>.'
         ],
         'desktop-firefox': [
             'Firefox n’installe pas encore les applications web sur ordinateur.',
             'Créez un raccourci : <strong>Ctrl + D</strong> pour ajouter la plateforme à vos favoris,',
-            'ou installez ADECOB depuis Chrome, Edge ou votre téléphone.'
+            'ou installez ' + APP_NAME + ' depuis Chrome, Edge ou votre téléphone.'
         ],
         'desktop-safari': [
             'Dans la barre de menus, ouvrez <strong>Fichier</strong>.',
@@ -102,14 +109,14 @@
         modal.className = 'adecob-install-modal';
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-label', 'Installer l’application ADECOB');
+        modal.setAttribute('aria-label', 'Installer l’application ' + APP_NAME);
 
         var dialog = document.createElement('div');
         dialog.className = 'adecob-install-modal__dialog';
 
         var title = document.createElement('div');
         title.className = 'adecob-install-modal__title';
-        title.textContent = 'Installer ADECOB sur votre appareil';
+        title.textContent = 'Installer ' + APP_NAME + ' sur votre appareil';
 
         var intro = document.createElement('p');
         intro.className = 'adecob-install-modal__intro';
@@ -181,12 +188,12 @@
         banner = document.createElement('div');
         banner.className = 'adecob-install-banner';
         banner.setAttribute('role', 'region');
-        banner.setAttribute('aria-label', 'Installer l’application ADECOB');
+        banner.setAttribute('aria-label', 'Installer l’application ' + APP_NAME);
 
         var icon = document.createElement('img');
         icon.className = 'adecob-install-banner__icon';
         icon.src = '/icon-192x192.png';
-        icon.alt = 'Logo ADECOB';
+        icon.alt = 'Logo ' + APP_NAME;
         icon.addEventListener('error', function () {
             icon.src = '/logo.jpg';
         });
@@ -195,7 +202,7 @@
         text.className = 'adecob-install-banner__text';
         var title = document.createElement('div');
         title.className = 'adecob-install-banner__title';
-        title.textContent = 'Installer l’application ADECOB';
+        title.textContent = 'Installer l’application ' + APP_NAME;
         var desc = document.createElement('div');
         desc.className = 'adecob-install-banner__desc';
         desc.textContent = 'Accès rapide depuis votre écran d’accueil et saisie hors-ligne.';

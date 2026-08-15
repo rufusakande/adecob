@@ -52,10 +52,15 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editWorkModal{{ $work->id }}">
                                             Modifier
                                         </button>
-                                        <form action="{{ route('infrastructures.works.destroy', [$infrastructure, $work]) }}" method="POST" class="d-inline">
+                                        <form action="{{ route('infrastructures.works.destroy', [$infrastructure, $work]) }}" method="POST" class="d-inline js-confirm-submit"
+                                              data-confirm-title="Supprimer ce travail"
+                                              data-confirm-message="Êtes-vous sûr de vouloir supprimer ce travail ?"
+                                              data-confirm-icon="danger"
+                                              data-confirm-ok="Supprimer"
+                                              data-loader-text="Suppression en cours...">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce travail ?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
                                                 Supprimer
                                             </button>
                                         </form>

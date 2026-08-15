@@ -84,8 +84,12 @@
                                         Le rôle Super Admin ne peut pas être modifié via ce formulaire.
                                         Utilisez le bouton ci-dessous pour rétrograder cet utilisateur en Agent Collecteur.
                                     </p>
-                                    <form action="{{ route('admin.users.toggle-admin', $user->id) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Êtes-vous sûr de vouloir retirer le rôle Super Admin à {{ $user->prenom }} {{ $user->name }} ? Il sera déconnecté et deviendra Agent Collecteur.')">
+                                    <form action="{{ route('admin.users.toggle-admin', $user->id) }}" method="POST" class="d-inline js-confirm-submit"
+                                          data-confirm-title="Retirer le rôle Super Admin"
+                                          data-confirm-message="Êtes-vous sûr de vouloir retirer le rôle Super Admin à {{ $user->prenom }} {{ $user->name }} ? Il sera déconnecté et deviendra Agent Collecteur."
+                                          data-confirm-icon="warning"
+                                          data-confirm-ok="Retirer"
+                                          data-loader-text="Mise à jour du rôle en cours...">
                                         @csrf
                                         @method('PUT')
                                         <button type="submit" class="btn btn-warning btn-sm">
@@ -196,8 +200,12 @@
                                     Promouvoir cet agent en Super Administrateur lui donnera un accès complet à toute la plateforme.
                                     <strong>Cette action est irréversible via ce formulaire — seul un autre Super Admin pourra retirer ce rôle.</strong>
                                 </p>
-                                <form action="{{ route('admin.users.toggle-admin', $user->id) }}" method="POST" class="d-inline"
-                                      onsubmit="return confirm('Êtes-vous sûr de vouloir promouvoir {{ $user->prenom }} {{ $user->name }} en Super Admin ? Il sera déconnecté et recevra un accès complet à la plateforme.')">
+                                <form action="{{ route('admin.users.toggle-admin', $user->id) }}" method="POST" class="d-inline js-confirm-submit"
+                                      data-confirm-title="Promouvoir en Super Admin"
+                                      data-confirm-message="Êtes-vous sûr de vouloir promouvoir {{ $user->prenom }} {{ $user->name }} en Super Admin ? Il sera déconnecté et recevra un accès complet à la plateforme."
+                                      data-confirm-icon="danger"
+                                      data-confirm-ok="Promouvoir"
+                                      data-loader-text="Promotion en cours...">
                                     @csrf
                                     @method('PUT')
                                     <button type="submit" class="btn btn-danger btn-sm">

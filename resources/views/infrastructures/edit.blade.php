@@ -3,7 +3,7 @@
 @section('content')
 <div class="container">
     <div class="text-center mb-4">
-        <img src="{{ asset('logo.jpg') }}" alt="Logo ADECOB" class="img-fluid" style="max-height: 100px;">
+        <img src="{{ asset('logo.jpg') }}" alt="Logo {{ config('app.name') }}" class="img-fluid" style="max-height: 100px;">
     </div>
     <h2 class="text-center mb-4">MODIFIER UNE INFRASTRUCTURE</h2>
 

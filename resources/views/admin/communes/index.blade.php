@@ -137,7 +137,12 @@
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     
-                                    <form action="{{ route('admin.communes.destroy', $commune) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette commune ?')">
+                                    <form action="{{ route('admin.communes.destroy', $commune) }}" method="POST" class="d-inline js-confirm-submit"
+                                          data-confirm-title="Supprimer la commune"
+                                          data-confirm-message="Êtes-vous sûr de vouloir supprimer la commune {{ $commune->name }} ? Cette action est irréversible."
+                                          data-confirm-icon="danger"
+                                          data-confirm-ok="Supprimer"
+                                          data-loader-text="Suppression de la commune en cours...">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
