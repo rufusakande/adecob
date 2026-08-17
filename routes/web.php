@@ -104,6 +104,7 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     Route::get('/infrastructures', [App\Http\Controllers\InfrastructureController::class, 'index'])->name('infrastructures.index');
     Route::post('/infrastructures/import', [App\Http\Controllers\InfrastructureController::class, 'import'])->name('infrastructures.import');
     Route::get('/infrastructures/export', [App\Http\Controllers\InfrastructureController::class, 'export'])->name('infrastructures.export');
+    Route::get('/infrastructures/filter-options', [App\Http\Controllers\InfrastructureController::class, 'filterOptions'])->name('infrastructures.filter-options');
 
     // Gestion des fiches saisies hors-ligne (stockées dans le navigateur de l'appareil)
     Route::view('/infrastructures-hors-ligne', 'infrastructures.offline-pending')->name('infrastructures.offline');

@@ -10,14 +10,20 @@
     $baseParams = request()->except(['priority', 'page']);
 @endphp
 
-{{-- Niveaux de priorité (cadres cliquables) --}}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
+{{-- Niveaux de priorité (cadres cliquables, repliable) --}}
+<div class="collapsible mb-4" data-collapsible>
+    <div class="collapsible__header" role="button" tabindex="0" data-collapsible-toggle aria-expanded="false">
+        <span class="collapsible__title">
+            <i class="fas fa-exclamation-triangle text-danger"></i>
+            Niveaux de Priorité
+            <span class="collapsible__hint text-dark">cliquez sur un cadre pour filtrer</span>
+        </span>
+        <span class="collapsible__chevron"><i class="fas fa-chevron-down"></i></span>
+    </div>
+    <div class="collapsible__body">
+        <div class="collapsible__body-inner">
+            <div class="p-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <h6 class="text-muted mb-0">
-                <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
-                Niveaux de Priorité — <span class="text-dark">cliquez sur un cadre pour filtrer</span>
-            </h6>
             @if(!empty($priorityFilter))
                 <a href="{{ route('infrastructures.index', request()->except(['priority', 'page'])) }}"
                    class="btn btn-sm btn-outline-secondary priority-clear">
@@ -51,6 +57,8 @@
                     </a>
                 </div>
             @endforeach
+        </div>
+        </div>
         </div>
     </div>
 </div>

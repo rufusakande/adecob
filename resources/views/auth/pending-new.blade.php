@@ -283,7 +283,7 @@
             <div class="info-box">
                 <h3>📋 Que se passe-t-il maintenant ?</h3>
                 <p>
-                    Votre demande d'inscription a été soumise à la validation. Un administrateur ou un administrateur de votre commune 
+                    Votre demande d'inscription a été soumise à la validation. Un administrateur 
                     examinera votre demande et vous contactera dans les meilleurs délais.
                 </p>
                 <ul>

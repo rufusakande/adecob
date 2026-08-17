@@ -74,6 +74,32 @@ class Infrastructure extends Model
     public function user() { return $this->belongsTo(User::class); }
     public function communeModel() { return $this->belongsTo(Commune::class, 'commune_id'); }
     public function validator() { return $this->belongsTo(User::class, 'validated_by'); }
+    public function assignments() { return $this->hasMany(InfrastructureAssignment::class); }
+
+    /** Affectation ACTIVE d'un agent pour cette infrastructure (assigned/submitted/rejected). */
+    public function activeAssignmentFor(?User $user)
+    {
+        if (!$user) return null;
+        return $this->assignments()
+            ->where('assigned_to', $user->id)
+            ->whereIn('status', InfrastructureAssignment::ACTIVE_STATUSES)
+            ->latest('id')
+            ->first();
+    }
+
+    public function hasActiveAssignmentFor(?User $user): bool
+    {
+        return $this->activeAssignmentFor($user) !== null;
+    }
+
+    /** Affectation en attente de revue admin (submitted) pour cette infrastructure. */
+    public function pendingAssignment()
+    {
+        return $this->assignments()
+            ->where('status', InfrastructureAssignment::STATUS_SUBMITTED)
+            ->latest('id')
+            ->first();
+    }
 
     /** Accessors */
     public function getLatestWorkAttribute() { return $this->works()->first(); }
@@ -105,7 +131,14 @@ class Infrastructure extends Model
             });
         }
         if ($user->isAgent()) {
-            return $query->where('user_id', $user->id);
+            return $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  // + les infrastructures qui lui ont été affectées (affectation encore active)
+                  ->orWhereHas('assignments', function ($a) use ($user) {
+                      $a->where('assigned_to', $user->id)
+                        ->whereIn('status', InfrastructureAssignment::ACTIVE_STATUSES);
+                  });
+            });
         }
         return $query->whereRaw('1=0');
     }
@@ -125,8 +158,12 @@ class Infrastructure extends Model
                 || ($this->commune === $user->commune->name);
         }
         if ($user->isAgent()) {
-            if ((int)$this->user_id !== (int)$user->id) return false;
-            return !$this->isValidated(); // pas de modif après validation
+            // Ses propres saisies non validées
+            if ((int) $this->user_id === (int) $user->id) {
+                return !$this->isValidated();
+            }
+            // OU une infrastructure affectée à cet agent (affectation encore active)
+            return $this->activeAssignmentFor($user) !== null;
         }
         return false;
     }
@@ -134,7 +171,19 @@ class Infrastructure extends Model
     /** Peut être supprimée par cet utilisateur (règle plus stricte que edit) */
     public function canBeDeletedBy($user): bool
     {
-        return $this->canBeManagedBy($user);
+        if (!$user) return false;
+        if ($user->isSuperAdmin()) return true;
+        if ($user->isCommuneAdmin()) {
+            if (!$user->commune) return false;
+            return ((int) $this->commune_id === (int) $user->commune_id)
+                || ($this->commune === $user->commune->name);
+        }
+        if ($user->isAgent()) {
+            // Un agent affecté ne peut PAS supprimer : seul le propriétaire de la saisie le peut.
+            if ((int) $this->user_id !== (int) $user->id) return false;
+            return !$this->isValidated();
+        }
+        return false;
     }
 
     /** Peut être validée / rejetée par cet utilisateur ? */

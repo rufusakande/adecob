@@ -1178,7 +1178,7 @@
                 return;
             }
             btn.disabled = true;
-            btnLabel.innerHTML = 'Recherche (objectif ≤ 5m)...';
+            btnLabel.innerHTML = 'Recherche (objectif < 5 m)...';
             btn.classList.add('geo-pulse');
             showStatus('info', '<i class="fas fa-spinner fa-spin"></i> Ajustement GPS en cours...');
             
@@ -1195,7 +1195,7 @@
                     showStatus('info', `<i class="fas fa-spinner fa-spin"></i> Précision actuelle: ±${Math.round(acc)} m...`);
                 }
                 
-                if (acc <= 5) {
+                if (acc < 5) {
                     navigator.geolocation.clearWatch(tempWatchId);
                     clearTimeout(timeoutId);
                     finalizeLocate('ok', `<i class="fas fa-circle-check"></i> Position optimale obtenue (±${Math.round(acc)} m).`);
@@ -1211,7 +1211,11 @@
             let timeoutId = setTimeout(() => {
                 navigator.geolocation.clearWatch(tempWatchId);
                 if (bestPos) {
-                    finalizeLocate('ok', `<i class="fas fa-circle-check"></i> Meilleure position trouvée (±${Math.round(bestPos.coords.accuracy)} m).`);
+                    if (bestPos.coords.accuracy >= 5) {
+                        finalizeLocate('err', `<i class="fas fa-circle-exclamation"></i> Position obtenue (±${Math.round(bestPos.coords.accuracy)} m) — précision insuffisante. Objectif : < 5 m. Réessayez ou ajustez le repère.`);
+                    } else {
+                        finalizeLocate('ok', `<i class="fas fa-circle-check"></i> Meilleure position trouvée (±${Math.round(bestPos.coords.accuracy)} m).`);
+                    }
                 } else {
                     finalizeLocate('err', '<i class="fas fa-circle-exclamation"></i> Impossible d\'obtenir une position précise.');
                 }
@@ -1246,7 +1250,7 @@
                 const { latitude, longitude, altitude, accuracy } = pos.coords;
                 setFields(latitude, longitude, altitude, accuracy);
                 placeMarker(latitude, longitude, accuracy);
-                if (accuracy <= 5){
+                if (accuracy < 5){
                     showStatus('ok', `<i class="fas fa-bullseye"></i> Position optimale atteinte (±${Math.round(accuracy)} m). Suivi arrêté.`);
                     navigator.geolocation.clearWatch(watchId);
                     watchId = null;
@@ -1284,6 +1288,27 @@
         btn?.addEventListener('click', locateOnce);
         watchBtn?.addEventListener('click', toggleWatch);
         clearBtn?.addEventListener('click', clearAll);
+
+        // Validation géolocalisation à la soumission : si une position est saisie,
+        // la précision doit être < 5 m (strict) et l'altitude renseignée.
+        document.getElementById('infraForm')?.addEventListener('submit', function(e) {
+            const la = parseFloat(latEl.value), ln = parseFloat(lngEl.value);
+            if (isNaN(la) || isNaN(ln)) return; // pas de position -> rien à vérifier
+            const prec = parseFloat(accEl.value);
+            const alt = parseFloat(altEl.value);
+            if (isNaN(alt)) {
+                e.preventDefault();
+                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> L\'altitude est obligatoire lorsque la position est renseignée.');
+                altEl.focus();
+                return;
+            }
+            if (isNaN(prec) || prec <= 0 || prec >= 5) {
+                e.preventDefault();
+                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> La précision GPS doit être strictement inférieure à 5 mètres. Relancez la géolocalisation ou corrigez la valeur.');
+                accEl.focus();
+                return;
+            }
+        });
 
         // Init carte au chargement
         window.addEventListener('load', () => {

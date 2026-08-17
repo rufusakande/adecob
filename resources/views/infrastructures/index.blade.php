@@ -100,15 +100,21 @@
     </div>
 
 
-    <!-- Statistiques -->
-    <div class="card shadow-sm mb-4 border-0">
-        <div class="card-header text-white" style="background: linear-gradient(135deg,#0b6623,#0a7a2a); border-radius: 15px 15px 0 0;">
-            <h5 class="mb-0">
-                <i class="fas fa-chart-line me-2"></i> 
+    <!-- Sections repliables (ordre CSS : Statistiques, Exporter, Filtres) -->
+    <div class="sections-stack">
+
+    <!-- Statistiques (ouverte par défaut) -->
+    <div class="collapsible is-open" data-collapsible style="order:1">
+        <div class="collapsible__header collapsible__header--green" role="button" tabindex="0" data-collapsible-toggle aria-expanded="true">
+            <span class="collapsible__title">
+                <i class="fas fa-chart-line"></i>
                 Statistiques des Infrastructures
-            </h5>
+            </span>
+            <span class="collapsible__chevron"><i class="fas fa-chevron-down"></i></span>
         </div>
-        <div class="card-body p-4">
+        <div class="collapsible__body">
+            <div class="collapsible__body-inner">
+                <div class="p-4">
             <!-- Statistiques principales -->
             <div class="row g-4 mb-4">
                 <!-- Total -->
@@ -276,24 +282,28 @@
             </div>
 
         </div>
+        </div>
+        </div>
     </div>
 
 
-    <!-- Formulaire de recherche -->
+    <!-- Filtres de Recherche (repliable, fermée par défaut) -->
     @if(!Auth::user()->isPublicUser())
-    <form method="GET" action="{{ route('infrastructures.index') }}" id="filtersForm" class="card shadow-sm mb-4 border-0">
-        <div class="card-body p-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
-                <h5 class="card-title mb-0 text-dark">
-                    <i class="fas fa-filter me-2 text-success"></i>
-                    Filtres de Recherche
-                    <span id="filtersLoader" class="ms-2 d-none">
-                        <span class="spinner-border spinner-border-sm text-success" role="status"></span>
-                        <small class="text-muted">Actualisation…</small>
-                    </span>
-                </h5>
-                <small class="text-muted"><i class="fas fa-bolt me-1 text-warning"></i>Filtrage automatique</small>
-            </div>
+    <div class="collapsible" data-collapsible style="order:3">
+        <div class="collapsible__header" role="button" tabindex="0" data-collapsible-toggle aria-expanded="false">
+            <span class="collapsible__title">
+                <i class="fas fa-filter"></i>
+                Filtres de Recherche
+                <span id="filtersLoader" class="ms-2 d-none">
+                    <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                    <small class="text-muted">Actualisation…</small>
+                </span>
+            </span>
+            <span class="collapsible__chevron"><i class="fas fa-chevron-down"></i></span>
+        </div>
+        <div class="collapsible__body">
+            <div class="collapsible__body-inner">
+    <form method="GET" action="{{ route('infrastructures.index') }}" id="filtersForm" class="p-4 mb-0">
 
             {{-- Conserve le filtre priorité choisi via les cadres --}}
             <input type="hidden" name="priority" value="{{ request('priority') }}">
@@ -403,18 +413,25 @@
                     </div>
                 </div>
             </div>
-        </div>
     </form>
+            </div>
+        </div>
+    </div>
     @endif
 
-    <!-- Boutons d'export -->
+    <!-- Exporter les Données (repliable, fermée par défaut — affichée au-dessus des filtres) -->
     @if(!Auth::user()->isPublicUser())
-    <form id="exportForm" data-no-loader="true" method="GET" action="{{ route('infrastructures.export') }}" class="card shadow-sm mb-4 border-0">
-        <div class="card-body p-4">
-            <h5 class="card-title mb-4 text-dark">
-                <i class="fas fa-download me-2 text-success"></i> 
+    <div class="collapsible" data-collapsible style="order:2">
+        <div class="collapsible__header" role="button" tabindex="0" data-collapsible-toggle aria-expanded="false">
+            <span class="collapsible__title">
+                <i class="fas fa-download"></i>
                 Exporter les Données
-            </h5>
+            </span>
+            <span class="collapsible__chevron"><i class="fas fa-chevron-down"></i></span>
+        </div>
+        <div class="collapsible__body">
+            <div class="collapsible__body-inner">
+    <form id="exportForm" data-no-loader="true" method="GET" action="{{ route('infrastructures.export') }}" class="p-4 mb-0">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4 col-lg-3">
                     <label class="form-label text-muted">Filtrer par année</label>
@@ -459,8 +476,11 @@
                 L'export se fait <strong>par commune</strong> : sélectionnez une commune obligatoirement
                 (ou sélectionnez des lignes précises dans le tableau pour un export personnalisé).
             </div>
-        </div>
     </form>
+            </div>
+        </div>
+    </div>
+    </div><!-- /sections-stack -->
     
     <script>
         document.getElementById('exportForm')?.addEventListener('submit', function(e) {
@@ -804,6 +824,51 @@
         from { opacity: 0; transform: translateY(6px); }
         to   { opacity: 1; transform: translateY(0); }
     }
+
+    /* ===== Sections repliables (accordéon premium) ===== */
+    .sections-stack { display: flex; flex-direction: column; }
+    .collapsible {
+        background:#fff;
+        border:1px solid #e7eeea;
+        border-radius:16px;
+        box-shadow:0 6px 20px -10px rgba(16,60,35,.1);
+        margin-bottom:1.5rem;
+        overflow:hidden;
+    }
+    .collapsible__header {
+        display:flex; align-items:center; justify-content:space-between; gap:1rem;
+        width:100%; padding:1rem 1.25rem; margin:0; border:0;
+        background:linear-gradient(135deg,#fbfdfb,#f0f7f2);
+        cursor:pointer; text-align:left; user-select:none;
+        transition:background .2s ease;
+        -webkit-tap-highlight-color:transparent;
+    }
+    .collapsible__header:hover { background:#e7f2ea; }
+    .collapsible__header--green { background:linear-gradient(135deg,#0b6623,#0a7a2a); }
+    .collapsible__header--green:hover { background:linear-gradient(135deg,#0a5a1f,#098d24); }
+    .collapsible__title {
+        display:flex; align-items:center; gap:.65rem;
+        font-weight:700; font-size:1.02rem; color:#1f2937;
+    }
+    .collapsible__header--green .collapsible__title { color:#fff; }
+    .collapsible__title i { color:#0b6623; }
+    .collapsible__header--green .collapsible__title i { color:#fff; }
+    .collapsible__hint { font-weight:500; font-size:.78rem; color:#6b7a72; }
+    .collapsible__chevron {
+        flex-shrink:0; width:30px; height:30px; display:grid; place-items:center;
+        border-radius:50%; background:#0b6623; color:#fff;
+        transition:transform .35s ease, background .2s ease;
+    }
+    .collapsible__header--green .collapsible__chevron { background:rgba(255,255,255,.18); }
+    .collapsible__chevron i { font-size:.75rem; }
+    .collapsible.is-open .collapsible__chevron { transform:rotate(180deg); }
+    .collapsible__body { overflow:hidden; }
+    .collapsible__body-inner { overflow:hidden; }
+    .collapsible:not(.is-open) .collapsible__body-inner { height:0; }
+    @media (max-width: 576px) {
+        .collapsible__header { padding:.85rem 1rem; }
+        .collapsible__title { font-size:.95rem; }
+    }
 </style>
 
 <script>
@@ -881,6 +946,61 @@
             });
         }
 
+        // === Filtres en cascade (commune -> arrondissements -> villages) ===
+        const communeSel = form ? form.querySelector('select[name="commune"]') : null;
+        const arrSel = form ? form.querySelector('select[name="arrondissement"]') : null;
+        const villageSel = form ? form.querySelector('select[name="village"]') : null;
+        const optionsUrl = "{{ route('infrastructures.filter-options') }}";
+
+        function fillSelect(sel, items, selected) {
+            if (!sel) return;
+            const firstText = sel.querySelector('option')?.textContent || 'Tous';
+            sel.innerHTML = '<option value="">' + firstText + '</option>';
+            (items || []).forEach(function (v) {
+                const o = document.createElement('option');
+                o.value = v;
+                o.textContent = v;
+                sel.appendChild(o);
+            });
+            if (selected && (items || []).includes(selected)) sel.value = selected;
+        }
+
+        function loadFilterOptions() {
+            if (!form) return;
+            const params = new URLSearchParams({
+                commune: communeSel ? communeSel.value : '',
+                arrondissement: arrSel ? arrSel.value : ''
+            });
+            fetch(optionsUrl + '?' + params.toString(), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                fillSelect(arrSel, data.arrondissements || [], arrSel ? arrSel.value : '');
+                fillSelect(villageSel, data.villages || [], villageSel ? villageSel.value : '');
+            })
+            .catch(() => {});
+        }
+
+        if (communeSel) {
+            // Phase de CAPTURE : s'exécute avant la soumission AJAX (bubble) pour
+            // effacer les filtres enfants devenus obsolètes lors du changement de commune.
+            communeSel.addEventListener('change', function () {
+                if (arrSel) arrSel.value = '';
+                if (villageSel) villageSel.value = '';
+                loadFilterOptions();
+            }, true);
+        }
+        if (arrSel) {
+            arrSel.addEventListener('change', function () {
+                if (villageSel) villageSel.value = '';
+                loadFilterOptions();
+            });
+        }
+        // Initialisation : si une commune est déjà sélectionnée (filtre actif)
+        if (communeSel) loadFilterOptions();
+
         // Délégation : clic sur un cadre de priorité, "effacer priorité", ou pagination
         if (dynamicZone) {
             dynamicZone.addEventListener('click', (e) => {
@@ -930,5 +1050,59 @@
             setTimeout(() => alert.remove(), 1000);
         });
     }, 5000);
+
+    // === Sections repliables (accordéon premium) ===
+    // Animation de hauteur pilotée en JS : fluide et fiable sur tous les navigateurs.
+    // Délégation globale : fonctionne aussi après les rechargements AJAX.
+    function toggleCollapsible(section) {
+        const inner = section.querySelector('.collapsible__body-inner');
+        const header = section.querySelector('[data-collapsible-toggle]');
+        if (!inner) return;
+        const opening = !section.classList.contains('is-open');
+        const done = function () {
+            inner.style.transition = '';
+            inner.style.height = opening ? 'auto' : '0px';
+            if (!opening) section.classList.remove('is-open');
+            if (header) header.setAttribute('aria-expanded', opening ? 'true' : 'false');
+        };
+        const onEnd = function (e) {
+            if (e && e.propertyName !== 'height') return;
+            inner.removeEventListener('transitionend', onEnd);
+            clearTimeout(timer);
+            done();
+        };
+        inner.style.transition = 'height .45s cubic-bezier(.4,0,.2,1)';
+        if (opening) {
+            section.classList.add('is-open');
+            inner.style.height = 'auto';
+            const h = inner.getBoundingClientRect().height;
+            inner.style.height = '0px';
+            void inner.offsetHeight; // force reflow pour démarrer l'animation
+            inner.style.height = h + 'px';
+        } else {
+            inner.style.height = inner.getBoundingClientRect().height + 'px';
+            void inner.offsetHeight;
+            inner.style.height = '0px';
+        }
+        inner.addEventListener('transitionend', onEnd);
+        const timer = setTimeout(onEnd, 600); // filet de sécurité
+    }
+
+    document.addEventListener('click', function (e) {
+        const header = e.target.closest('[data-collapsible-toggle]');
+        if (!header) return;
+        const section = header.closest('[data-collapsible]');
+        if (section) toggleCollapsible(section);
+    });
+    // Accessibilité clavier (Entrée / Espace)
+    document.addEventListener('keydown', function (e) {
+        const header = e.target.closest('[data-collapsible-toggle]');
+        if (!header) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const section = header.closest('[data-collapsible]');
+            if (section) toggleCollapsible(section);
+        }
+    });
 </script>
 @endsection

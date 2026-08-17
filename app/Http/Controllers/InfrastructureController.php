@@ -52,7 +52,20 @@ class InfrastructureController extends Controller
         $villages = Infrastructure::query()->visibleTo($user)->select('village')->distinct()->orderBy('village')->pluck('village')->filter()->values();
         $secteurs = Infrastructure::query()->visibleTo($user)->select('secteur_domaine')->distinct()->orderBy('secteur_domaine')->pluck('secteur_domaine')->filter()->values();
         $types = Infrastructure::query()->visibleTo($user)->select('type_infrastructure')->distinct()->orderBy('type_infrastructure')->pluck('type_infrastructure')->filter()->values();
-        $annees = Infrastructure::query()->visibleTo($user)->select('annee_realisation')->distinct()->orderBy('annee_realisation')->pluck('annee_realisation')->filter()->values();
+        // Années valides uniquement (4 chiffres, plage plausible), tri numérique.
+        $annees = Infrastructure::query()->visibleTo($user)
+            ->whereNotNull('annee_realisation')
+            ->pluck('annee_realisation')
+            ->filter(function ($a) {
+                if ($a === null || $a === '') return false;
+                if (! preg_match('/^\d{4}$/', trim((string) $a))) return false;
+                $y = (int) $a;
+                return $y >= 1900 && $y <= ((int) date('Y') + 5);
+            })
+            ->map(fn ($a) => (string) ((int) $a))
+            ->unique()
+            ->sortBy(fn ($y) => (int) $y)
+            ->values();
         $etats = Infrastructure::query()->visibleTo($user)->select('etat_fonctionnement')->distinct()->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement')->filter()->values();
         $niveaux = Infrastructure::query()->visibleTo($user)->select('niveau_degradation')->distinct()->orderBy('niveau_degradation')->pluck('niveau_degradation')->filter()->values();
 
@@ -115,6 +128,19 @@ class InfrastructureController extends Controller
             'bon_etat' => $infrastructuresWithPriority->where('score_priorite', '<', 21)->count(),
         ];
 
+        $priorityFilter = $request->get('priority');
+
+        // Requête AJAX (filtrage) : renvoyer UNIQUEMENT la zone dynamique
+        // (tableau + cadres de priorité) pour ne pas dupliquer en-têtes/stats/footer.
+        if ($request->ajax()) {
+            return view('infrastructures._dynamic', [
+                'infrastructures'          => $infrastructures,
+                'priorityStats'            => $priorityStats,
+                'priorityFilter'           => $priorityFilter,
+                'plannedInfrastructureIds' => $plannedInfrastructureIds,
+            ]);
+        }
+
         // Nombre EXACT d'infrastructures entretenues = celles marquées « Réhabilitée ».
         $totalMaintained = Infrastructure::query()->visibleTo($user)
             ->whereRaw('LOWER(rehabilitation) = ?', ['réhabilitée'])
@@ -153,7 +179,59 @@ class InfrastructureController extends Controller
                 ->orderBy('count', 'desc')->get(),
         ];
 
-        return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats', 'plannedRehabilitated'));
+        return view('infrastructures.index', compact('infrastructures', 'communes', 'arrondissements', 'villages', 'secteurs', 'types', 'annees', 'etats', 'niveaux', 'plannedInfrastructureIds', 'stats', 'priorityStats', 'plannedRehabilitated', 'priorityFilter'));
+    }
+
+    /**
+     * Options de filtres en cascade : arrondissements / villages d'une commune choisie.
+     */
+    public function filterOptions(Request $request)
+    {
+        $user = auth()->user();
+        $commune = trim((string) $request->string('commune'));
+        $arrondissement = trim((string) $request->string('arrondissement'));
+
+        $query = Infrastructure::query()->visibleTo($user);
+        if ($commune !== '') {
+            $query->where('commune', $commune);
+        }
+
+        // Arrondissements de la commune (champ JSON ou liste séparée par virgules).
+        $arrondissements = (clone $query)
+            ->whereNotNull('arrondissement')
+            ->pluck('arrondissement')
+            ->flatMap(function ($item) {
+                if (is_array($item)) return $item;
+                $decoded = json_decode($item, true);
+                if (is_array($decoded)) return $decoded;
+                if (is_string($item) && $item !== '') return array_map('trim', explode(',', $item));
+                return [];
+            })
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        // Villages : dépendent de la commune (et de l'arrondissement si sélectionné).
+        $villageQuery = Infrastructure::query()->visibleTo($user);
+        if ($commune !== '') {
+            $villageQuery->where('commune', $commune);
+        }
+        if ($arrondissement !== '') {
+            $villageQuery->whereJsonContains('arrondissement', $arrondissement);
+        }
+        $villages = $villageQuery->whereNotNull('village')
+            ->select('village')
+            ->distinct()
+            ->orderBy('village')
+            ->pluck('village')
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'arrondissements' => $arrondissements,
+            'villages'        => $villages,
+        ]);
     }
 
     /**

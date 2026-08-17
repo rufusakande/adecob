@@ -2,8 +2,14 @@
 @section('title', 'Nouvelle infrastructure')
 @section('content')
 <div class="container">
+    @php
+        $commune = auth()->user()?->commune;
+        $communeLogoUrl = ($commune && $commune->logo) ? asset('storage/' . $commune->logo) : null;
+    @endphp
     <div class="text-center mb-4">
-        <img src="{{ asset('logo.jpg') }}" alt="Logo {{ config('app.name') }}" class="img-fluid" style="max-height: 100px;">
+        <img src="{{ $communeLogoUrl ?? asset('logo.jpg') }}"
+             alt="{{ $communeLogoUrl ? 'Logo ' . $commune->name : 'Logo ' . config('app.name') }}"
+             class="img-fluid" style="max-height: 100px;">
     </div>
     <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/{{ config('app.name') }}</h2>
 

@@ -186,7 +186,7 @@
     </div>
 </section>
 
-<section class="lp-section">
+<section class="lp-section" id="stats">
     <div class="container">
         <div class="text-center mb-5">
             <div class="lp-eyebrow">Chiffres clés</div>
@@ -267,12 +267,13 @@
     <div class="container">
         <div class="lp-cta d-flex flex-column flex-md-row align-items-md-center justify-content-between">
             <div class="position-relative" style="z-index:1;">
-                <h3 class="mb-1">Vous travaillez pour une commune du Borgou ?</h3>
-                <p class="mb-0">Rejoignez la plateforme pour collecter et suivre les infrastructures de votre territoire.</p>
+                <h3 class="mb-1">Des données ouvertes au service du développement</h3>
+                <p class="mb-0">La plateforme recense, cartographie et suit les infrastructures des 8 communes du Borgou :
+                    états de fonctionnement, dégradations et priorités, pour éclairer la planification locale.</p>
             </div>
             <div class="lp-cta__actions flex-shrink-0">
-                <a href="{{ route('register.form') }}" class="lp-btn lp-btn--gold">S'inscrire</a>
-                <a href="{{ route('public.infrastructures') }}" class="lp-btn lp-btn--ghost">Voir les données</a>
+                <a href="{{ route('public.infrastructures') }}" class="lp-btn lp-btn--gold">Explorer les données</a>
+                <a href="#stats" class="lp-btn lp-btn--ghost">Voir les chiffres clés</a>
             </div>
         </div>
     </div>
