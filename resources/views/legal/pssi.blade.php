@@ -24,9 +24,8 @@
     Code du numérique en République du Bénin</em>, le référentiel international
     <em>ISO/IEC 27001:2022</em>, les recommandations <em>OWASP Top 10 2021</em> et le
     cadre de gouvernance <em>COBIT 2019</em>. Il complète la
-    <a href="{{ route('legal.confidentialite') }}">Politique de confidentialité</a>,
-    les <a href="{{ route('legal.cgu') }}">Conditions Générales d'Utilisation</a>
-    et le <a href="{{ route('legal.registre') }}">Registre des traitements</a>.
+    <a href="{{ route('legal.confidentialite') }}">Politique de confidentialité</a> et
+    les <a href="{{ route('legal.cgu') }}">Conditions Générales d'Utilisation</a>.
 </p>
 
 
@@ -1431,9 +1430,8 @@
 
 <div class="alert alert-light border mt-4">
     <strong>Documents connexes.</strong> La présente PSSI doit être lue conjointement avec :
-    la <a href="{{ route('legal.confidentialite') }}">Politique de confidentialité</a>,
-    les <a href="{{ route('legal.cgu') }}">Conditions Générales d'Utilisation</a>,
-    et le <a href="{{ route('legal.registre') }}">Registre des traitements de données personnelles</a>.
+    la <a href="{{ route('legal.confidentialite') }}">Politique de confidentialité</a> et
+    les <a href="{{ route('legal.cgu') }}">Conditions Générales d'Utilisation</a>.
     Pour toute question, utilisez le <a href="{{ route('contact.form') }}">formulaire de contact</a>.
 </div>
 

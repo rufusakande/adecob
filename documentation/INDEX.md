@@ -88,6 +88,109 @@ Bienvenue dans la documentation complète de la plateforme **ADECOB** (Infrastru
 
 ---
 
+## ⚖️ DOCUMENTS LÉGAUX & CONFORMITÉ (RGPD / PSSI)
+
+### 4. 📄 [MENTIONS_LEGALES.md](./MENTIONS_LEGALES.md)
+**Pour:** Direction, publication du site, conformité légale
+**Contenu:**
+- Éditeur et directeur de publication
+- Hébergement (Open.bj — offre DIAMOND)
+- Propriété intellectuelle
+- Données personnelles (RGPD) et cookies
+- Responsabilité et droit applicable
+
+✅ **Idéal si:** Vous devez publier la page « Mentions légales » du site
+
+---
+
+### 5. 🤝 [CONVENTION_SOUS_TRAITANCE_OPENBJ.md](./CONVENTION_SOUS_TRAITANCE_OPENBJ.md)
+**Pour:** Direction, référent RGPD
+**Contenu:**
+- Encadrement RGPD de l'hébergement (Article 28)
+- Description du traitement
+- Obligations du sous-traitant (Open.bj)
+- Sécurité de l'offre DIAMOND
+- Durée, résiliation et sortie de contrat
+
+✅ **Idéal si:** Vous devez formaliser le lien avec l'hébergeur Open.bj
+
+---
+
+### 6. 🛡️ [PROCEDURE_DROITS_RGPD.md](./PROCEDURE_DROITS_RGPD.md)
+**Pour:** Référent RGPD, administrateurs, support
+**Contenu:**
+- Les droits des personnes (accès, rectification, effacement, portabilité…)
+- Réception et traitement des demandes (délais, vérification d'identité)
+- Registre des demandes
+- Notifications de violation de données (72 h)
+
+✅ **Idéal si:** Une personne exerce ses droits RGPD sur la plateforme
+
+---
+
+### 7. 💾 [PRA_PCA_SAUVEGARDE.md](./PRA_PCA_SAUVEGARDE.md)
+**Pour:** Administrateurs système, équipe technique, hébergeur
+**Contenu:**
+- Politique de sauvegarde (base MySQL + fichiers)
+- Procédure de restauration pas à pas
+- Tests de restauration mensuels
+- Gestion des incidents (PCA) et contacts
+- Registre des sauvegardes
+
+✅ **Idéal si:** Vous devez sauvegarder ou restaurer les données de la plateforme
+
+---
+
+### 8. 💻 [CHARTE_INFORMATIQUE.md](./CHARTE_INFORMATIQUE.md)
+**Pour:** Tous les utilisateurs (à faire signer)
+**Contenu:**
+- Règles d'utilisation des comptes et mots de passe
+- Confidentialité des données
+- Utilisation des équipements (tablettes, GPS)
+- Rôles et habilitations
+- Sanctions et bloc de signature
+
+✅ **Idéal si:** Vous devez faire signer les règles d'utilisation à un utilisateur
+
+---
+
+### 9. 👥 [PROCEDURE_GESTION_COMPTES.md](./PROCEDURE_GESTION_COMPTES.md)
+**Pour:** Super administrateur, administrateurs de commune
+**Contenu:**
+- Cycle de vie des comptes (création, approbation, modification, suppression)
+- Rôles et habilitations (moindre privilège)
+- Élévation de droits
+- Revue périodique des comptes
+- Registre des comptes
+
+✅ **Idéal si:** Vous devez créer, approuver ou supprimer des comptes
+
+---
+
+### 10. 🚨 [PROCEDURE_INCIDENTS_SECURITE.md](./PROCEDURE_INCIDENTS_SECURITE.md)
+**Pour:** Équipe technique, administrateurs, référent RGPD
+**Contenu:**
+- Catégories et niveaux de gravité des incidents
+- Processus complet (détection → contenement → rétablissement → REX)
+- Notification de violation de données (72 h)
+- Registre des incidents et contacts
+
+✅ **Idéal si:** Un incident de sécurité survient sur la plateforme
+
+---
+
+### 11. 🍪 [POLITIQUE_COOKIES.md](./POLITIQUE_COOKIES.md)
+**Pour:** Direction, conformité, publication site
+**Contenu:**
+- Cookies utilisés (techniques et sécurité uniquement)
+- Consentement et gestion navigateur
+- Évolutions prévues (bannière de consentement)
+- Contact
+
+✅ **Idéal si:** Vous devez publier la page « Cookies » du site
+
+---
+
 ## 🎯 CHOISIR LE BON GUIDE
 
 ### Vous êtes un nouvel utilisateur?
@@ -173,6 +276,42 @@ Bienvenue dans la documentation complète de la plateforme **ADECOB** (Infrastru
 → GUIDE_ADMINISTRATION.md - Section "Codes d'accès"
 ```
 
+### "Une personne veut exercer ses droits RGPD (accès, suppression...)?"
+```
+→ PROCEDURE_DROITS_RGPD.md - Procédure de gestion des droits
+```
+
+### "Où sont hébergées les données et qui est l'hébergeur?"
+```
+→ MENTIONS_LEGALES.md - Section "Hébergement" (Open.bj)
+→ CONVENTION_SOUS_TRAITANCE_OPENBJ.md - Convention de sous-traitance
+```
+
+### "Comment restaurer les données après un incident?"
+```
+→ PRA_PCA_SAUVEGARDE.md - Section "Procédure de restauration"
+```
+
+### "Que dois-je signer avant d'obtenir un compte?"
+```
+→ CHARTE_INFORMATIQUE.md - Charte d'utilisation
+```
+
+### "Comment créer / supprimer un compte utilisateur?"
+```
+→ PROCEDURE_GESTION_COMPTES.md - Cycle de vie des comptes
+```
+
+### "Que faire en cas d'incident de sécurité?"
+```
+→ PROCEDURE_INCIDENTS_SECURITE.md - Processus de gestion d'un incident
+```
+
+### "Quels cookies sont utilisés par le site?"
+```
+→ POLITIQUE_COOKIES.md - Cookies utilisés
+```
+
 ---
 
 ## 📋 STRUCTURE DES DOCUMENTS
@@ -206,6 +345,32 @@ Documentation/
       ├─ Sauvegardes
       ├─ Journal d'audit
       └─ Dépannage avancé
+
+⚖️ Documents légaux & conformité :
+│
+├─ MENTIONS_LEGALES.md 📄
+│  └─ Mentions légales du site (éditeur, hébergement, RGPD, cookies)
+│
+├─ CONVENTION_SOUS_TRAITANCE_OPENBJ.md 🤝
+│  └─ Convention de sous-traitance RGPD avec l'hébergeur Open.bj
+│
+├─ PROCEDURE_DROITS_RGPD.md 🛡️
+│  └─ Procédure de gestion des droits des personnes (accès, rectification…)
+│
+├─ PRA_PCA_SAUVEGARDE.md 💾
+│  └─ Plan de sauvegarde & restauration (PRA/PCA)
+│
+├─ CHARTE_INFORMATIQUE.md 💻
+│  └─ Charte d'utilisation des systèmes d'information (à signer)
+│
+├─ PROCEDURE_GESTION_COMPTES.md 👥
+│  └─ Gestion des comptes et des habilitations
+│
+├─ PROCEDURE_INCIDENTS_SECURITE.md 🚨
+│  └─ Gestion des incidents de sécurité
+│
+└─ POLITIQUE_COOKIES.md 🍪
+   └─ Politique de gestion des cookies
 ```
 
 ---

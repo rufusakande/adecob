@@ -82,13 +82,16 @@ class PublicController extends Controller
             $query->where('etat_fonctionnement', $request->string('etat'));
         }
 
+        // Cloner AVANT paginate : sinon le clone hérite du LIMIT 24 de la pagination
+        // et la carte n'afficherait que 24 points au lieu de tous les points.
+        $mapQuery = (clone $query);
+
         $infrastructures = $query->orderByDesc('id')->paginate(24)->withQueryString();
 
-        // Points pour la carte (limités pour éviter de surcharger)
-        $mapPoints = (clone $query)
+        // Points pour la carte (tous les points géolocalisés, rendu léger en canvas)
+        $mapPoints = $mapQuery
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->limit(500)
             ->get()
             ->map(fn ($i) => [
                 'id'    => $i->id,

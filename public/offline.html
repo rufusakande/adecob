@@ -1917,6 +1917,16 @@
 
         let map, marker, accuracyCircle, watchId = null;
 
+        // Petit repère "point" centré exactement sur la position (remplace l'épingle).
+        function getPinpointIcon(){
+            return L.divIcon({
+                className: 'leaflet-pinpoint-wrap',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7],
+                html: '<div style="width:14px;height:14px;background:#0b7a3b;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.45);"></div>',
+            });
+        }
+
         function ensureLeaflet(cb){
             if (window.L) return cb();
             const s = document.createElement('script');
@@ -2011,7 +2021,7 @@
         function placeMarker(lat, lng, acc){
             if (!map) return;
             if (!marker){
-                marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                marker = L.marker([lat, lng], { draggable: true, icon: getPinpointIcon() }).addTo(map);
                 marker.on('dragend', () => {
                     const p = marker.getLatLng();
                     setFields(p.lat, p.lng);
@@ -2193,13 +2203,13 @@
         <div class="footer-text">
             &copy; 2026 <strong>ARMANI</strong>. Tous droits réservés.<br class="d-md-none">
             <div class="mt-2">
-                <a href="/pssi" class="text-white-50 mx-2">PSSI</a>
+                <a href="/mentions-legales" class="text-white-50 mx-2">Mentions légales</a>
+                <span class="text-white-50">·</span>
+                <a href="/politique-cookies" class="text-white-50 mx-2">Cookies</a>
                 <span class="text-white-50">·</span>
                 <a href="/politique-confidentialite" class="text-white-50 mx-2">Politique de confidentialité</a>
                 <span class="text-white-50">·</span>
                 <a href="/cgu" class="text-white-50 mx-2">CGU</a>
-                <span class="text-white-50">·</span>
-                <a href="/registre-traitements" class="text-white-50 mx-2">Registre des traitements</a>
             </div>
             <p class="mb-0 opacity-0">Développé par Rufus Akande, développeur web freelance <a href="https://rufusakande.github.io/rufus-akande">Rufus Akande</a></p>
         </div>

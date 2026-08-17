@@ -112,12 +112,6 @@
             <td>Les présentes Conditions Générales d'Utilisation, dans leur version
             en vigueur au moment de chaque connexion.</td>
         </tr>
-        <tr>
-            <td><strong>PSSI</strong></td>
-            <td>Politique de Sécurité des Systèmes d'Information de la Plateforme,
-            document décrivant les mesures techniques et organisationnelles de sécurité
-            applicables. Consultable à l'adresse : <a href="{{ route('legal.pssi') }}">Politique de sécurité (PSSI)</a>.</td>
-        </tr>
     </tbody>
 </table>
 
@@ -231,7 +225,8 @@
             <li>Adresse électronique professionnelle (email) — sert d'identifiant unique ;</li>
             <li>Numéro de téléphone ;</li>
             <li>Commune d'affectation (parmi les 8 communes du Borgou) ;</li>
-            <li>Mot de passe (soumis aux exigences de robustesse définies dans la PSSI).</li>
+            <li>Mot de passe (soumis aux exigences de robustesse définies par la
+                politique de sécurité interne de la Plateforme).</li>
         </ul>
     </li>
     <li><strong>Mise en attente (statut <em>« en attente »</em>) :</strong> le compte
@@ -266,7 +261,7 @@
     <li>ne <strong>pas partager son Compte</strong> ni ses identifiants avec quiconque,
         quelle qu'en soit la raison ;</li>
     <li>choisir un mot de passe robuste et le renouveler régulièrement conformément
-        aux recommandations de la PSSI ;</li>
+        aux recommandations de sécurité ;</li>
     <li><strong>signaler sans délai</strong> à l'{{ config('app.name') }}, via le
         <a href="{{ route('contact.form') }}">formulaire de contact</a>, tout accès non
         autorisé, perte, vol ou compromission de ses identifiants ;</li>
@@ -457,8 +452,8 @@
         un délai de préavis raisonnable (sauf urgence ou incident de sécurité imprévu),
         via une notification sur la Plateforme ou par email ;</li>
     <li><strong>Protéger les données</strong> traitées sur la Plateforme par des mesures
-        techniques et organisationnelles appropriées, conformément à la PSSI publiée à
-        l'adresse <a href="{{ route('legal.pssi') }}">Politique de sécurité (PSSI)</a> ;</li>
+        techniques et organisationnelles appropriées, conformément à la politique de
+        sécurité interne de la Plateforme ;</li>
     <li><strong>Traiter les demandes d'exercice des droits</strong> des personnes
         concernées (accès, rectification, suppression, limitation) dans un délai maximum
         d'<strong>un (1) mois</strong> à compter de la réception d'une demande complète,
@@ -467,8 +462,8 @@
     <li><strong>Notifier les incidents de sécurité</strong> majeurs aux Utilisateurs
         concernés et aux autorités compétentes dans les délais prévus par la
         réglementation béninoise applicable ;</li>
-    <li><strong>Tenir à jour le registre des traitements</strong>, consultable à
-        l'adresse <a href="{{ route('legal.registre') }}">Registre des traitements</a> ;</li>
+    <li><strong>Tenir à jour le registre des traitements</strong>, conformément à la
+        réglementation applicable en matière de protection des données ;</li>
     <li><strong>Répondre aux signalements de vulnérabilités</strong> dans les conditions
         prévues à l'article 13 des présentes CGU.</li>
 </ul>
@@ -961,11 +956,7 @@ l'{{ config('app.name') }} ne saurait être tenue responsable :</p>
 accessibles sur la Plateforme :</p>
 <ul>
     <li><a href="{{ route('legal.confidentialite') }}">Politique de confidentialité</a>
-        — traitements de données personnelles, droits des personnes ;</li>
-    <li><a href="{{ route('legal.pssi') }}">Politique de Sécurité des Systèmes
-        d'Information (PSSI)</a> — mesures de sécurité techniques et organisationnelles ;</li>
-    <li><a href="{{ route('legal.registre') }}">Registre des traitements</a>
-        — liste des traitements de données opérés par l'{{ config('app.name') }}.</li>
+        — traitements de données personnelles, droits des personnes.</li>
 </ul>
 
 @endsection

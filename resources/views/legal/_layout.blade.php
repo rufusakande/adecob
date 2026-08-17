@@ -13,9 +13,13 @@
 
     {{-- Navigation entre les documents légaux --}}
     <div class="d-flex flex-wrap gap-2 mb-4 small">
-        <a href="{{ route('legal.pssi') }}"
-           class="btn btn-sm {{ request()->routeIs('legal.pssi') ? 'btn-success' : 'btn-outline-secondary' }}">
-            <i class="bi bi-shield-lock"></i> PSSI
+        <a href="{{ route('legal.mentions') }}"
+           class="btn btn-sm {{ request()->routeIs('legal.mentions') ? 'btn-success' : 'btn-outline-secondary' }}">
+            <i class="bi bi-file-earmark-text"></i> Mentions légales
+        </a>
+        <a href="{{ route('legal.cookies') }}"
+           class="btn btn-sm {{ request()->routeIs('legal.cookies') ? 'btn-success' : 'btn-outline-secondary' }}">
+            <i class="bi bi-cookie"></i> Cookies
         </a>
         <a href="{{ route('legal.confidentialite') }}"
            class="btn btn-sm {{ request()->routeIs('legal.confidentialite') ? 'btn-success' : 'btn-outline-secondary' }}">
@@ -24,10 +28,6 @@
         <a href="{{ route('legal.cgu') }}"
            class="btn btn-sm {{ request()->routeIs('legal.cgu') ? 'btn-success' : 'btn-outline-secondary' }}">
             <i class="bi bi-file-text"></i> CGU
-        </a>
-        <a href="{{ route('legal.registre') }}"
-           class="btn btn-sm {{ request()->routeIs('legal.registre') ? 'btn-success' : 'btn-outline-secondary' }}">
-            <i class="bi bi-journal-bookmark"></i> Registre des traitements
         </a>
     </div>
 

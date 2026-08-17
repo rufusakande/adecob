@@ -52,10 +52,12 @@ Route::get('/infrastructures/public', [App\Http\Controllers\PublicController::cl
     ->name('public.infrastructures');
 
 // Documents légaux & conformité (Code du numérique du Bénin)
-Route::get('/pssi', [App\Http\Controllers\LegalController::class, 'pssi'])->name('legal.pssi');
+// NB : la PSSI et le Registre des traitements sont des documents INTERNES
+// (non publiés sur le site) — ils restent disponibles dans /documentation.
+Route::get('/mentions-legales', [App\Http\Controllers\LegalController::class, 'mentionsLegales'])->name('legal.mentions');
+Route::get('/politique-cookies', [App\Http\Controllers\LegalController::class, 'politiqueCookies'])->name('legal.cookies');
 Route::get('/politique-confidentialite', [App\Http\Controllers\LegalController::class, 'confidentialite'])->name('legal.confidentialite');
 Route::get('/cgu', [App\Http\Controllers\LegalController::class, 'cgu'])->name('legal.cgu');
-Route::get('/registre-traitements', [App\Http\Controllers\LegalController::class, 'registreTraitements'])->name('legal.registre');
 
 // Authentication Routes (avec rate-limit anti brute-force)
 Route::get('/register', [App\Http\Controllers\AuthController::class, 'showRegisterForm'])->name('register.form');

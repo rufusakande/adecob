@@ -438,7 +438,13 @@
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
-        const marker = L.marker([lat, lng]).addTo(map);
+        const marker = L.circleMarker([lat, lng], {
+            radius: 8,
+            color: '#0b7a3b',
+            weight: 2,
+            fillColor: '#10b981',
+            fillOpacity: 0.85,
+        }).addTo(map);
         marker.bindPopup(`
             <div style="font-weight:700; margin-bottom:4px;">${@json($infrastructure->nom_infrastructure ?: 'Infrastructure')}</div>
             <div style="font-size:.95rem; color:#475569;">

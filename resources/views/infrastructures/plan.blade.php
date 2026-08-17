@@ -224,7 +224,13 @@
     }
     const map = L.map('plan-map').setView([lat,lng], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(map);
-    L.marker([lat,lng]).addTo(map).bindPopup(@json($infrastructure->nom_infrastructure ?: 'Infrastructure')).openPopup();
+    L.circleMarker([lat,lng], {
+        radius: 8,
+        color: '#0b7a3b',
+        weight: 2,
+        fillColor: '#10b981',
+        fillOpacity: 0.85,
+    }).addTo(map).bindPopup(@json($infrastructure->nom_infrastructure ?: 'Infrastructure')).openPopup();
 })();
 </script>
 @endpush

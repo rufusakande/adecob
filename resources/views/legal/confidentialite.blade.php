@@ -341,8 +341,7 @@ des garanties appropriées sont exigées pour tout transfert transfrontalier :</
 
 <p>L'{{ config('app.name') }} met en œuvre des mesures techniques et organisationnelles appropriées
 pour protéger vos données contre tout accès non autorisé, toute altération, divulgation
-ou destruction. Le détail complet est disponible dans la
-<a href="{{ route('legal.pssi') }}">Politique de Sécurité du Système d'Information (PSSI)</a>.</p>
+ou destruction. Le détail complet est défini dans la politique de sécurité interne de la Plateforme.</p>
 
 <h3>Principales mesures en vigueur</h3>
 <ul>
@@ -542,9 +541,7 @@ de la politique mise à jour.</p>
 
 <div class="alert alert-light border mt-4">
     <strong>Documents complémentaires :</strong>
-    <a href="{{ route('legal.pssi') }}">Politique de Sécurité du SI (PSSI)</a> ·
-    <a href="{{ route('legal.cgu') }}">Conditions Générales d'Utilisation</a> ·
-    <a href="{{ route('legal.registre') }}">Registre des traitements de données</a>
+    <a href="{{ route('legal.cgu') }}">Conditions Générales d'Utilisation</a>
 </div>
 
 @endsection

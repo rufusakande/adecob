@@ -101,6 +101,9 @@
     .geo-locked-note{ font-size:.72rem; color:#6b7280; margin-top:.15rem;}
     @keyframes geoPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
     .geo-pulse{ animation: geoPulse 1.2s ease-in-out infinite; }
+    /* Repère de position : petit point centré exactement sur la position */
+    .leaflet-pinpoint-wrap{ background:transparent; border:none; }
+    .geopin-dot{ width:14px; height:14px; background:#0b7a3b; border:2px solid #ffffff; border-radius:50%; box-shadow:0 1px 4px rgba(0,0,0,.45); }
 </style>
 @endpush
 
@@ -1046,6 +1049,16 @@
 
         let map, marker, accuracyCircle, watchId = null;
 
+        // Petit repère "point" centré exactement sur la position (remplace l'épingle).
+        function getPinpointIcon(){
+            return L.divIcon({
+                className: 'leaflet-pinpoint-wrap',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7], // centre du point = position exacte
+                html: '<div class="geopin-dot"></div>',
+            });
+        }
+
         function ensureLeaflet(cb){
             if (window.L) return cb();
             const s = document.createElement('script');
@@ -1140,7 +1153,7 @@
         function placeMarker(lat, lng, acc){
             if (!map) return;
             if (!marker){
-                marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                marker = L.marker([lat, lng], { draggable: true, icon: getPinpointIcon() }).addTo(map);
                 marker.on('dragend', () => {
                     const p = marker.getLatLng();
                     setFields(p.lat, p.lng);

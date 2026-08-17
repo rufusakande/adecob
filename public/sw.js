@@ -10,7 +10,7 @@
  *  - Navigation : réseau d'abord, sinon cache, sinon -> page offline.html.
  *  - Statiques (css/js/images) : cache d'abord, sinon réseau + mise en cache.
  */
-const VERSION = '2026-08-15-v2';
+const VERSION = '2026-08-15-v3';
 const OFFLINE_URL = '/offline.html';
 const PAGE_CACHE = 'adecob-pages-' + VERSION;
 const STATIC_CACHE = 'adecob-static-' + VERSION;

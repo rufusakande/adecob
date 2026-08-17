@@ -10,9 +10,14 @@ namespace App\Http\Controllers;
  */
 class LegalController extends Controller
 {
-    public function pssi()
+    public function mentionsLegales()
     {
-        return view('legal.pssi');
+        return view('legal.mentions-legales');
+    }
+
+    public function politiqueCookies()
+    {
+        return view('legal.politique-cookies');
     }
 
     public function confidentialite()
@@ -23,10 +28,5 @@ class LegalController extends Controller
     public function cgu()
     {
         return view('legal.cgu');
-    }
-
-    public function registreTraitements()
-    {
-        return view('legal.registre-traitements');
     }
 }

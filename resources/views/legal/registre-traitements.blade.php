@@ -1211,8 +1211,6 @@ saisir l'<strong>APDP</strong> aux coordonnées indiquées ci-dessus.</p>
         à destination des utilisateurs de la Plateforme</li>
     <li><a href="{{ route('legal.cgu') }}">Conditions Générales d'Utilisation (CGU)</a> —
         règles d'accès, d'utilisation et de responsabilité sur la Plateforme</li>
-    <li><a href="{{ route('legal.pssi') }}">Politique de Sécurité du Système d'Information (PSSI)</a> —
-        description des mesures organisationnelles et techniques de sécurité mises en œuvre</li>
 </ul>
 
 <p class="text-muted small mt-4">Ce registre est mis à jour à chaque évolution significative
