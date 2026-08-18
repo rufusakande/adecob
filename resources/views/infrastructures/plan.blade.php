@@ -134,7 +134,7 @@
             <form method="POST" action="{{ route('infrastructures.plan.store', $infrastructure) }}" class="infra-card p-4">
                 @csrf
                 <h5 class="mb-3"><i class="fas fa-pen-to-square text-success me-2"></i>{{ $existingPlannedWork ? 'Modifier la planification' : 'Nouvelle planification' }}</h5>
-                <p class="text-muted small">Renseignez le type d'intervention, la date prévue, le coût et les actions à effectuer. Ces informations aideront au suivi budgétaire de la commune.</p>
+                <p class="text-muted small">Renseignez le type d'intervention, la date prévue, le coût et les actions à effectuer. Les informations des sections <strong>annuelle</strong> et <strong>triennale</strong> alimenteront les fiches MDGL exportées en PDF.</p>
 
                 <div class="form-section-title">Nature de l'intervention</div>
                 <div class="row g-3">
@@ -194,6 +194,99 @@
                     <div class="col-12">
                         <label class="form-label">Acteurs / prestataires additionnels</label>
                         <textarea name="provider_name" rows="2" class="form-control" maxlength="255" placeholder="Ex. : Mairie, artisans locaux, comité de gestion…">{{ old('provider_name', optional($existingPlannedWork)->provider_name) }}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-section-title"><i class="fas fa-calendar-week me-1"></i> Fiche de planification TRIENNALE <span class="badge bg-success-subtle text-success fs-6 ms-1">{{ now()->year }} → {{ now()->year + 2 }}</span></div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Unité</label>
+                        <input type="text" name="unite" class="form-control" maxlength="255" placeholder="Ex. : Forfait, U, m², km…"
+                               value="{{ old('unite', optional($existingPlannedWork)->unite) }}">
+                        @error('unite')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Quantité</label>
+                        <input type="number" name="quantite" class="form-control" min="0" step="0.01" placeholder="Ex. : 1"
+                               value="{{ old('quantite', optional($existingPlannedWork)->quantite) }}">
+                        @error('quantite')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Coût unitaire (FCFA)</label>
+                        <input type="number" name="cout_unitaire" class="form-control" min="0" step="500" placeholder="Ex. : 2 500 000"
+                               value="{{ old('cout_unitaire', optional($existingPlannedWork)->cout_unitaire) }}">
+                        @error('cout_unitaire')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Priorité</label>
+                        <select name="priorite" class="form-select @error('priorite') is-invalid @enderror">
+                            <option value="">— Non définie —</option>
+                            @foreach(['Urgent','Élevée','Moyenne','Faible'] as $pr)
+                                <option value="{{ $pr }}" @selected(old('priorite', optional($existingPlannedWork)->priorite) === $pr)>{{ $pr }}</option>
+                            @endforeach
+                        </select>
+                        @error('priorite')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Répartition Année 1 (FCFA)</label>
+                        <input type="number" name="repartition_an1" class="form-control" min="0" step="500" placeholder="Ex. : 2 500 000"
+                               value="{{ old('repartition_an1', optional($existingPlannedWork)->repartition_an1) }}">
+                        @error('repartition_an1')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Répartition Année 2 (FCFA)</label>
+                        <input type="number" name="repartition_an2" class="form-control" min="0" step="500" placeholder="Ex. : 0"
+                               value="{{ old('repartition_an2', optional($existingPlannedWork)->repartition_an2) }}">
+                        @error('repartition_an2')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Répartition Année 3 (FCFA)</label>
+                        <input type="number" name="repartition_an3" class="form-control" min="0" step="500" placeholder="Ex. : 0"
+                               value="{{ old('repartition_an3', optional($existingPlannedWork)->repartition_an3) }}">
+                        @error('repartition_an3')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+
+                <div class="form-section-title"><i class="fas fa-calendar-day me-1"></i> Fiche de planification ANNUELLE <span class="badge bg-success-subtle text-success fs-6 ms-1">Exercice {{ now()->year }}</span></div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Budget annuel (FCFA)</label>
+                        <div class="input-group">
+                            <input type="number" name="budget_annuel" class="form-control" min="0" step="500" placeholder="Ex. : 2 500 000"
+                                   value="{{ old('budget_annuel', optional($existingPlannedWork)->budget_annuel) }}">
+                            <span class="input-group-text">FCFA</span>
+                        </div>
+                        @error('budget_annuel')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Trimestre 1 (FCFA)</label>
+                        <input type="number" name="trimestre_t1" class="form-control" min="0" step="500" value="{{ old('trimestre_t1', optional($existingPlannedWork)->trimestre_t1) }}">
+                        @error('trimestre_t1')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Trimestre 2 (FCFA)</label>
+                        <input type="number" name="trimestre_t2" class="form-control" min="0" step="500" value="{{ old('trimestre_t2', optional($existingPlannedWork)->trimestre_t2) }}">
+                        @error('trimestre_t2')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Trimestre 3 (FCFA)</label>
+                        <input type="number" name="trimestre_t3" class="form-control" min="0" step="500" value="{{ old('trimestre_t3', optional($existingPlannedWork)->trimestre_t3) }}">
+                        @error('trimestre_t3')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Trimestre 4 (FCFA)</label>
+                        <input type="number" name="trimestre_t4" class="form-control" min="0" step="500" value="{{ old('trimestre_t4', optional($existingPlannedWork)->trimestre_t4) }}">
+                        @error('trimestre_t4')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Statut d'exécution</label>
+                        <select name="statut_execution" class="form-select @error('statut_execution') is-invalid @enderror">
+                            <option value="">— Non défini —</option>
+                            @foreach(['Non démarré','En cours','Partiellement exécuté','Terminé','Suspendu'] as $se)
+                                <option value="{{ $se }}" @selected(old('statut_execution', optional($existingPlannedWork)->statut_execution) === $se)>{{ $se }}</option>
+                            @endforeach
+                        </select>
+                        @error('statut_execution')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
 

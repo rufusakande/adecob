@@ -32,11 +32,11 @@ class LoginRequest extends FormRequest
                 'string',
                 'min:6'
             ],
-            // reCAPTCHA temporarily disabled
-            // 'recaptcha_token' => [
-            //     'required',
-            //     new RecaptchaV3(0.5, 'login') // Score minimum 0.5, action 'login'
-            // ]
+            // reCAPTCHA v3 — protection anti-bot
+            'recaptcha_token' => [
+                'required',
+                new RecaptchaV3(0.5, 'login'), // Score minimum 0.5, action 'login'
+            ],
         ];
     }
 

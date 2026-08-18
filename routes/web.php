@@ -120,6 +120,8 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
         ->middleware('admin.access')->name('infrastructures.planned');
     Route::match(['get','post'], '/infrastructures-planifiees/export-pdf', [App\Http\Controllers\InfrastructureController::class, 'exportPlannedPdf'])
         ->middleware('admin.access')->name('infrastructures.planned.export');
+    Route::match(['get','post'], '/infrastructures-planifiees/export-pdf-annuel', [App\Http\Controllers\InfrastructureController::class, 'exportPlannedAnnualPdf'])
+        ->middleware('admin.access')->name('infrastructures.planned.export.annual');
 
     // Planification single-infrastructure: formulaire et enregistrement
     Route::get('/infrastructures/{infrastructure}/plan', [App\Http\Controllers\InfrastructureController::class, 'planForm'])
@@ -154,6 +156,18 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
         Route::put('works/{work}', [InfrastructureWorkController::class, 'update'])->name('infrastructures.works.update');
         Route::delete('works/{work}', [InfrastructureWorkController::class, 'destroy'])->name('infrastructures.works.destroy');
     });
+});
+
+// Affectation des infrastructures aux agents collecteurs
+// (index : agent = ses affectations ; admin = gestion. store/revoke : admins uniquement)
+Route::middleware(['auth', 'check.approval'])->group(function () {
+    Route::get('/affectations', [App\Http\Controllers\InfrastructureAssignmentController::class, 'index'])->name('infrastructure-assignments.index');
+    Route::get('/affectations/infrastructures', [App\Http\Controllers\InfrastructureAssignmentController::class, 'infraList'])
+        ->middleware('admin.access')->name('infrastructure-assignments.list');
+    Route::post('/affectations', [App\Http\Controllers\InfrastructureAssignmentController::class, 'store'])
+        ->middleware('admin.access')->name('infrastructure-assignments.store');
+    Route::delete('/affectations/{assignment}', [App\Http\Controllers\InfrastructureAssignmentController::class, 'revoke'])
+        ->middleware('admin.access')->name('infrastructure-assignments.revoke');
 });
 
 

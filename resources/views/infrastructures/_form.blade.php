@@ -633,17 +633,20 @@
                                 <div class="col-md-8 mx-auto">
                                     <div class="card">
                                         <div class="card-body text-center">
-                                            <video id="camera-video" width="320" height="240" autoplay class="border rounded mb-3" style="display: none;"></video>
+                                            <video id="camera-video" width="320" height="240" autoplay playsinline class="border rounded mb-3" style="display: none; width: 100%; max-width: 420px; height: auto;"></video>
                                             <div id="camera-placeholder" class="border rounded p-5 mb-3 text-center" style="display: block;">
                                                 <i class="fas fa-video-slash fa-3x text-muted mb-3"></i>
                                                 <p class="text-muted">Caméra non activée</p>
                                             </div>
-                                            <div class="d-flex justify-content-center gap-2 mb-3">
+                                            <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
                                                 <button type="button" id="start-camera" class="btn btn-primary">
                                                     <i class="fas fa-video me-2"></i> Activer Caméra
                                                 </button>
                                                 <button type="button" id="take-photo" class="btn btn-success" disabled>
                                                     <i class="fas fa-camera me-2"></i> Prendre Photo
+                                                </button>
+                                                <button type="button" id="stop-camera" class="btn btn-outline-secondary" disabled>
+                                                    <i class="fas fa-video-slash me-2"></i> Arrêter Caméra
                                                 </button>
                                             </div>
                                         </div>
@@ -928,31 +931,71 @@
     const video = document.getElementById('camera-video');
     const startCameraButton = document.getElementById('start-camera');
     const takePhotoButton = document.getElementById('take-photo');
+    const stopCameraButton = document.getElementById('stop-camera');
     const cameraPhotoPreviews = document.getElementById('camera-photo-previews');
     const cameraPhotosDataInput = document.getElementById('camera-photos-data');
     const combinedPhotoPreviews = document.getElementById('combined-photo-previews');
 
-    startCameraButton.addEventListener('click', async () => {
+    function stopCameraStream() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        if (video) {
+            video.srcObject = null;
+            video.style.display = 'none';
+        }
+        const placeholder = document.getElementById('camera-placeholder');
+        if (placeholder) placeholder.style.display = 'block';
+        if (takePhotoButton) takePhotoButton.disabled = true;
+        if (startCameraButton) startCameraButton.disabled = false;
+        if (stopCameraButton) stopCameraButton.disabled = true;
+    }
+
+    async function startCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('Votre navigateur ne permet pas l\'accès à la caméra. Utilisez « Importer des Photos » ou un navigateur récent (Chrome/Firefox/Safari).');
+            return;
+        }
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
+            stopCameraStream();
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
                     width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                } 
+                    height: { ideal: 720 },
+                    facingMode: 'environment'
+                }
             });
             video.srcObject = stream;
             video.style.display = 'block';
             document.getElementById('camera-placeholder').style.display = 'none';
             takePhotoButton.disabled = false;
             startCameraButton.disabled = true;
+            stopCameraButton.disabled = false;
         } catch (err) {
             console.error('Erreur caméra:', err);
-            alert('Impossible d\'accéder à la caméra: ' + err.message);
+            let message = err && err.message ? err.message : 'Erreur inconnue';
+            if (err.name === 'NotAllowedError') {
+                message = 'Accès à la caméra refusé. Autorisez la caméra dans votre navigateur puis réessayez.';
+            } else if (err.name === 'NotFoundError' || err.name === 'OverconstrainedError') {
+                message = 'Aucune caméra détectée sur cet appareil.';
+            } else if (err.name === 'NotReadableError') {
+                message = 'La caméra est utilisée par une autre application. Fermez-la et réessayez.';
+            } else if (err.name === 'SecurityError' || err.name === 'InsecureContextError') {
+                message = 'La caméra nécessite une connexion sécurisée (HTTPS).';
+            }
+            alert('Impossible d\'accéder à la caméra : ' + message);
         }
-    });
+    }
+
+    startCameraButton.addEventListener('click', startCamera);
+    if (stopCameraButton) stopCameraButton.addEventListener('click', stopCameraStream);
 
     takePhotoButton.addEventListener('click', () => {
-        if (!stream) return;
+        if (!stream || !video.videoWidth) {
+            alert('Activez d\'abord la caméra avant de prendre une photo.');
+            return;
+        }
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -968,6 +1011,15 @@
         addCameraPhotoPreview(photoId, dataUrl);
         updateCombinedPreviews();
     });
+
+    // Couper proprement la caméra quand on quitte l'onglet, la page ou qu'on soumet le formulaire
+    document.addEventListener('hidden.bs.tab', (e) => {
+        if (e.target && e.target.id === 'camera-tab') stopCameraStream();
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stopCameraStream(); });
+    window.addEventListener('beforeunload', stopCameraStream);
+    const infraFormEl = document.getElementById('infraForm');
+    if (infraFormEl) infraFormEl.addEventListener('submit', stopCameraStream);
 
     function addCameraPhotoPreview(photoId, dataUrl) {
         const imgContainer = document.createElement('div');

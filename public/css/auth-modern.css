@@ -561,8 +561,7 @@
     padding: var(--spacing-lg) var(--spacing-2xl);
     text-align: center;
     border-top: 1px solid var(--color-gray-200);
-    font-size: 0.875rem;
-    color: var(--color-gray-600);
+    font-size: 0.875rem;    color: var(--color-gray-600);
     animation: slideInUp var(--duration-base) var(--ease-out) 300ms both;
 }
 
@@ -651,3 +650,296 @@ button:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
 }
+
+/* ================================================
+   PREMIUM UPGRADE (v3)
+   Fond animé, verre dépoli, bouton œil, focus lumineux
+   ================================================ */
+
+:root {
+    --auth-grad-1: #0b6623;
+    --auth-grad-2: #0a7a2a;
+    --auth-grad-3: #0d5c1f;
+    --auth-glow: rgba(11, 102, 35, 0.35);
+}
+
+/* Fond premium : dégradé animé + halos décoratifs */
+.auth-container {
+    position: relative;
+    isolation: isolate;
+    background:
+        radial-gradient(1100px 600px at 10% -10%, rgba(11, 102, 35, 0.18), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(10, 122, 42, 0.16), transparent 55%),
+        radial-gradient(700px 700px at 50% 120%, rgba(4, 74, 26, 0.22), transparent 60%),
+        linear-gradient(160deg, #f4fbf5 0%, #eaf5ec 45%, #e2efe5 100%);
+    overflow: hidden;
+}
+
+.auth-container::before,
+.auth-container::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.5;
+    z-index: -1;
+    animation: authBlob 16s ease-in-out infinite alternate;
+}
+
+.auth-container::before {
+    width: 340px;
+    height: 340px;
+    top: -80px;
+    left: -100px;
+    background: radial-gradient(circle, rgba(10, 122, 42, 0.35), transparent 70%);
+}
+
+.auth-container::after {
+    width: 420px;
+    height: 420px;
+    bottom: -120px;
+    right: -100px;
+    background: radial-gradient(circle, rgba(4, 74, 26, 0.32), transparent 70%);
+    animation-delay: -8s;
+}
+
+@keyframes authBlob {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(40px, 30px) scale(1.08); }
+    100% { transform: translate(-30px, -20px) scale(0.95); }
+}
+
+/* Carte premium : verre dépoli + halo */
+.auth-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.82);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 22px;
+    box-shadow:
+        0 30px 70px -20px rgba(6, 51, 19, 0.35),
+        0 0 0 1px rgba(11, 102, 35, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
+}
+
+.auth-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 40px 90px -22px rgba(6, 51, 19, 0.42),
+        0 0 0 1px rgba(11, 102, 35, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Bandeau supérieur décoratif de la carte */
+.auth-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    border-radius: 22px 22px 0 0;
+    background: linear-gradient(90deg, var(--auth-grad-1), var(--auth-grad-2), var(--auth-grad-3), var(--auth-grad-2), var(--auth-grad-1));
+    background-size: 200% 100%;
+    animation: authGradShift 6s linear infinite;
+}
+
+@keyframes authGradShift {
+    0% { background-position: 0% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* En-tête premium */
+.auth-header {
+    background: linear-gradient(160deg, rgba(11, 102, 35, 0.07), rgba(10, 122, 42, 0.03));
+    border-bottom: 1px solid rgba(11, 102, 35, 0.08);
+}
+
+.auth-header h1 {
+    background: linear-gradient(120deg, var(--auth-grad-1), var(--auth-grad-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* Sous-titres lisibles sur fond clair (l'en-tête premium est clair) */
+.auth-header p {
+    color: var(--color-gray-700);
+    opacity: 1;
+    font-weight: 500;
+}
+
+/* Champs : focus lumineux premium */
+.form-input,
+.form-select {
+    border: 1.5px solid var(--color-gray-300);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    transition: border-color var(--duration-fast) var(--ease-in-out),
+                box-shadow var(--duration-fast) var(--ease-in-out),
+                background var(--duration-fast) var(--ease-in-out);
+}
+
+.form-input:focus,
+.form-select:focus {
+    border-color: var(--color-primary);
+    background: #fff;
+    box-shadow: 0 0 0 4px var(--auth-glow);
+}
+
+/* ================================================
+   BOUTON ŒIL (voir / masquer le mot de passe)
+   ================================================ */
+
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper .form-input {
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    width: 2.25rem;
+    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--color-gray-500);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color var(--duration-fast) var(--ease-in-out), background var(--duration-fast) var(--ease-in-out);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+    color: var(--color-primary);
+    background: rgba(11, 102, 35, 0.08);
+}
+
+.password-toggle:active {
+    transform: translateY(-50%) scale(0.92);
+}
+
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+}
+
+/* ================================================
+   BOUTON PRINCIPAL PREMIUM (dégradé + reflet)
+   ================================================ */
+
+.auth-form .btn-primary {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(120deg, var(--auth-grad-1), var(--auth-grad-2));
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 12px 26px -10px var(--auth-glow);
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out),
+                filter var(--duration-fast) var(--ease-out);
+}
+
+.auth-form .btn-primary::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -70%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transform: skewX(-20deg);
+    animation: authShine 4.5s ease-in-out infinite;
+}
+
+@keyframes authShine {
+    0%, 60% { left: -70%; }
+    100% { left: 130%; }
+}
+
+.auth-form .btn-primary:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: 0 16px 34px -12px var(--auth-glow);
+}
+
+.auth-form .btn-primary:active {
+    transform: translateY(0);
+}
+
+/* ================================================
+   BADGE reCAPTCHA & sécurité
+   ================================================ */
+
+.auth-recaptcha-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+    font-size: 0.75rem;
+    color: var(--color-gray-500);
+}
+
+.auth-recaptcha-note svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+/* Le badge reCAPTCHA v3 (Google) est invisible par défaut ; on le montre discrètement */
+.grecaptcha-badge {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.grecaptcha-badge.auth-visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ================================================
+   MESSAGE CODE MFA (effet chiffres)
+   ================================================ */
+
+.auth-form input#code {
+    transition: box-shadow var(--duration-fast) var(--ease-in-out), border-color var(--duration-fast) var(--ease-in-out);
+}
+
+.auth-form input#code:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px var(--auth-glow);
+}
+
+/* ================================================
+   RESPONSIVE PREMIUM
+   ================================================ */
+
+@media (max-width: 480px) {
+    .auth-card {
+        border-radius: 18px;
+    }
+    .password-toggle {
+        width: 2rem;
+        height: 2rem;
+    }
+    .password-toggle svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+

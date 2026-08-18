@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Fiche de Planification Triennal — {{ $communeName ?: 'Infrastructures Communales' }}</title>
+    <title>Fiche de Planification Annuelle — {{ $communeName ?: 'Infrastructures Communales' }}</title>
     <style>
         @page { margin: 60px 25px 40px 25px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #111; margin: 0; }
@@ -45,18 +45,14 @@
         }
         table.plan td.center { text-align: center; }
         .col-id   { width: 3%; }
-        .col-loc  { width: 16%; }
+        .col-loc  { width: 17%; }
         .col-sec  { width: 9%; }
-        .col-desc { width: 18%; }
-        .col-unit { width: 5%; }
-        .col-qte  { width: 5%; }
-        .col-cu   { width: 8%; }
-        .col-rep  { width: 13%; }
-        .col-act  { width: 9%; }
-        .col-src  { width: 9%; }
-        .col-prio { width: 5%; }
-
-        .check { font-size: 12px; font-weight: 700; color: #0b7a3b; }
+        .col-desc { width: 20%; }
+        .col-ba   { width: 10%; }
+        .col-t    { width: 16%; }
+        .col-act  { width: 10%; }
+        .col-stat { width: 8%; }
+        .col-obs  { width: 7%; }
 
         footer {
             position: fixed; bottom: -25px; left: 0; right: 0;
@@ -71,7 +67,7 @@
     <table>
         <tr>
             <td class="header-left">
-                @php 
+                @php
                     $possiblePaths = [
                         public_path('logo-alt.png'),
                         base_path('public/logo-alt.png'),
@@ -108,29 +104,33 @@
     </table>
 </div>
 
-<h1 class="title">FICHE DE PLANIFICATION TRIENNAL D'ENTRETIEN DES INFRASTRUCTURES COMMUNALES</h1>
+<h1 class="title">FICHE DE PLANIFICATION ANNUELLE D'ENTRETIEN DES INFRASTRUCTURES COMMUNALES</h1>
 
 <div class="meta">
     <div class="line"><span class="label">Département :</span> {{ $departement ?: '…………………………' }}</div>
     <div class="line"><span class="label">Commune :</span> {{ $communeName ?: '…………………………' }}</div>
     <div class="line"><span class="label">Date d'élaboration :</span> {{ $dateElaboration }}</div>
-    <div class="line"><span class="label">Exercices budgétaires :</span> {{ $anneeBase }} à {{ $anneeBase + 2 }}</div>
+    <div class="line"><span class="label">Exercices budgétaires :</span> {{ $anneeBase }}</div>
 </div>
 
 <table class="plan">
     <thead>
         <tr>
-            <th class="col-id">ID</th>
-            <th class="col-loc">Localisation de l'infrastructure <br><em>(Commune, Arrondissement, Village/Quartier, Coordonnées GPS)</em></th>
-            <th class="col-sec">Secteur / Type d'infrastructure</th>
-            <th class="col-desc">Description des travaux à réaliser</th>
-            <th class="col-unit">Unité</th>
-            <th class="col-qte">Quantité</th>
-            <th class="col-cu">Coût unitaire (FCFA)</th>
-            <th class="col-rep">Répartition (FCFA)</th>
-            <th class="col-act">Acteur(s) concerné(s)</th>
-            <th class="col-src">Source de financement</th>
-            <th class="col-prio">Priorité</th>
+            <th class="col-id" rowspan="2">ID</th>
+            <th class="col-loc" rowspan="2">Localisation de l'infrastructure <br><em>(Commune, Arrondissement, Village/Quartier, Coordonnées GPS)</em></th>
+            <th class="col-sec" rowspan="2">Secteur / Type d'infrastructure</th>
+            <th class="col-desc" rowspan="2">Description des travaux à réaliser</th>
+            <th class="col-ba" rowspan="2">Budget annuel (FCFA)</th>
+            <th class="col-t" colspan="4">Trimestre (FCFA)</th>
+            <th class="col-act" rowspan="2">Acteur(s) concerné(s)</th>
+            <th class="col-stat" rowspan="2">Statut d'exécution</th>
+            <th class="col-obs" rowspan="2">Observations / justificatifs</th>
+        </tr>
+        <tr>
+            <th>T1</th>
+            <th>T2</th>
+            <th>T3</th>
+            <th>T4</th>
         </tr>
     </thead>
     <tbody>
@@ -162,28 +162,24 @@
                 <td>{{ $localisation ?: '—' }}</td>
                 <td>{{ $secteurType ?: '—' }}</td>
                 <td>{{ $description ?: '—' }}</td>
-                <td class="center">{{ $plan->unite ?: '—' }}</td>
-                <td class="center">{{ $plan->quantite !== null ? rtrim(rtrim(number_format((float)$plan->quantite, 2, '.', ''), '0'), '.') : '—' }}</td>
-                <td class="center">{{ $plan->cout_unitaire !== null ? number_format((float)$plan->cout_unitaire, 0, '.', ' ') : '—' }}</td>
-                <td>
-                    <div class="center">An-1 : {{ $fmt($plan->repartition_an1) }}</div>
-                    <div class="center">An-2 : {{ $fmt($plan->repartition_an2) }}</div>
-                    <div class="center">An-3 : {{ $fmt($plan->repartition_an3) }}</div>
-                </td>
+                <td class="center"><strong>{{ $plan->budget_annuel !== null ? number_format((float)$plan->budget_annuel, 0, '.', ' ') : '—' }}</strong></td>
+                <td class="center">{{ $fmt($plan->trimestre_t1) }}</td>
+                <td class="center">{{ $fmt($plan->trimestre_t2) }}</td>
+                <td class="center">{{ $fmt($plan->trimestre_t3) }}</td>
+                <td class="center">{{ $fmt($plan->trimestre_t4) }}</td>
                 <td>{{ $plan->acteurs_concernes ?: ($plan->provider_name ?: '—') }}</td>
-                <td>{{ $plan->sources_financement ?: '—' }}</td>
-                <td class="center"><strong>{{ $plan->priorite ?: '—' }}</strong></td>
+                <td class="center">{{ $plan->statut_execution ?: '—' }}</td>
+                <td>{{ $plan->observations ?: '—' }}</td>
             </tr>
         @empty
-            <tr><td colspan="11" class="center" style="padding:20px;">Aucune infrastructure planifiée à exporter.</td></tr>
+            <tr><td colspan="12" class="center" style="padding:20px;">Aucune infrastructure planifiée à exporter.</td></tr>
         @endforelse
     </tbody>
 </table>
 
 <footer>
-    Fiche de planification triennal générée le {{ now()->format('d/m/Y H:i') }} — Page <span class="page-num"></span>
+    Fiche de planification annuelle générée le {{ now()->format('d/m/Y H:i') }} — Page <span class="page-num"></span>
 </footer>
 
 </body>
 </html>
-

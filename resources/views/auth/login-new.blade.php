@@ -1,9 +1,33 @@
 @extends('layouts.app')
 
-@section('title', 'Se Connecter')
+@section('title')
+    Connexion — {{ config('app.name') }}
+@endsection
+
+@push('meta')
+    <meta name="description" content="Connectez-vous à votre espace {{ config('app.name') }} pour gérer les infrastructures sociocommunautaires et économiques des communes du Borgou.">
+    <meta name="keywords" content="connexion, {{ config('app.name') }}, ADECOB, infrastructures, Borgou, Bénin, plateforme, gestion">
+    <meta property="og:title" content="Connexion — {{ config('app.name') }}">
+    <meta property="og:description" content="Accédez à votre espace {{ config('app.name') }} : données, cartographie et gestion des infrastructures du Borgou.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta name="twitter:card" content="summary">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Connexion — {{ config('app.name') }}",
+        "url": "{{ url()->current() }}",
+        "inLanguage": "fr",
+        "isPartOf": { "@type": "WebSite", "name": "{{ config('app.name') }}" },
+        "description": "Page de connexion à la plateforme {{ config('app.name') }} de gestion des infrastructures des communes du Borgou."
+    }
+    </script>
+@endpush
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/auth-modern.css?v=2') }}">
+<link rel="stylesheet" href="{{ asset('css/auth-modern.css?v=5') }}">
 
 <div class="auth-container">
     <div class="auth-card">
@@ -96,17 +120,26 @@
                         </svg>
                         Mot de passe
                     </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password"
-                        class="form-input @error('password') is-invalid @enderror"
-                        placeholder="••••••••••"
-                        required
-                        autocomplete="current-password"
-                        aria-label="Votre mot de passe"
-                        aria-required="true"
-                    >
+                    <div class="password-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password"
+                            class="form-input @error('password') is-invalid @enderror"
+                            placeholder="••••••••••"
+                            required
+                            autocomplete="current-password"
+                            aria-label="Votre mot de passe"
+                            aria-required="true"
+                        >
+                        <button type="button" class="password-toggle" data-target="password"
+                                aria-label="Afficher le mot de passe" aria-pressed="false">
+                            <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M2.06 12.35a1 1 0 010-.7C3.42 8.46 7.3 5 12 5s8.58 3.46 9.94 6.65a1 1 0 010 .7C20.58 15.54 16.7 19 12 19s-8.58-3.46-9.94-6.65z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Se souvenir de moi -->
@@ -124,8 +157,15 @@
                     </label>
                 </div>
 
+                <!-- reCAPTCHA v3 (invisible) -->
+                <input type="hidden" name="recaptcha_token" id="recaptcha_token" value="">
+                <div class="auth-recaptcha-note">
+                    <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                    <span>Protégé par Google reCAPTCHA</span>
+                </div>
+
                 <!-- Bouton de connexion -->
-                <button type="submit" class="btn btn-primary" aria-busy="false">
+                <button type="submit" class="btn btn-primary" aria-busy="false" data-loading-text="Connexion en cours...">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
@@ -147,5 +187,12 @@
     </div>
 </div>
 
-<script src="{{ asset('js/auth-form.js?v=3') }}"></script>
+@if(config('services.recaptcha.site_key'))
+    <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
+    <script>
+        window.AUTH_RECAPTCHA_KEY = '{{ config('services.recaptcha.site_key') }}';
+        window.AUTH_RECAPTCHA_ACTION = 'login';
+    </script>
+@endif
+<script src="{{ asset('js/auth-form.js?v=4') }}"></script>
 @endsection

@@ -38,8 +38,17 @@ return [
     ],
 
     'recaptcha' => [
-        'site_key' => env('RECAPTCHA_SITE_KEY'),
-        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+        // En développement local, Google n'accepte que les domaines enregistrés pour les
+        // VRAIES clés. On force donc les clés de TEST officielles (score 0.9, fonctionnent
+        // sur localhost) en environnement local, et on utilise les vraies clés du .env
+        // (RECAPTCHA_SITE_KEY / RECAPTCHA_SECRET_KEY) en production.
+        // NB : utiliser env('APP_ENV') et non app()->environment() dans un fichier de config.
+        'site_key' => env('APP_ENV', 'production') === 'local'
+            ? '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+            : env('RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('APP_ENV', 'production') === 'local'
+            ? '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+            : env('RECAPTCHA_SECRET_KEY'),
     ],
 
 ];

@@ -20,17 +20,33 @@
             <i class="fas fa-file-pdf me-1"></i> Exporter Plan Triennal (tous filtrés)
         </a>
         <span class="vr d-none d-md-inline"></span>
+        <button type="button" class="btn btn-info btn-sm text-white" id="export-plan-annual-selected-btn">
+            <i class="fas fa-file-pdf me-1"></i> Exporter Plan Annuel (sélection)
+        </button>
+        <a href="{{ route('infrastructures.planned.export.annual', array_merge(request()->except(['page','_token']), ['export_scope' => 'filtered'])) }}"
+           class="btn btn-outline-info btn-sm export-link-loader">
+            <i class="fas fa-file-pdf me-1"></i> Exporter Plan Annuel (tous filtrés)
+        </a>
+        <span class="vr d-none d-md-inline"></span>
         <button type="button" class="btn btn-primary btn-sm" id="export-selected-btn"><i class="fas fa-file-excel me-1"></i> Excel (sélection)</button>
         <a href="{{ route('infrastructures.export', array_merge(request()->query(), ['format' => 'excel', 'export_scope' => 'filtered', 'source' => 'planned'])) }}" class="btn btn-outline-primary btn-sm export-link-loader"><i class="fas fa-file-excel me-1"></i> Excel (tous filtrés)</a>
-        <span class="ms-auto small text-muted">Le Plan Triennal respecte le modèle MDGL — République du Bénin.</span>
+        <span class="ms-auto small text-muted">Fiches annuelle et triennale conformes au modèle MDGL — République du Bénin.</span>
     </div>
 
-    {{-- Formulaire caché pour l'export PDF de la sélection --}}
+    {{-- Formulaire caché pour l'export PDF Triennal de la sélection --}}
     <form id="plan-export-form" method="POST" action="{{ route('infrastructures.planned.export') }}" style="display:none">
         @csrf
         <input type="hidden" name="export_scope" value="selected">
         @if(request('commune'))<input type="hidden" name="commune" value="{{ request('commune') }}">@endif
         <div id="plan-export-selected-container"></div>
+    </form>
+
+    {{-- Formulaire caché pour l'export PDF Annuel de la sélection --}}
+    <form id="plan-export-annual-form" method="POST" action="{{ route('infrastructures.planned.export.annual') }}" style="display:none">
+        @csrf
+        <input type="hidden" name="export_scope" value="selected">
+        @if(request('commune'))<input type="hidden" name="commune" value="{{ request('commune') }}">@endif
+        <div id="plan-export-annual-selected-container"></div>
     </form>
 
     <div class="card mb-3">
@@ -111,6 +127,10 @@
                             <th>Commune / Village</th>
                             <th>Type</th>
                             <th>Interventions planifiées</th>
+                            <th>Plan annuel (FCFA)</th>
+                            <th>Plan triennal (FCFA)</th>
+                            <th>Priorité</th>
+                            <th>Statut exécution</th>
                             <th>Coût total (FCFA)</th>
                             <th>Prochaine échéance</th>
                             <th width="150">Actions</th>
@@ -123,6 +143,7 @@
                                 $totalCost = $plans->sum('cost');
                                 $next = $plans->sortBy('completion_date')->first();
                                 $isRehabilitated = !empty($infra->rehabilitation) && strtolower($infra->rehabilitation) === 'réhabilitée';
+                                $plan = $plans->where('status', 'planned')->sortBy('completion_date')->first();
                             @endphp
                             <tr class="{{ $isRehabilitated ? 'table-success' : '' }}">
                                 <td><input type="checkbox" name="selected_ids[]" value="{{ $infra->id }}" class="row-select" /></td>
@@ -154,6 +175,74 @@
                                         @if($plans->count() > 2)<div>+ {{ $plans->count()-2 }} autres…</div>@endif
                                     </div>
                                 </td>
+                                <td>
+                                    @if($plan && $plan->budget_annuel !== null)
+                                        <strong>{{ number_format((float)$plan->budget_annuel, 0, ',', ' ') }}</strong>
+                                        @php
+                                            $trimestres = [
+                                                'T1' => $plan->trimestre_t1,
+                                                'T2' => $plan->trimestre_t2,
+                                                'T3' => $plan->trimestre_t3,
+                                                'T4' => $plan->trimestre_t4,
+                                            ];
+                                        @endphp
+                                        <div class="small text-muted mt-1">
+                                            @foreach($trimestres as $t => $v)
+                                                <span class="badge bg-light text-dark me-1" title="Trimestre {{ $t }}">{{ $t }}: {{ $v !== null ? number_format((float)$v, 0, ',', ' ') : '—' }}</span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($plan && ($plan->cout_unitaire !== null || $plan->repartition_an1 !== null))
+                                        @if($plan->cout_unitaire !== null)
+                                            <div><strong>{{ number_format((float)$plan->cout_unitaire, 0, ',', ' ') }}</strong>
+                                            @if($plan->unite) <small class="text-muted">/ {{ $plan->unite }}</small>@endif
+                                            @if($plan->quantite) <small class="text-muted">× {{ $plan->quantite }}</small>@endif
+                                            </div>
+                                        @endif
+                                        <div class="small text-muted mt-1">
+                                            @if($plan->repartition_an1 !== null)<span class="badge bg-light text-dark me-1" title="Année 1">An1: {{ number_format((float)$plan->repartition_an1, 0, ',', ' ') }}</span>@endif
+                                            @if($plan->repartition_an2 !== null)<span class="badge bg-light text-dark me-1" title="Année 2">An2: {{ number_format((float)$plan->repartition_an2, 0, ',', ' ') }}</span>@endif
+                                            @if($plan->repartition_an3 !== null)<span class="badge bg-light text-dark me-1" title="Année 3">An3: {{ number_format((float)$plan->repartition_an3, 0, ',', ' ') }}</span>@endif
+                                        </div>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($plan && $plan->priorite)
+                                        @php
+                                            $prioClass = match($plan->priorite) {
+                                                'Urgent' => 'bg-danger',
+                                                'Élevée', 'Elevee' => 'bg-warning text-dark',
+                                                'Moyenne' => 'bg-info text-white',
+                                                default => 'bg-secondary',
+                                            };
+                                        @endphp
+                                        <span class="badge {{ $prioClass }}">{{ $plan->priorite }}</span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($plan && $plan->statut_execution)
+                                        @php
+                                            $statutClass = match($plan->statut_execution) {
+                                                'Terminé', 'Termine' => 'bg-success',
+                                                'En cours' => 'bg-info text-white',
+                                                'Partiellement exécuté' => 'bg-warning text-dark',
+                                                'Suspendu' => 'bg-danger',
+                                                default => 'bg-secondary',
+                                            };
+                                        @endphp
+                                        <span class="badge {{ $statutClass }}">{{ $plan->statut_execution }}</span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                                 <td><strong>{{ number_format($totalCost, 0, ',', ' ') }}</strong></td>
                                 <td>{{ $next ? $next->completion_date->format('d/m/Y') : '—' }}</td>
                                 <td>
@@ -178,7 +267,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-5 text-muted">
+                                <td colspan="13" class="text-center py-5 text-muted">
                                     <i class="fas fa-inbox fa-2x d-block mb-2"></i>
                                     Aucune infrastructure planifiée pour le moment.
                                 </td>
@@ -249,6 +338,23 @@
                 planContainer.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
                 showExportLoader();
                 planForm.submit();
+            });
+        }
+
+        // Export PDF Plan Annuel (sélection)
+        const planAnnualBtn = document.getElementById('export-plan-annual-selected-btn');
+        const planAnnualForm = document.getElementById('plan-export-annual-form');
+        const planAnnualContainer = document.getElementById('plan-export-annual-selected-container');
+        if (planAnnualBtn && planAnnualForm && planAnnualContainer) {
+            planAnnualBtn.addEventListener('click', function () {
+                const ids = rowCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
+                if (!ids.length) {
+                    alert('Veuillez sélectionner au moins une infrastructure planifiée pour générer le Plan Annuel.');
+                    return;
+                }
+                planAnnualContainer.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
+                showExportLoader();
+                planAnnualForm.submit();
             });
         }
 

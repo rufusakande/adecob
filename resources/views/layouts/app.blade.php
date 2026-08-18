@@ -44,6 +44,8 @@
     <!-- Design System Premium global (toutes les pages) -->
     <link rel="stylesheet" href="{{ asset('css/app-design.css?v=2') }}">
 
+    {{-- Meta tags spécifiques par page (SEO : description, Open Graph, JSON-LD, etc.) --}}
+    @stack('meta')
 
     @stack('styles')
 

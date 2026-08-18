@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\StrongPassword;
+use App\Rules\RecaptchaV3;
 
 class RegisterRequest extends FormRequest
 {
@@ -42,6 +43,11 @@ class RegisterRequest extends FormRequest
                 'required', 'string', 'same:password',
             ],
             'terms' => ['accepted'],
+            // reCAPTCHA v3 — protection anti-bot
+            'recaptcha_token' => [
+                'required',
+                new RecaptchaV3(0.5, 'register'), // Score minimum 0.5, action 'register'
+            ],
         ];
     }
 

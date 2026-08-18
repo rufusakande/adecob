@@ -23,6 +23,8 @@ class AuthForm {
         this.setupSubmitButton();
         this.setupCommuneSelect();
         this.setupFieldAnimations();
+        this.setupPasswordToggle();
+        this.setupRecaptcha();
     }
 
     /**
@@ -243,7 +245,7 @@ class AuthForm {
     }
 
     /**
-     * Configuration du bouton de soumission
+     * Configuration du bouton de soumission (avec reCAPTCHA v3 si présent)
      */
     setupSubmitButton() {
         if (!this.submitButton) return;
@@ -258,7 +260,35 @@ class AuthForm {
                 return;
             }
 
-            // Afficher l'état de chargement
+            // reCAPTCHA v3 : obtenir le token puis soumettre (asynchrone)
+            const tokenInput = this.form.querySelector('input[name="recaptcha_token"]');
+            if (tokenInput && typeof grecaptcha !== 'undefined' && window.AUTH_RECAPTCHA_KEY) {
+                e.preventDefault();
+                this.setButtonLoading(true);
+                // Sécurité : si reCAPTCHA ne répond pas dans 10 s, on soumet quand même
+                // (le serveur évalue ; en cas d'erreur de configuration de la clé, il
+                // n'empêche plus la connexion — voir app\Rules\RecaptchaV3.php).
+                const recaptchaTimeout = setTimeout(() => {
+                    this.setButtonLoading(false);
+                    this.form.submit();
+                }, 10000);
+                grecaptcha.ready(() => {
+                    grecaptcha.execute(window.AUTH_RECAPTCHA_KEY, { action: window.AUTH_RECAPTCHA_ACTION || 'submit' })
+                        .then((token) => {
+                            clearTimeout(recaptchaTimeout);
+                            tokenInput.value = token;
+                            this.form.submit();
+                        })
+                        .catch(() => {
+                            clearTimeout(recaptchaTimeout);
+                            this.setButtonLoading(false);
+                            this.form.submit(); // soumission native : le serveur décide
+                        });
+                });
+                return;
+            }
+
+            // Sans reCAPTCHA : soumission native
             this.setButtonLoading(true);
         });
     }
@@ -304,17 +334,25 @@ class AuthForm {
     }
 
     /**
-     * Définir l'état de chargement du bouton
+     * Définir l'état de chargement du bouton (générique — conserve le HTML d'origine)
      */
     setButtonLoading(loading) {
+        if (!this.submitButton) return;
         if (loading) {
+            if (!this.submitButton.dataset.originalHtml) {
+                this.submitButton.dataset.originalHtml = this.submitButton.innerHTML;
+            }
             this.submitButton.classList.add('loading');
             this.submitButton.disabled = true;
-            this.submitButton.innerHTML = '<span style="visibility: hidden;">Inscription...</span>';
+            const label = this.submitButton.dataset.loadingText || 'Veuillez patienter...';
+            this.submitButton.innerHTML = '<span class="btn-spinner" style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:-3px;margin-right:.5rem;"></span>' + label;
         } else {
             this.submitButton.classList.remove('loading');
             this.submitButton.disabled = false;
-            this.submitButton.innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg> Créer un Compte';
+            if (this.submitButton.dataset.originalHtml) {
+                this.submitButton.innerHTML = this.submitButton.dataset.originalHtml;
+                delete this.submitButton.dataset.originalHtml;
+            }
         }
     }
 
@@ -326,6 +364,57 @@ class AuthForm {
         inputs.forEach((group, index) => {
             group.style.animation = `slideInUp var(--duration-base) var(--ease-out) ${index * 50}ms both`;
         });
+    }
+
+    /**
+     * Basculement afficher / masquer le mot de passe (bouton œil)
+     */
+    setupPasswordToggle() {
+        document.querySelectorAll('.password-toggle').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const input = document.getElementById(btn.getAttribute('data-target'));
+                if (!input) return;
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.setAttribute('aria-pressed', String(show));
+                btn.innerHTML = show ? this.eyeOpenSvg() : this.eyeClosedSvg();
+                input.focus();
+            });
+        });
+    }
+
+    eyeOpenSvg() {
+        return '<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.06 12.35a1 1 0 010-.7C3.42 8.46 7.3 5 12 5s8.58 3.46 9.94 6.65a1 1 0 010 .7C20.58 15.54 16.7 19 12 19s-8.58-3.46-9.94-6.65z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+
+    eyeClosedSvg() {
+        return '<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.08A8.86 8.86 0 0112 5c4.7 0 8.58 3.46 9.94 6.65a1 1 0 010 .7 13.5 13.5 0 01-2.48 3.06"/><path d="M6.6 6.6A12.6 12.6 0 002.06 11.65a1 1 0 000 .7C3.42 15.54 7.3 19 12 19a8.86 8.86 0 003.4-.6"/><path d="M9.88 9.88a3 3 0 104.24 4.24"/></svg>';
+    }
+
+    /**
+     * Préparation du reCAPTCHA : pré-chargement du widget invisible + affichage du badge
+     */
+    setupRecaptcha() {
+        const tokenInput = this.form.querySelector('input[name="recaptcha_token"]');
+        if (!tokenInput || typeof grecaptcha === 'undefined' || !window.AUTH_RECAPTCHA_KEY) return;
+
+        // Pré-charger reCAPTCHA pour une validation plus rapide
+        try {
+            grecaptcha.ready(() => {
+                grecaptcha.execute(window.AUTH_RECAPTCHA_KEY, { action: 'init' }).catch(() => {});
+            });
+        } catch (e) { /* silencieux */ }
+
+        // Rendre le badge Google visible discrètement après chargement
+        const observer = new MutationObserver(() => {
+            const badge = document.querySelector('.grecaptcha-badge');
+            if (badge) {
+                badge.classList.add('auth-visible');
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
     }
 }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Infrastructure;
+use App\Models\InfrastructureAssignment;
 use App\Models\Commune;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\InfrastructuresImport;
@@ -496,9 +497,12 @@ class InfrastructureController extends Controller
         if (!$infrastructure->canBeManagedBy($authUser)) {
             abort(403, 'Accès non autorisé à cette infrastructure.');
         }
-        // Un agent ne peut modifier que ses propres saisies
-        if ($authUser->isAgent() && (int)$infrastructure->user_id !== (int)$authUser->id) {
-            abort(403, 'Les agents ne peuvent modifier que leurs propres infrastructures.');
+        // Un agent ne peut modifier que ses propres saisies OU les infrastructures
+        // qui lui ont été affectées (affectation encore active).
+        if ($authUser->isAgent()
+            && (int)$infrastructure->user_id !== (int)$authUser->id
+            && !$infrastructure->hasActiveAssignmentFor($authUser)) {
+            abort(403, 'Les agents ne peuvent modifier que leurs propres infrastructures ou celles qui leur ont été affectées.');
         }
 
         $validated = $request->validated();
@@ -537,11 +541,30 @@ class InfrastructureController extends Controller
         $infrastructure->observation_generale = $validated['observation_generale'] ?? null;
         $infrastructure->rehabilitation = $validated['rehabilitation'] ?? null;
 
-        // Si un agent modifie une saisie rejetée, elle repasse en attente.
-        if ($authUser->isAgent() && $infrastructure->isRejected()) {
+        // Si un agent modifie une saisie rejetée (la sienne), elle repasse en attente.
+        if ($authUser->isAgent()
+            && (int)$infrastructure->user_id === (int)$authUser->id
+            && $infrastructure->isRejected()) {
             $infrastructure->status = Infrastructure::STATUS_PENDING;
             $infrastructure->rejection_reason = null;
             $infrastructure->submitted_at = now();
+        }
+
+        // Agent affecté à une infrastructure : sa mise à jour est soumise à la
+        // validation de l'admin → l'infrastructure repasse en attente et
+        // l'affectation passe au statut « submitted » (en attente de revue).
+        if ($authUser->isAgent()
+            && (int)$infrastructure->user_id !== (int)$authUser->id
+            && $infrastructure->hasActiveAssignmentFor($authUser)) {
+            $assignment = $infrastructure->activeAssignmentFor($authUser);
+            if ($assignment && $assignment->isActive()) {
+                $infrastructure->status = Infrastructure::STATUS_PENDING;
+                $infrastructure->submitted_at = now();
+                $infrastructure->rejection_reason = null;
+                $assignment->status = InfrastructureAssignment::STATUS_SUBMITTED;
+                $assignment->submitted_at = now();
+                $assignment->save();
+            }
         }
 
 
@@ -685,6 +708,17 @@ class InfrastructureController extends Controller
         $infrastructure->rejection_reason = null;
         $infrastructure->save();
 
+        // Affectation(s) en attente de revue pour cette infrastructure → terminées (validées).
+        // L'agent perd alors l'accès à l'infrastructure (affectation non active).
+        $infrastructure->assignments()
+            ->where('status', InfrastructureAssignment::STATUS_SUBMITTED)
+            ->update([
+                'status'           => InfrastructureAssignment::STATUS_VALIDATED,
+                'reviewed_at'      => now(),
+                'reviewed_by'      => $user->id,
+                'rejection_reason' => null,
+            ]);
+
         Log::info('Infrastructure validée', [
             'id' => $infrastructure->id, 'by' => $user->id,
         ]);
@@ -711,6 +745,17 @@ class InfrastructureController extends Controller
         $infrastructure->validated_at = now();
         $infrastructure->rejection_reason = $data['rejection_reason'];
         $infrastructure->save();
+
+        // Affectation(s) en attente de revue → rejetées (l'agent garde l'accès
+        // pour corriger puis resoumettre).
+        $infrastructure->assignments()
+            ->where('status', InfrastructureAssignment::STATUS_SUBMITTED)
+            ->update([
+                'status'           => InfrastructureAssignment::STATUS_REJECTED,
+                'reviewed_at'      => now(),
+                'reviewed_by'      => $user->id,
+                'rejection_reason' => $data['rejection_reason'],
+            ]);
 
         Log::info('Infrastructure rejetée', [
             'id' => $infrastructure->id, 'by' => $user->id,
@@ -915,6 +960,21 @@ class InfrastructureController extends Controller
             'provider_name'       => 'nullable|string|max:255',
             'provider_contact'    => 'nullable|string|max:255',
             'observations'        => 'nullable|string|max:5000',
+            // Fiche triennale
+            'unite'               => 'nullable|string|max:255',
+            'quantite'            => 'nullable|numeric|min:0|max:9999999999999',
+            'cout_unitaire'       => 'nullable|numeric|min:0|max:9999999999999',
+            'repartition_an1'     => 'nullable|numeric|min:0|max:9999999999999',
+            'repartition_an2'     => 'nullable|numeric|min:0|max:9999999999999',
+            'repartition_an3'     => 'nullable|numeric|min:0|max:9999999999999',
+            'priorite'            => 'nullable|string|max:255',
+            // Fiche annuelle
+            'budget_annuel'       => 'nullable|numeric|min:0|max:9999999999999',
+            'trimestre_t1'        => 'nullable|numeric|min:0|max:9999999999999',
+            'trimestre_t2'        => 'nullable|numeric|min:0|max:9999999999999',
+            'trimestre_t3'        => 'nullable|numeric|min:0|max:9999999999999',
+            'trimestre_t4'        => 'nullable|numeric|min:0|max:9999999999999',
+            'statut_execution'    => 'nullable|string|max:255',
         ]);
         $validated['status'] = 'planned';
 
@@ -978,15 +1038,12 @@ class InfrastructureController extends Controller
     }
 
     /**
-     * Exporter le Plan Triennal des infrastructures planifiées en PDF
-     * (respecte le modèle officiel MDGL — République du Bénin).
+     * Prépare les données communes aux exports PDF (annuel / triennal)
+     * : infrastructures planifiées filtrées, commune, logo, département.
+     * Retourne null si une sélection était requise et qu'elle est vide.
      */
-    public function exportPlannedPdf(Request $request)
+    protected function plannedExportData(Request $request): ?array
     {
-        // Optimisation : mémoire et temps suffisants pour les gros exports PDF
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
-
         $user = auth()->user();
         abort_unless($user && ($user->isSuperAdmin() || $user->isCommuneAdmin()), 403);
 
@@ -998,7 +1055,7 @@ class InfrastructureController extends Controller
 
         if ($scope === 'selected') {
             if (empty($selectedIds)) {
-                return redirect()->back()->with('error', 'Sélectionnez au moins une infrastructure avant d\'exporter.');
+                return null;
             }
             $query->whereIn('id', $selectedIds);
         } else {
@@ -1042,15 +1099,64 @@ class InfrastructureController extends Controller
         // Département : on prend celui de la 1ère infra sinon "Borgou" par défaut (contexte projet)
         $departement = optional($infrastructures->first())->departement ?: 'Borgou';
 
-        $pdf = Pdf::loadView('infrastructures.planned_export_pdf', [
-            'infrastructures' => $infrastructures,
-            'communeName'     => $communeName,
-            'communeLogoData' => $communeLogoData,
-            'departement'     => $departement,
-            'dateElaboration' => now()->locale('fr')->isoFormat('D MMMM YYYY'),
-        ])->setPaper('a4', 'landscape');
+        // Année de base (exercice budgétaire N) : la plus petite année des interventions planifiées
+        $anneeBase = $infrastructures
+            ->pluck('works')->flatten()
+            ->pluck('completion_date')
+            ->filter()
+            ->map(fn($d) => (int) $d->year)
+            ->min();
+        if (!$anneeBase) {
+            $anneeBase = (int) now()->year;
+        }
 
-        $filename = 'plan_triennal_' . ($communeName ? \Illuminate\Support\Str::slug($communeName) . '_' : '') . now()->format('Ymd_His') . '.pdf';
+        return compact('infrastructures', 'communeName', 'communeLogoData', 'departement', 'anneeBase');
+    }
+
+    /**
+     * Exporter le Plan Triennal des infrastructures planifiées en PDF
+     * (respecte le modèle officiel MDGL — République du Bénin).
+     */
+    public function exportPlannedPdf(Request $request)
+    {
+        // Optimisation : mémoire et temps suffisants pour les gros exports PDF
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $data = $this->plannedExportData($request);
+        if ($data === null) {
+            return redirect()->back()->with('error', 'Sélectionnez au moins une infrastructure avant d\'exporter.');
+        }
+
+        $data['dateElaboration'] = now()->locale('fr')->isoFormat('D MMMM YYYY');
+
+        $pdf = Pdf::loadView('infrastructures.planned_export_pdf', $data)
+            ->setPaper('a4', 'landscape');
+
+        $filename = 'plan_triennal_' . ($data['communeName'] ? \Illuminate\Support\Str::slug($data['communeName']) . '_' : '') . now()->format('Ymd_His') . '.pdf';
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Exporter le Plan Annuel des infrastructures planifiées en PDF
+     * (respecte le modèle officiel MDGL — République du Bénin).
+     */
+    public function exportPlannedAnnualPdf(Request $request)
+    {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $data = $this->plannedExportData($request);
+        if ($data === null) {
+            return redirect()->back()->with('error', 'Sélectionnez au moins une infrastructure avant d\'exporter.');
+        }
+
+        $data['dateElaboration'] = now()->locale('fr')->isoFormat('D MMMM YYYY');
+
+        $pdf = Pdf::loadView('infrastructures.annual_export_pdf', $data)
+            ->setPaper('a4', 'landscape');
+
+        $filename = 'plan_annuel_' . ($data['communeName'] ? \Illuminate\Support\Str::slug($data['communeName']) . '_' : '') . now()->format('Ymd_His') . '.pdf';
         return $pdf->download($filename);
     }
 

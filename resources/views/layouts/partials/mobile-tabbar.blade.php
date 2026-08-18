@@ -8,22 +8,23 @@
         $tabs = [
             ['route' => route('admin.dashboard'), 'icon' => 'bi-speedometer2', 'label' => 'Tableau', 'active' => $is('admin.dashboard')],
             ['route' => url('/infrastructures'), 'icon' => 'bi-buildings', 'label' => 'Infras', 'active' => $is('infrastructures.index')],
+            ['route' => route('infrastructure-assignments.index'), 'icon' => 'bi-hand-index', 'label' => 'Affect.', 'active' => $is('infrastructure-assignments.*')],
             ['route' => route('admin.communes.index'), 'icon' => 'bi-geo-alt', 'label' => 'Communes', 'active' => $is('admin.communes.*')],
             ['route' => route('admin.users.index'), 'icon' => 'bi-people', 'label' => 'Users', 'active' => $is('admin.users.*')],
-            ['route' => route('infrastructures.offline'), 'icon' => 'bi-cloud-arrow-up', 'label' => 'Hors-ligne', 'active' => $is('infrastructures.offline')],
         ];
     } elseif ($u->isCommuneAdmin()) {
         $tabs = [
             ['route' => route('commune-admin.dashboard'), 'icon' => 'bi-speedometer2', 'label' => 'Tableau', 'active' => $is('commune-admin.dashboard')],
             ['route' => url('/infrastructures'), 'icon' => 'bi-buildings', 'label' => 'Infras', 'active' => $is('infrastructures.index')],
+            ['route' => route('infrastructure-assignments.index'), 'icon' => 'bi-hand-index', 'label' => 'Affect.', 'active' => $is('infrastructure-assignments.*')],
             ['route' => route('infrastructures.planned'), 'icon' => 'bi-calendar-check', 'label' => 'Planifiées', 'active' => $is('infrastructures.planned')],
             ['route' => route('admin.pending-registrations'), 'icon' => 'bi-person-check', 'label' => 'Agents', 'active' => $is('admin.pending-registrations')],
-            ['route' => route('infrastructures.offline'), 'icon' => 'bi-cloud-arrow-up', 'label' => 'Hors-ligne', 'active' => $is('infrastructures.offline')],
         ];
     } else {
         $tabs = [
             ['route' => url('/infrastructures'), 'icon' => 'bi-buildings', 'label' => 'Mes fiches', 'active' => $is('infrastructures.index')],
             ['route' => route('infrastructures.create'), 'icon' => 'bi-plus-circle', 'label' => 'Ajouter', 'active' => $is('infrastructures.create')],
+            ['route' => route('infrastructure-assignments.index'), 'icon' => 'bi-hand-index', 'label' => 'Affectées', 'active' => $is('infrastructure-assignments.*')],
             ['route' => route('infrastructures.offline'), 'icon' => 'bi-cloud-arrow-up', 'label' => 'Hors-ligne', 'active' => $is('infrastructures.offline')],
         ];
     }

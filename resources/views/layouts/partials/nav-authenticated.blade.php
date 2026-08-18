@@ -39,6 +39,9 @@
     <li class="nav-item">
         <a class="nav-link" href="{{ url('/infrastructures') }}"><i class="fas fa-building"></i> Infrastructures</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('infrastructure-assignments.index') }}"><i class="fas fa-hand-holding"></i> Affectations</a>
+    </li>
 @elseif($u->isCommuneAdmin())
     <li class="nav-item">
         <a class="nav-link" href="{{ route('commune-admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Tableau de bord</a>
@@ -64,12 +67,18 @@
             @endif
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('infrastructure-assignments.index') }}"><i class="fas fa-hand-holding"></i> Affectations</a>
+    </li>
 @elseif($u->isAgent())
     <li class="nav-item">
         <a class="nav-link" href="{{ url('/infrastructures') }}"><i class="fas fa-building"></i> Mes infrastructures</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" href="{{ route('infrastructures.create') }}"><i class="fas fa-plus-circle"></i> Ajouter</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('infrastructure-assignments.index') }}"><i class="fas fa-hand-holding"></i> Mes affectations</a>
     </li>
 @endif
 

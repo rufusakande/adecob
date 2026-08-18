@@ -1,9 +1,33 @@
 @extends('layouts.app')
 
-@section('title', 'Créer un Compte')
+@section('title')
+    Créer un Compte — {{ config('app.name') }}
+@endsection
+
+@push('meta')
+    <meta name="description" content="Créez votre compte {{ config('app.name') }} pour participer au recensement et à la gestion des infrastructures des communes du Borgou.">
+    <meta name="keywords" content="inscription, créer un compte, {{ config('app.name') }}, ADECOB, infrastructures, Borgou, Bénin">
+    <meta property="og:title" content="Créer un Compte — {{ config('app.name') }}">
+    <meta property="og:description" content="Rejoignez la plateforme {{ config('app.name') }} et contribuez à la gestion des infrastructures du Borgou.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta name="twitter:card" content="summary">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Créer un Compte — {{ config('app.name') }}",
+        "url": "{{ url()->current() }}",
+        "inLanguage": "fr",
+        "isPartOf": { "@type": "WebSite", "name": "{{ config('app.name') }}" },
+        "description": "Page d'inscription à la plateforme {{ config('app.name') }}."
+    }
+    </script>
+@endpush
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/auth-modern.css?v=2') }}">
+<link rel="stylesheet" href="{{ asset('css/auth-modern.css?v=5') }}">
 
 <div class="auth-container">
     <div class="auth-card">
@@ -163,18 +187,27 @@
                         </svg>
                         Mot de passe
                     </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password"
-                        class="form-input @error('password') is-invalid @enderror"
-                        placeholder="••••••••••"
-                        required
-                        autocomplete="new-password"
-                        aria-label="Votre mot de passe"
-                        aria-required="true"
-                        aria-describedby="password-requirements"
-                    >
+                    <div class="password-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password"
+                            class="form-input @error('password') is-invalid @enderror"
+                            placeholder="••••••••••"
+                            required
+                            autocomplete="new-password"
+                            aria-label="Votre mot de passe"
+                            aria-required="true"
+                            aria-describedby="password-requirements"
+                        >
+                        <button type="button" class="password-toggle" data-target="password"
+                                aria-label="Afficher le mot de passe" aria-pressed="false">
+                            <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M2.06 12.35a1 1 0 010-.7C3.42 8.46 7.3 5 12 5s8.58 3.46 9.94 6.65a1 1 0 010 .7C20.58 15.54 16.7 19 12 19s-8.58-3.46-9.94-6.65z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
                     <small id="password-requirements" style="color: var(--color-gray-500); margin-top: 0.5rem; display: block;">
                         ✓ Minimum 10 caractères<br>
                         ✓ Majuscules, minuscules, chiffres et caractères spéciaux
@@ -189,17 +222,26 @@
                         </svg>
                         Confirmer le mot de passe
                     </label>
-                    <input 
-                        type="password" 
-                        id="password_confirmation" 
-                        name="password_confirmation"
-                        class="form-input @error('password_confirmation') is-invalid @enderror"
-                        placeholder="••••••••••"
-                        required
-                        autocomplete="new-password"
-                        aria-label="Confirmez votre mot de passe"
-                        aria-required="true"
-                    >
+                    <div class="password-wrapper">
+                        <input 
+                            type="password" 
+                            id="password_confirmation" 
+                            name="password_confirmation"
+                            class="form-input @error('password_confirmation') is-invalid @enderror"
+                            placeholder="••••••••••"
+                            required
+                            autocomplete="new-password"
+                            aria-label="Confirmez votre mot de passe"
+                            aria-required="true"
+                        >
+                        <button type="button" class="password-toggle" data-target="password_confirmation"
+                                aria-label="Afficher le mot de passe" aria-pressed="false">
+                            <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M2.06 12.35a1 1 0 010-.7C3.42 8.46 7.3 5 12 5s8.58 3.46 9.94 6.65a1 1 0 010 .7C20.58 15.54 16.7 19 12 19s-8.58-3.46-9.94-6.65z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Conditions d'utilisation -->
@@ -221,8 +263,15 @@
                     </label>
                 </div>
 
+                <!-- reCAPTCHA v3 (invisible) -->
+                <input type="hidden" name="recaptcha_token" id="recaptcha_token" value="">
+                <div class="auth-recaptcha-note">
+                    <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                    <span>Protégé par Google reCAPTCHA</span>
+                </div>
+
                 <!-- Bouton d'inscription -->
-                <button type="submit" class="btn btn-primary" aria-busy="false">
+                <button type="submit" class="btn btn-primary" aria-busy="false" data-loading-text="Création du compte...">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                     </svg>
@@ -239,5 +288,12 @@
     </div>
 </div>
 
-<script src="{{ asset('js/auth-form.js?v=3') }}"></script>
+@if(config('services.recaptcha.site_key'))
+    <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
+    <script>
+        window.AUTH_RECAPTCHA_KEY = '{{ config('services.recaptcha.site_key') }}';
+        window.AUTH_RECAPTCHA_ACTION = 'register';
+    </script>
+@endif
+<script src="{{ asset('js/auth-form.js?v=4') }}"></script>
 @endsection

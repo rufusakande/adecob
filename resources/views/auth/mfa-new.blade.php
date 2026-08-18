@@ -1,9 +1,20 @@
 @extends('layouts.app')
 
-@section('title', 'Vérification à Deux Facteurs')
+@section('title')
+    Vérification à Deux Facteurs — {{ config('app.name') }}
+@endsection
+
+@push('meta')
+    <meta name="description" content="Vérification à deux facteurs pour sécuriser l'accès à votre espace {{ config('app.name') }}.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta property="og:title" content="Vérification à Deux Facteurs — {{ config('app.name') }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <link rel="canonical" href="{{ url()->current() }}">
+@endpush
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/auth-modern.css?v=2') }}">
+<link rel="stylesheet" href="{{ asset('css/auth-modern.css?v=5') }}">
 
 <div class="auth-container">
     <div class="auth-card">
@@ -126,7 +137,7 @@
     </div>
 </div>
 
-<script src="{{ asset('js/auth-form.js?v=3') }}"></script>
+<script src="{{ asset('js/auth-form.js?v=4') }}"></script>
 <script>
     // Formater automatiquement le code MFA (accepter seulement les chiffres)
     document.getElementById('code').addEventListener('input', function(e) {
