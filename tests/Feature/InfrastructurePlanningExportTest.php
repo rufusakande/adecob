@@ -59,18 +59,28 @@ class InfrastructurePlanningExportTest extends TestCase
             'acteurs_concernes'   => 'DST, DSI, AUE',
             'sources_financement' => 'FADeC, Coopération Suisse',
             'annee_execution'     => now()->year . ' - ' . (now()->year + 2),
+            'annee_debut'         => now()->year,
+            'annee_fin'           => now()->year + 2,
             'unite'               => 'Forfait',
             'quantite'            => 1,
             'cout_unitaire'       => 2500000,
             'repartition_an1'     => 2500000,
             'repartition_an2'     => 0,
             'repartition_an3'     => 0,
+            'repartition_annees'  => [
+                now()->year      => 2500000,
+                now()->year + 1  => 0,
+                now()->year + 2  => 0,
+            ],
             'priorite'            => 'Urgent',
             'budget_annuel'       => 2500000,
             'trimestre_t1'        => 2500000,
             'trimestre_t2'        => 0,
             'trimestre_t3'        => 0,
             'trimestre_t4'        => 0,
+            'trimestres_annees'   => [
+                now()->year => ['t1' => 2500000, 't2' => 0, 't3' => 0, 't4' => 0],
+            ],
             'statut_execution'    => 'En cours',
         ]);
 
@@ -102,9 +112,31 @@ class InfrastructurePlanningExportTest extends TestCase
 		$this->assertTrue(Schema::hasColumn('infrastructure_works', 'priorite'));
 	}
 
+	public function test_infrastructure_work_table_has_annee_range_columns()
+	{
+		$this->assertTrue(Schema::hasColumn('infrastructure_works', 'annee_debut'));
+		$this->assertTrue(Schema::hasColumn('infrastructure_works', 'annee_fin'));
+		$this->assertTrue(Schema::hasColumn('infrastructure_works', 'repartition_annees'));
+		$this->assertTrue(Schema::hasColumn('infrastructure_works', 'trimestres_annees'));
+	}
+
 	public function test_annual_export_route_is_registered()
 	{
 		$this->assertTrue(Route::has('infrastructures.planned.export.annual'));
+	}
+
+	public function test_annual_export_with_year_selection_generates_pdf()
+	{
+		$admin = $this->makeSuperAdmin();
+		$this->makePlannedInfrastructure();
+
+		$response = $this->actingAs($admin)->get(route('infrastructures.planned.export.annual', [
+			'export_scope' => 'filtered',
+			'annee_export' => now()->year,
+		]));
+
+		$response->assertOk();
+		$this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
 	}
 
 	public function test_annual_export_generates_pdf()
@@ -179,17 +211,22 @@ class InfrastructurePlanningExportTest extends TestCase
 
 		$this->assertStringContainsString("Exercices budgétaires :</span> {$annee} à {$annee2}", $triennial);
 		$this->assertStringNotContainsString('N à N+2', $triennial);
+		// La colonne « Répartition » affiche les années réelles (et plus An-1/An-2/An-3).
+		$this->assertStringContainsString("{$annee} :", $triennial);
+		$this->assertStringNotContainsString('An-1', $triennial);
 
+		$anneeExport = $annee + 1;
 		$annual = view('infrastructures.annual_export_pdf', [
 			'infrastructures' => \App\Models\Infrastructure::with(['works'])->get(),
 			'communeName'     => 'N\'Dali',
 			'communeLogoData' => null,
 			'departement'     => 'Borgou',
 			'anneeBase'       => $annee,
+			'anneeExport'     => $anneeExport,
 			'dateElaboration' => now()->locale('fr')->isoFormat('D MMMM YYYY'),
 		])->render();
 
-		$this->assertStringContainsString("Exercices budgétaires :</span> {$annee}", $annual);
+		$this->assertStringContainsString("Exercice budgétaire :</span> {$anneeExport}", $annual);
 		$this->assertStringNotContainsString('N (', $annual);
 	}
 }

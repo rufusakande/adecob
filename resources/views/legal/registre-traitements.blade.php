@@ -30,15 +30,11 @@
     </tr>
     <tr>
         <th>Siège social</th>
-        <td>Parakou, République du Bénin</td>
+        <td>N'DALI, République du Bénin</td>
     </tr>
     <tr>
         <th>Statut juridique</th>
         <td>Association à but non lucratif, à vocation d'intérêt public</td>
-    </tr>
-    <tr>
-        <th>Financeur principal</th>
-        <td>DDC Suisse — Direction du Développement et de la Coopération (Berne, Suisse)</td>
     </tr>
     <tr>
         <th>Contact du responsable de traitement</th>
@@ -85,7 +81,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>{{ config('app.name') }} — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — ADECOB, N'Dali, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -149,13 +145,7 @@
         <td>Fournisseur SMTP (acheminement des e-mails de confirmation, de notification et d'alerte) —
             données transmises : adresse e-mail destinataire et corps du message uniquement</td>
     </tr>
-    <tr>
-        <th>Transferts hors Bénin</th>
-        <td><strong>Potentiellement oui</strong> via le fournisseur SMTP (selon localisation des serveurs).
-            Garanties : clause de confidentialité contractuelle, transmission chiffrée TLS 1.2+.
-            Aucun transfert de mot de passe ou de numéro de téléphone hors de la base de données
-            hébergée.</td>
-    </tr>
+    
     <tr>
         <th>Durée de conservation</th>
         <td>
@@ -202,7 +192,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>{{ config('app.name') }} — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — N'DALI, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -301,7 +291,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>{{ config('app.name') }} — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — N'DALI, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -417,7 +407,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>{{ config('app.name') }} — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — ADECOB, N'Dali, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -520,7 +510,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>{{ config('app.name') }} — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — ADECOB, N'Dali, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -618,7 +608,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>{{ config('app.name') }} — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — ADECOB, N'Dali, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -713,7 +703,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>{{ config('app.name') }} — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — ADECOB, N'Dali, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -814,7 +804,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>{{ config('app.name') }} — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — ADECOB, N'Dali, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -908,7 +898,7 @@
 <table>
     <tr>
         <th style="width:35%">Responsable du traitement</th>
-        <td>{{ config('app.name') }} — Parakou, Bénin</td>
+        <td>{{ config('app.name') }} — ADECOB, N'Dali, Bénin</td>
     </tr>
     <tr>
         <th>Finalité(s) précise(s)</th>
@@ -1011,12 +1001,12 @@ fins autres que celles définies par contrat.</p>
         <th>Garanties contractuelles</th>
     </tr>
     <tr>
-        <td><strong>Hébergeur applicatif</strong><br><em>(Hostinger ou équivalent)</em></td>
+        <td><strong>Hébergeur applicatif</strong><br><em>(open.bj ou équivalent)</em></td>
         <td>Hébergement de l'application Laravel, de la base de données MariaDB, des fichiers
             uploadés (photos d'infrastructures) et des sauvegardes chiffrées</td>
         <td>Toutes les données personnelles traitées par la Plateforme, en transit et au repos
             sur le serveur</td>
-        <td>Union Européenne (data center UE)</td>
+        <td>Bénin</td>
         <td>Contrat de service avec clauses de confidentialité et de sécurité ; chiffrement des
             données au repos et en transit ; accès restreint aux ingénieurs d'astreinte sous NDA ;
             certifications ISO 27001 ou équivalent ; politique de sauvegarde documentée</td>

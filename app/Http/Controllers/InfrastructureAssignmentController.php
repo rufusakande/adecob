@@ -74,6 +74,9 @@ class InfrastructureAssignmentController extends Controller
         $villages = Infrastructure::query()->visibleTo($user)
             ->select('village')->distinct()->orderBy('village')
             ->pluck('village')->filter()->values();
+        $secteurs = Infrastructure::query()->visibleTo($user)
+            ->select('secteur_domaine')->distinct()->orderBy('secteur_domaine')
+            ->pluck('secteur_domaine')->filter()->values();
         $types = Infrastructure::query()->visibleTo($user)
             ->select('type_infrastructure')->distinct()->orderBy('type_infrastructure')
             ->pluck('type_infrastructure')->filter()->values();
@@ -90,7 +93,7 @@ class InfrastructureAssignmentController extends Controller
 
         return view('infrastructures.affectations.admin', compact(
             'agents', 'agentAssignCounts', 'assignments', 'totalAffectables',
-            'communes', 'arrondissements', 'villages', 'types'
+            'communes', 'arrondissements', 'villages', 'secteurs', 'types'
         ) + $infraList);
     }
 
@@ -281,6 +284,9 @@ class InfrastructureAssignmentController extends Controller
         }
         if ($request->filled('village')) {
             $query->where('village', $request->village);
+        }
+        if ($request->filled('secteur_domaine')) {
+            $query->where('secteur_domaine', $request->secteur_domaine);
         }
         if ($request->filled('type_infrastructure')) {
             $query->where('type_infrastructure', $request->type_infrastructure);

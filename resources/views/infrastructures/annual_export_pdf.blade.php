@@ -110,7 +110,7 @@
     <div class="line"><span class="label">Département :</span> {{ $departement ?: '…………………………' }}</div>
     <div class="line"><span class="label">Commune :</span> {{ $communeName ?: '…………………………' }}</div>
     <div class="line"><span class="label">Date d'élaboration :</span> {{ $dateElaboration }}</div>
-    <div class="line"><span class="label">Exercices budgétaires :</span> {{ $anneeBase }}</div>
+    <div class="line"><span class="label">Exercice budgétaire :</span> {{ $anneeExport ?? $anneeBase }}</div>
 </div>
 
 <table class="plan">
@@ -156,17 +156,21 @@
                 $secteurType = trim(($infra->secteur_domaine ?: '') . ($infra->type_infrastructure ? ' / ' . $infra->type_infrastructure : ''), ' /');
                 $description = $plan->description ?: $infra->mesures_proposees;
                 $fmt = fn($v) => ($v !== null && $v !== '') ? number_format((float)$v, 0, '.', ' ') : '0';
+                // Données de l'exercice sélectionné (annee_export).
+                $anneeX = (int) ($anneeExport ?? $anneeBase);
+                $aBudget = $plan->repartitionForYear($anneeX);
+                $aTris = $plan->trimestresForYear($anneeX) ?? [];
             @endphp
             <tr>
                 <td class="center">{{ $rowNum }}</td>
                 <td>{{ $localisation ?: '—' }}</td>
                 <td>{{ $secteurType ?: '—' }}</td>
                 <td>{{ $description ?: '—' }}</td>
-                <td class="center"><strong>{{ $plan->budget_annuel !== null ? number_format((float)$plan->budget_annuel, 0, '.', ' ') : '—' }}</strong></td>
-                <td class="center">{{ $fmt($plan->trimestre_t1) }}</td>
-                <td class="center">{{ $fmt($plan->trimestre_t2) }}</td>
-                <td class="center">{{ $fmt($plan->trimestre_t3) }}</td>
-                <td class="center">{{ $fmt($plan->trimestre_t4) }}</td>
+                <td class="center"><strong>{{ $aBudget !== null ? number_format((float)$aBudget, 0, '.', ' ') : '—' }}</strong></td>
+                <td class="center">{{ $fmt($aTris['t1'] ?? null) }}</td>
+                <td class="center">{{ $fmt($aTris['t2'] ?? null) }}</td>
+                <td class="center">{{ $fmt($aTris['t3'] ?? null) }}</td>
+                <td class="center">{{ $fmt($aTris['t4'] ?? null) }}</td>
                 <td>{{ $plan->acteurs_concernes ?: ($plan->provider_name ?: '—') }}</td>
                 <td class="center">{{ $plan->statut_execution ?: '—' }}</td>
                 <td>{{ $plan->observations ?: '—' }}</td>

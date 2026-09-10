@@ -114,7 +114,7 @@
     <div class="line"><span class="label">Département :</span> {{ $departement ?: '…………………………' }}</div>
     <div class="line"><span class="label">Commune :</span> {{ $communeName ?: '…………………………' }}</div>
     <div class="line"><span class="label">Date d'élaboration :</span> {{ $dateElaboration }}</div>
-    <div class="line"><span class="label">Exercices budgétaires :</span> {{ $anneeBase }} à {{ $anneeBase + 2 }}</div>
+    <div class="line"><span class="label">Exercices budgétaires :</span> {{ $anneeDebut ?? $anneeBase }} à {{ $anneeFin ?? ($anneeBase + 2) }}</div>
 </div>
 
 <table class="plan">
@@ -166,9 +166,9 @@
                 <td class="center">{{ $plan->quantite !== null ? rtrim(rtrim(number_format((float)$plan->quantite, 2, '.', ''), '0'), '.') : '—' }}</td>
                 <td class="center">{{ $plan->cout_unitaire !== null ? number_format((float)$plan->cout_unitaire, 0, '.', ' ') : '—' }}</td>
                 <td>
-                    <div class="center">An-1 : {{ $fmt($plan->repartition_an1) }}</div>
-                    <div class="center">An-2 : {{ $fmt($plan->repartition_an2) }}</div>
-                    <div class="center">An-3 : {{ $fmt($plan->repartition_an3) }}</div>
+                    @foreach($plan->anneeRangeYears() as $yr)
+                        <div class="center">{{ $yr }} : {{ $fmt($plan->repartitionForYear($yr)) }}</div>
+                    @endforeach
                 </td>
                 <td>{{ $plan->acteurs_concernes ?: ($plan->provider_name ?: '—') }}</td>
                 <td>{{ $plan->sources_financement ?: '—' }}</td>

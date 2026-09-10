@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\MfaCodeNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -41,15 +42,29 @@ class MfaTest extends TestCase
         return $admin;
     }
 
+    /** Simule une vérification reCAPTCHA v3 réussie (évite un appel réseau réel). */
+    protected function fakeRecaptcha(): void
+    {
+        Http::fake([
+            'https://www.google.com/recaptcha/api/siteverify' => Http::response([
+                'success' => true,
+                'action'  => 'login',
+                'score'   => 0.9,
+            ], 200),
+        ]);
+    }
+
     /** @test */
     public function admin_login_redirects_to_mfa_and_sends_code(): void
     {
         Notification::fake();
+        $this->fakeRecaptcha();
         $admin = $this->makeAdmin('super_admin');
 
         $response = $this->post('/login', [
-            'email'    => $admin->email,
-            'password' => 'Password!123',
+            'email'           => $admin->email,
+            'password'        => 'Password!123',
+            'recaptcha_token' => 'test-token',
         ]);
 
         $response->assertRedirect(route('mfa.show'));
@@ -138,9 +153,11 @@ class MfaTest extends TestCase
         // role et is_approved sont hors $fillable → affectation forcée
         $agent->forceFill(['role' => 'agent', 'is_approved' => true])->save();
 
+        $this->fakeRecaptcha();
         $response = $this->post('/login', [
-            'email'    => $agent->email,
-            'password' => 'Password!123',
+            'email'           => $agent->email,
+            'password'        => 'Password!123',
+            'recaptcha_token' => 'test-token',
         ]);
 
         $response->assertRedirect(route('infrastructures.index'));

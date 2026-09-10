@@ -132,18 +132,22 @@ CREATE TABLE IF NOT EXISTS `infrastructure_works` (
   `acteurs_concernes` text COLLATE utf8mb4_unicode_ci,
   `sources_financement` text COLLATE utf8mb4_unicode_ci,
   `annee_execution` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `annee_debut` smallint unsigned DEFAULT NULL,
+  `annee_fin` smallint unsigned DEFAULT NULL,
   `unite` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `quantite` decimal(15,2) DEFAULT NULL,
   `cout_unitaire` decimal(15,2) DEFAULT NULL,
   `repartition_an1` decimal(15,2) DEFAULT NULL,
   `repartition_an2` decimal(15,2) DEFAULT NULL,
   `repartition_an3` decimal(15,2) DEFAULT NULL,
+  `repartition_annees` json DEFAULT NULL,
   `priorite` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `budget_annuel` decimal(15,2) DEFAULT NULL,
   `trimestre_t1` decimal(15,2) DEFAULT NULL,
   `trimestre_t2` decimal(15,2) DEFAULT NULL,
   `trimestre_t3` decimal(15,2) DEFAULT NULL,
   `trimestre_t4` decimal(15,2) DEFAULT NULL,
+  `trimestres_annees` json DEFAULT NULL,
   `statut_execution` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `cost` decimal(15,2) DEFAULT NULL,
   `status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'completed',
@@ -436,18 +440,22 @@ CALL __ensure_col('infrastructure_works', 'provider_contact', '`provider_contact
 CALL __ensure_col('infrastructure_works', 'acteurs_concernes', '`acteurs_concernes` text COLLATE utf8mb4_unicode_ci');
 CALL __ensure_col('infrastructure_works', 'sources_financement', '`sources_financement` text COLLATE utf8mb4_unicode_ci');
 CALL __ensure_col('infrastructure_works', 'annee_execution', '`annee_execution` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL');
+CALL __ensure_col('infrastructure_works', 'annee_debut', '`annee_debut` smallint unsigned DEFAULT NULL');
+CALL __ensure_col('infrastructure_works', 'annee_fin', '`annee_fin` smallint unsigned DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'unite', '`unite` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'quantite', '`quantite` decimal(15,2) DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'cout_unitaire', '`cout_unitaire` decimal(15,2) DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'repartition_an1', '`repartition_an1` decimal(15,2) DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'repartition_an2', '`repartition_an2` decimal(15,2) DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'repartition_an3', '`repartition_an3` decimal(15,2) DEFAULT NULL');
+CALL __ensure_col('infrastructure_works', 'repartition_annees', '`repartition_annees` json DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'priorite', '`priorite` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'budget_annuel', '`budget_annuel` decimal(15,2) DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'trimestre_t1', '`trimestre_t1` decimal(15,2) DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'trimestre_t2', '`trimestre_t2` decimal(15,2) DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'trimestre_t3', '`trimestre_t3` decimal(15,2) DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'trimestre_t4', '`trimestre_t4` decimal(15,2) DEFAULT NULL');
+CALL __ensure_col('infrastructure_works', 'trimestres_annees', '`trimestres_annees` json DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'statut_execution', '`statut_execution` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'cost', '`cost` decimal(15,2) DEFAULT NULL');
 CALL __ensure_col('infrastructure_works', 'status', '`status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT ''completed''');

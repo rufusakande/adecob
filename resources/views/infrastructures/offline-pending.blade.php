@@ -11,7 +11,8 @@
                 (<span id="offline-count">0</span> en attente). Synchronisez-les pour les envoyer en validation.
             </p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url('/offline.html') }}" class="btn btn-warning text-dark"><i class="fas fa-plus me-1"></i> Ajouter (hors-ligne)</a>
             <a href="{{ route('infrastructures.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Infrastructures</a>
             <button type="button" class="btn btn-success" id="offline-sync-all"><i class="fas fa-cloud-arrow-up me-1"></i> Tout synchroniser</button>
         </div>

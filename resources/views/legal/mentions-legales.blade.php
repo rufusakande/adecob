@@ -3,7 +3,7 @@
 @section('title', 'Mentions légales')
 @section('doc_title', 'Mentions légales')
 @section('doc_version', '1.0')
-@section('doc_date', date('d/m/Y'))
+@section('doc_date', '27/08/2026')
 
 @section('doc_content')
 
@@ -15,17 +15,19 @@
 </div>
 
 {{-- ═══════════════════════════════════════════════
-     1. ÉDITEUR DU SITE
+     1. ÉDITEUR DU SITE ET CO-RESPONSABILITÉ
 ═══════════════════════════════════════════════ --}}
-<h2>1. Éditeur du site</h2>
-<p>La Plateforme {{ config('app.name') }} est éditée et gérée par :</p>
+<h2>1. Éditeur du site et co-responsabilité</h2>
+<p>La Plateforme {{ config('app.name') }} est <strong>co-gérée par les Communes du Borgou</strong>
+et administrée techniquement par :</p>
 <ul>
-    <li><strong>Association :</strong> Association pour le Développement des Communes du Borgou ({{ config('app.name') }})</li>
-    <li><strong>Siège social :</strong> Parakou, République du Bénin</li>
-    <li><strong>Téléphone :</strong> [À COMPLÉTER]</li>
-    <li><strong>E-mail :</strong> [À COMPLÉTER]</li>
-    <li><strong>Représentant légal :</strong> [À COMPLÉTER — Président / Directeur]</li>
-    <li><strong>Récépissé de déclaration :</strong> [À COMPLÉTER — n° de récépissé de l'association]</li>
+    <li><strong>Propriétaire / Éditeur :</strong> l'Association pour le Développement des Communes du
+        Borgou (ADECOB)</li>
+    <li><strong>Statut :</strong> association de collectivités locales (loi 1901), regroupant l'ensemble
+        des mairies du Borgou</li>
+    <li><strong>Siège social :</strong> N'Dali, Département du Borgou, République du Bénin</li>
+    <li><strong>Téléphone :</strong> +229 01 95 64 73 73</li>
+    <li><strong>E-mail :</strong> secretariatadecob@yahoo.fr</li>
 </ul>
 
 {{-- ═══════════════════════════════════════════════
@@ -33,77 +35,79 @@
 ═══════════════════════════════════════════════ --}}
 <h2>2. Directeur de la publication</h2>
 <ul>
-    <li><strong>Directeur de publication :</strong> [À COMPLÉTER — Nom, Prénom]</li>
-    <li><strong>Contact :</strong> [À COMPLÉTER — e-mail / téléphone]</li>
+    <li><strong>Directeur de publication :</strong> ADECOB</li>
+    <li><strong>Contact :</strong> secretariatadecob@yahoo.fr</li>
 </ul>
 
 {{-- ═══════════════════════════════════════════════
      3. HÉBERGEMENT
 ═══════════════════════════════════════════════ --}}
 <h2>3. Hébergement</h2>
-<p>Le site est hébergé chez :</p>
+<p>Le site est hébergé sur le territoire national béninois conformément aux recommandations de
+souveraineté numérique :</p>
 <ul>
     <li><strong>Hébergeur :</strong> Open.bj (Open Business)</li>
-    <li><strong>Type d'hébergement :</strong> Hébergement cloud — offre <strong>DIAMOND</strong></li>
+    <li><strong>Type d'hébergement :</strong> hébergement cloud — offre <strong>DIAMOND</strong></li>
     <li><strong>Site web :</strong> <a href="https://open.bj" target="_blank" rel="noopener">https://open.bj</a></li>
-    <li><strong>Adresse de l'hébergeur :</strong> [À COMPLÉTER — adresse d'Open.bj, Bénin]</li>
 </ul>
-<p><strong>Caractéristiques de l'offre :</strong> 5 domaines, sous-domaines illimités, 100 Go SSD,
-1 000 Go de transfert mensuel, 50 comptes e-mail, 5 comptes FTP, 5 bases de données MySQL,
-support PHP/Perl/Python, certificat SSL Let's Encrypt, support des sauvegardes.</p>
 
 {{-- ═══════════════════════════════════════════════
      4. PROPRIÉTÉ INTELLECTUELLE
 ═══════════════════════════════════════════════ --}}
 <h2>4. Propriété intellectuelle</h2>
-<p>L'ensemble des contenus de la Plateforme (textes, données, cartographies, logo, structure,
-base de données) est la propriété de l'association éditrice ou de ses partenaires, sauf mention
-contraire.</p>
-<p>Le code source de la Plateforme est livré à l'association dans le cadre de la mission
-AGORA TERRAIN. Toute reproduction, représentation, modification ou exploitation, totale ou
-partielle, sans autorisation préalable écrite de l'éditeur est interdite.</p>
+<p>L'ensemble des contenus de la Plateforme (textes, données publiques, cartographies numériques, logos,
+structures applicatives, bases de données) est la <strong>propriété conjointe de l'ADECOB et des Communes
+membres du Borgou</strong>, ou fait l'objet d'un droit d'utilisation accordé par ses partenaires. Toute
+reproduction, représentation ou extraction non autorisée des bases de données géographiques est strictement
+interdite sans accord écrit préalable de l'ADECOB.</p>
 
 {{-- ═══════════════════════════════════════════════
-     5. DONNÉES PERSONNELLES
+     5. PROTECTION DES DONNÉES PERSONNELLES
 ═══════════════════════════════════════════════ --}}
-<h2>5. Données personnelles</h2>
-<p>La Plateforme collecte et traite des données à caractère personnel (comptes utilisateurs,
-données de recensement des infrastructures).</p>
+<h2>5. Protection des données personnelles (Conformité APDP)</h2>
+<p>La Plateforme collecte et traite des données à caractère personnel (gestion des comptes des agents
+communaux, données de recensement terrain des infrastructures incluant parfois des données nominatives ou
+de géolocalisation).</p>
 <ul>
-    <li><strong>Responsable de traitement :</strong> l'association éditrice (voir point 1)</li>
-    <li><strong>Base légale :</strong> mission d'intérêt public / exécution des missions de l'association, consentement pour les comptes publics</li>
-    <li><strong>Finalités :</strong> gestion des comptes, recensement et suivi des infrastructures, statistiques, cartographie publique</li>
-    <li><strong>Durée de conservation :</strong> [À COMPLÉTER — ex. durée de vie des comptes + 1 an]</li>
-    <li><strong>Droits des personnes :</strong> accès, rectification, effacement, limitation, portabilité, opposition — voir la
-        <a href="{{ route('legal.confidentialite') }}">Politique de confidentialité</a></li>
-    <li><strong>Contact RGPD :</strong> [À COMPLÉTER — e-mail du référent RGPD]</li>
+    <li><strong>Co-responsables de traitement :</strong> l'ADECOB et les Mairies du Borgou partenaires.</li>
+    <li><strong>Conformité légale :</strong> le traitement de ces données est effectué en stricte conformité
+        avec le Livre V du <em>Code du numérique du Bénin</em>.</li>
+    <li><strong>Formalités APDP :</strong> le traitement fait l'objet des formalités préalables obligatoires
+        auprès de l'Autorité de Protection des Données Personnelles (APDP) — numéro en cours d'immatriculation.</li>
+    <li><strong>Base légale :</strong> exécution d'une mission d'intérêt public et exercice de l'autorité
+        publique dévolue aux communes.</li>
+    <li><strong>Droits des personnes :</strong> toute personne inscrite ou recensée dispose d'un droit
+        d'accès, de rectification, d'opposition et de suppression de ses données. Pour l'exercer, contactez
+        le délégué aux données : <strong>secretariatadecob@yahoo.fr</strong>. Voir également la
+        <a href="{{ route('legal.confidentialite') }}">Politique de confidentialité</a>.</li>
 </ul>
 
 {{-- ═══════════════════════════════════════════════
      6. COOKIES
 ═══════════════════════════════════════════════ --}}
 <h2>6. Cookies</h2>
-<p>La Plateforme utilise des <strong>cookies techniques et de session</strong>, strictement
-nécessaires à son fonctionnement (authentification, sécurité). Aucun cookie publicitaire n'est
-utilisé. Voir la <a href="{{ route('legal.cookies') }}">Politique de gestion des cookies</a>.</p>
+<p>La Plateforme utilise exclusivement des <strong>cookies techniques et de session</strong>, strictement
+nécessaires à la sécurisation des accès (authentification des agents de mairie, maintien de la connexion).
+Aucun traçage publicitaire n'est mis en œuvre. Voir la
+<a href="{{ route('legal.cookies') }}">Politique de gestion des cookies</a>.</p>
 
 {{-- ═══════════════════════════════════════════════
      7. RESPONSABILITÉ
 ═══════════════════════════════════════════════ --}}
 <h2>7. Responsabilité</h2>
-<p>L'éditeur s'efforce d'assurer l'exactitude et la mise à jour des informations diffusées, mais
-ne peut garantir l'absence d'erreurs ou d'omissions. Les données affichées (notamment issues des
-recensements terrain) engagent les communes et agents qui les ont saisies.</p>
-<p>L'éditeur ne peut être tenu responsable des dommages résultant de l'utilisation du site ou de
-l'impossibilité d'y accéder (interruptions, maintenance, force majeure).</p>
+<p>L'éditeur et les communes partenaires s'efforcent d'assurer l'exactitude des informations cartographiques
+et techniques diffusées. Toutefois, les données issues des recensements terrain engagent directement la
+responsabilité des communes et des agents assermentés qui les ont saisies.</p>
+<p>L'éditeur ne saurait être tenu responsable des interruptions temporaires de la plateforme pour cause de
+maintenance ou d'indisponibilité des réseaux de télécommunication locaux.</p>
 
 {{-- ═══════════════════════════════════════════════
-     8. DROIT APPLICABLE
+     8. DROIT APPLICABLE ET ATTRIBUTION DE JURIDICTION
 ═══════════════════════════════════════════════ --}}
-<h2>8. Droit applicable</h2>
-<p>Le présent site est soumis au droit béninois et, le cas échéant, au droit applicable en matière
-de protection des données (loi n°2017-20 portant Code du numérique du Bénin, RGPD pour les échanges
-avec l'Union européenne). En cas de litige, et à défaut de résolution amiable, les tribunaux
-compétents sont ceux de [À COMPLÉTER — Parakou / Cotonou].</p>
+<h2>8. Droit applicable et attribution de juridiction</h2>
+<p>Le présent site et ses mentions légales sont exclusivement soumis au <strong>droit béninois</strong>.
+En cas de litige relatif à l'utilisation de la plateforme {{ config('app.name') }}, et à défaut de
+résolution amiable, compétence exclusive est attribuée aux <strong>tribunaux compétents de la République
+du Bénin</strong>.</p>
 
 @endsection

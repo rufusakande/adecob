@@ -89,6 +89,13 @@
                         <div>
                             <p class="text-muted mb-1">Agents de mairie</p>
                             <h3 class="mb-0" style="color: #dc3545;">{{ $stats['total_agents'] }}</h3>
+                            <small class="text-muted">
+                                @if($stats['pending_agents'] > 0)
+                                    <span class="text-warning"><i class="fas fa-user-clock"></i> {{ $stats['pending_agents'] }} en attente</span>
+                                @else
+                                    <i class="fas fa-check-circle text-success"></i> Aucune demande en attente
+                                @endif
+                            </small>
                         </div>
                         <div class="text-muted" style="font-size: 2rem;">
                             <i class="fas fa-users"></i>
@@ -101,8 +108,38 @@
     </div>
 
     <div class="row mt-4">
+        <!-- Répartition des utilisateurs par rôle -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-user-tag"></i> Utilisateurs</h5>
+                    <span class="badge bg-success text-white">{{ $stats['active_users'] }} actifs</span>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span><i class="fas fa-user-shield text-primary me-2"></i>Admins de commune</span>
+                            <strong>{{ $stats['commune_admins'] }}</strong>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span><i class="fas fa-user-tie text-danger me-2"></i>Agents collecteurs</span>
+                            <strong>{{ $stats['total_agents'] }}</strong>
+                        </li>
+                        <li class="d-flex justify-content-between py-2">
+                            <span><i class="fas fa-user text-secondary me-2"></i>Utilisateurs publics</span>
+                            <strong>{{ $stats['public_users'] }}</strong>
+                        </li>
+                    </ul>
+                    <div class="small text-muted border-top pt-2 d-flex justify-content-between mt-2">
+                        <span><i class="fas fa-user-clock text-warning me-1"></i>En attente : <strong>{{ $stats['pending_agents'] }}</strong></span>
+                        <span><i class="fas fa-user-slash text-danger me-1"></i>Rejetés : <strong>{{ $stats['rejected_agents'] }}</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Actions rapides -->
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-light border-0">
                     <h5 class="mb-0"><i class="fas fa-cogs"></i> Actions rapides</h5>
@@ -123,13 +160,13 @@
         </div>
 
         <!-- Informations de la commune -->
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-light border-0">
                     <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informations de la commune</h5>
                 </div>
                 <div class="card-body">
-                    <dl class="row">
+                    <dl class="row mb-0">
                         <dt class="col-sm-4">Nom :</dt>
                         <dd class="col-sm-8">{{ $commune->name }}</dd>
 

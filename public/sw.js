@@ -10,7 +10,7 @@
  *  - Navigation : réseau d'abord, sinon cache, sinon -> page offline.html.
  *  - Statiques (css/js/images) : cache d'abord, sinon réseau + mise en cache.
  */
-const VERSION = '2026-08-15-v3';
+const VERSION = '2026-08-26-v1';
 const OFFLINE_URL = '/offline.html';
 const PAGE_CACHE = 'adecob-pages-' + VERSION;
 const STATIC_CACHE = 'adecob-static-' + VERSION;
@@ -36,6 +36,15 @@ const STATIC_ASSETS = [
   '/js/offline-storage.js',
   '/js/offline-sync.js',
   '/vendor/localforage.min.js',
+  /* Assets locaux du formulaire hors-ligne (offline.html) */
+  '/vendor/pwa/bootstrap.min.css',
+  '/vendor/pwa/bootstrap.bundle.min.js',
+  '/vendor/pwa/bootstrap-icons.css',
+  '/vendor/pwa/fonts/bootstrap-icons.woff2',
+  '/vendor/pwa/fontawesome.min.css',
+  '/vendor/pwa/webfonts/fa-solid-900.woff2',
+  '/vendor/pwa/webfonts/fa-brands-400.woff2',
+  '/vendor/pwa/webfonts/fa-regular-400.woff2',
 ];
 
 self.addEventListener('install', (event) => {

@@ -87,3 +87,11 @@
         <i class="fas fa-cloud-download-alt"></i> Fiches hors-ligne
     </a>
 </li>
+
+@if(\App\Http\Controllers\GuideController::hasGuide($u->role))
+<li class="nav-item">
+    <a class="nav-link" href="{{ route('guide.show') }}" target="_blank" rel="noopener">
+        <i class="fas fa-book-open"></i> Guide d'utilisation
+    </a>
+</li>
+@endif

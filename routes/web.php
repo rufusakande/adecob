@@ -6,6 +6,7 @@ use App\Http\Controllers\InfrastructureController;
 use App\Http\Controllers\InfrastructureWorkController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CommuneController;
+use App\Http\Controllers\GuideController;
 use App\Http\Controllers\Admin\CommuneAdminController;
 
 /*
@@ -108,6 +109,9 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
 
     // Gestion des fiches saisies hors-ligne (stockées dans le navigateur de l'appareil)
     Route::view('/infrastructures-hors-ligne', 'infrastructures.offline-pending')->name('infrastructures.offline');
+
+    // Guide d'utilisation — PDF servi selon le rôle de l'utilisateur connecté
+    Route::get('/guide-utilisateur', [GuideController::class, 'show'])->name('guide.show');
 
 
 

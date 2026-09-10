@@ -23,9 +23,20 @@ class CommuneAdminController extends Controller
 
     public function index()
     {
-        $communes = Commune::with(['creator', 'users', 'infrastructures'])->get();
+        $communes = Commune::with(['creator', 'users', 'infrastructures', 'communeAdmins'])->get();
 
-        return view('admin.communes.index', compact('communes'));
+        // Statistiques globales — basées sur les rôles réels (comptes actifs/approuvés),
+        // et non sur created_by (qui n'est qu'un historique de création).
+        $totalCommunes    = $communes->count();
+        $communesWithAdmin = Commune::whereHas('users', function ($q) {
+            $q->where('role', 'commune_admin')->where('is_approved', true);
+        })->count();
+        $totalAgents      = User::where('role', 'agent')->where('is_approved', true)->count();
+        $totalAdmins      = User::where('role', 'commune_admin')->where('is_approved', true)->count();
+
+        return view('admin.communes.index', compact(
+            'communes', 'totalCommunes', 'communesWithAdmin', 'totalAgents', 'totalAdmins'
+        ));
     }
 
     public function create()

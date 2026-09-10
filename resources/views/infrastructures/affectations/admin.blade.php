@@ -89,25 +89,31 @@
                                 <input type="text" id="filter-q" name="q" class="form-control form-control-sm"
                                        placeholder="Rechercher (nom, type, village, secteur)..." autocomplete="off">
                             </div>
-                            <div class="col-6 col-md-3">
+                            <div class="col-6 col-md-2">
                                 <select id="filter-commune" name="commune" class="form-select form-select-sm">
                                     <option value="">Toutes les communes</option>
                                     @foreach($communes as $c)<option value="{{ $c }}">{{ $c }}</option>@endforeach
                                 </select>
                             </div>
-                            <div class="col-6 col-md-3">
+                            <div class="col-6 col-md-2">
                                 <select id="filter-arrondissement" name="arrondissement" class="form-select form-select-sm">
                                     <option value="">Tous les arrondissements</option>
                                     @foreach($arrondissements as $a)<option value="{{ $a }}">{{ $a }}</option>@endforeach
                                 </select>
                             </div>
-                            <div class="col-6 col-md-3">
+                            <div class="col-6 col-md-2">
                                 <select id="filter-village" name="village" class="form-select form-select-sm">
                                     <option value="">Tous les villages</option>
                                     @foreach($villages as $v)<option value="{{ $v }}">{{ $v }}</option>@endforeach
                                 </select>
                             </div>
-                            <div class="col-6 col-md-3">
+                            <div class="col-6 col-md-2">
+                                <select id="filter-secteur_domaine" name="secteur_domaine" class="form-select form-select-sm">
+                                    <option value="">Tous les secteurs</option>
+                                    @foreach($secteurs as $s)<option value="{{ $s }}">{{ $s }}</option>@endforeach
+                                </select>
+                            </div>
+                            <div class="col-6 col-md-2">
                                 <select id="filter-type_infrastructure" name="type_infrastructure" class="form-select form-select-sm">
                                     <option value="">Tous les types</option>
                                     @foreach($types as $t)<option value="{{ $t }}">{{ $t }}</option>@endforeach
@@ -135,9 +141,10 @@
 
                         <hr>
                         <button type="button" id="btn-select-all" class="btn btn-outline-danger btn-sm w-100">
-                            <i class="fas fa-layer-group me-1"></i> Affecter TOUTES les infrastructures ({{ number_format($totalAffectables, 0, ',', ' ') }})
+                            <i class="fas fa-layer-group me-1"></i> Affecter TOUTES les infrastructures
+                            <span id="select-all-count">({{ number_format($totalAffectables, 0, ',', ' ') }})</span>
                         </button>
-                        <div class="form-text text-center">Sélectionnez d'abord les agents, puis cliquez ici pour tout affecter d'un coup.</div>
+                        <div class="form-text text-center">Le compteur se met à jour selon vos filtres. Sélectionnez d'abord les agents, puis cliquez ici pour affecter toutes les infrastructures correspondantes d'un coup.</div>
                     </div>
                 </div>
             </div>
@@ -293,7 +300,7 @@
 
     function filterParams(page) {
         const params = new URLSearchParams();
-        ['q', 'commune', 'arrondissement', 'village', 'type_infrastructure'].forEach(n => {
+        ['q', 'commune', 'arrondissement', 'village', 'secteur_domaine', 'type_infrastructure'].forEach(n => {
             const el = filterEl(n);
             if (el && el.value) params.set(n, el.value);
         });
@@ -308,6 +315,26 @@
             .then(html => { listWrap.innerHTML = html; reapplyState(); })
             .catch(() => {})
             .finally(() => listWrap.classList.remove('opacity-50'));
+    }
+
+    /* ---- Compteur « Affecter toutes » (suivi des filtres) ---- */
+    function hasActiveFilters() {
+        return ['q', 'commune', 'arrondissement', 'village', 'secteur_domaine', 'type_infrastructure']
+            .some(n => { const el = filterEl(n); return el && el.value !== ''; });
+    }
+
+    function updateSelectAllCount() {
+        const totalEl = document.getElementById('infra-list-total');
+        const n = totalEl ? parseInt(totalEl.getAttribute('data-total') || '0', 10) : 0;
+        const span = document.getElementById('select-all-count');
+        if (span) {
+            span.textContent = n > 0
+                ? '(' + n.toLocaleString('fr-FR') + (hasActiveFilters() ? ' filtrée' + (n > 1 ? 's' : '') + ')' : ')')
+                : '(aucune)';
+        }
+        // Met en évidence le mode « filtré » pour éviter d'affecter tout par erreur.
+        selectAllBtn.classList.toggle('btn-outline-warning', hasActiveFilters());
+        selectAllBtn.classList.toggle('btn-outline-danger', !hasActiveFilters());
     }
 
     /* ---- Sélection ---- */
@@ -400,6 +427,7 @@
     function reapplyState() {
         listWrap.querySelectorAll('.infra-check').forEach(cb => { cb.checked = selected.has(cb.value); });
         updateAssignedStates();
+        updateSelectAllCount();
     }
 
     let searchTimer = null;
@@ -443,14 +471,15 @@
     });
 
     filterEl('village').addEventListener('change', loadInfraList);
+    filterEl('secteur_domaine').addEventListener('change', loadInfraList);
     filterEl('type_infrastructure').addEventListener('change', loadInfraList);
 
     resetBtn.addEventListener('click', function () {
-        ['q', 'commune', 'arrondissement', 'village', 'type_infrastructure'].forEach(n => { filterEl(n).value = ''; });
+        ['q', 'commune', 'arrondissement', 'village', 'secteur_domaine', 'type_infrastructure'].forEach(n => { filterEl(n).value = ''; });
         loadInfraList();
     });
 
-    /* ---- Affecter toutes ---- */
+    /* ---- Affecter toutes (suivant les filtres actifs) ---- */
     selectAllBtn.addEventListener('click', function () {
         if (!document.querySelector('input[name="agent_ids[]"]:checked')) {
             if (window.adecobUI) {
@@ -460,7 +489,15 @@
         }
         const totalEl = document.getElementById('infra-list-total');
         const n = totalEl ? parseInt(totalEl.getAttribute('data-total') || '0', 10) : {{ $totalAffectables ?? 0 }};
-        const msg = 'Toutes les infrastructures' + (n ? ' (' + n.toLocaleString('fr-FR') + ')' : '') + ' correspondant aux filtres seront affectées aux agents sélectionnés. Continuer ?';
+        if (n === 0) {
+            const msgNoResult = 'Aucune infrastructure ne correspond aux filtres actuels. Modifiez vos filtres puis réessayez.';
+            if (window.adecobUI) {
+                window.adecobUI.confirm({ title: 'Aucun résultat', message: msgNoResult, icon: 'info', okText: 'OK' });
+            } else { alert(msgNoResult); }
+            return;
+        }
+        const scope = hasActiveFilters() ? ' correspondant aux filtres actuels' : '';
+        const msg = 'Toutes les infrastructures' + (n ? ' (' + n.toLocaleString('fr-FR') + ')' : '') + scope + ' seront affectées aux agents sélectionnés. Continuer ?';
         const doAssignAll = function () {
             selectAllInput.value = '1';
             assignForm.submit();
@@ -486,6 +523,7 @@
 
     // État initial
     updateAssignedStates();
+    updateSelectAllCount();
 })();
 </script>
 @endpush

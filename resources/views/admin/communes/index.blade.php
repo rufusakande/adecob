@@ -55,15 +55,42 @@
 
     <!-- Stats Cards -->
     <div class="row mb-5">
-        
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm" style="border-left: 5px solid #0d6efd;">
+                <div class="card-body text-center">
+                    <h6 class="text-muted text-uppercase fw-bold mb-2">Communes</h6>
+                    <h3 class="fw-bold" style="color: #0d6efd;">{{ $totalCommunes }}</h3>
+                    <small class="text-muted">Enregistrées</small>
+                </div>
+            </div>
+        </div>
+
         <div class="col-md-3 mb-3">
             <div class="card border-0 shadow-sm" style="border-left: 5px solid #006600;">
                 <div class="card-body text-center">
                     <h6 class="text-muted text-uppercase fw-bold mb-2">Avec Admin</h6>
-                    <h3 class="fw-bold" style="color: #006600;">
-                        {{ count($communes->where('created_by', '!=', null)) }}
-                    </h3>
-                    <small class="text-muted">Configurées</small>
+                    <h3 class="fw-bold" style="color: #006600;">{{ $communesWithAdmin }}</h3>
+                    <small class="text-muted">Sur {{ $totalCommunes }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm" style="border-left: 5px solid #6d28d9;">
+                <div class="card-body text-center">
+                    <h6 class="text-muted text-uppercase fw-bold mb-2">Agents actifs</h6>
+                    <h3 class="fw-bold" style="color: #6d28d9;">{{ $totalAgents }}</h3>
+                    <small class="text-muted">Approuvés</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm" style="border-left: 5px solid #0369a1;">
+                <div class="card-body text-center">
+                    <h6 class="text-muted text-uppercase fw-bold mb-2">Admins de commune</h6>
+                    <h3 class="fw-bold" style="color: #0369a1;">{{ $totalAdmins }}</h3>
+                    <small class="text-muted">Approuvés</small>
                 </div>
             </div>
         </div>
@@ -121,8 +148,13 @@
                                 </span>
                             </td>
                             <td class="px-4 py-4">
-                                @if($commune->creator)
-                                    <small class="text-dark">{{ $commune->creator->name }}</small>
+                                @if($commune->communeAdmins->count())
+                                    @foreach($commune->communeAdmins as $ca)
+                                        <small class="text-dark d-block">
+                                            <i class="bi bi-shield-check me-1" style="color: #006600;"></i>
+                                            {{ $ca->prenom }} {{ $ca->name }}
+                                        </small>
+                                    @endforeach
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif

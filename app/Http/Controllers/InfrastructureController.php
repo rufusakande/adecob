@@ -954,7 +954,9 @@ class InfrastructureController extends Controller
             'description'         => 'required|string|min:5|max:5000',
             'completion_date'     => 'required|date|after_or_equal:today',
             'cost'                => 'required|numeric|min:0|max:9999999999999',
-            'annee_execution'     => 'required|string|max:255',
+            // Plage d'années d'exécution (structurée : début → fin)
+            'annee_debut'         => 'required|integer|min:2000|max:2100',
+            'annee_fin'           => 'required|integer|min:2000|max:2100|gte:annee_debut',
             'acteurs_concernes'   => 'required|string|max:1000',
             'sources_financement' => 'required|string|max:1000',
             'provider_name'       => 'nullable|string|max:255',
@@ -964,18 +966,71 @@ class InfrastructureController extends Controller
             'unite'               => 'nullable|string|max:255',
             'quantite'            => 'nullable|numeric|min:0|max:9999999999999',
             'cout_unitaire'       => 'nullable|numeric|min:0|max:9999999999999',
-            'repartition_an1'     => 'nullable|numeric|min:0|max:9999999999999',
-            'repartition_an2'     => 'nullable|numeric|min:0|max:9999999999999',
-            'repartition_an3'     => 'nullable|numeric|min:0|max:9999999999999',
+            'repartition_annees'  => 'nullable|array',
+            'repartition_annees.*' => 'nullable|numeric|min:0|max:9999999999999',
             'priorite'            => 'nullable|string|max:255',
-            // Fiche annuelle
-            'budget_annuel'       => 'nullable|numeric|min:0|max:9999999999999',
-            'trimestre_t1'        => 'nullable|numeric|min:0|max:9999999999999',
-            'trimestre_t2'        => 'nullable|numeric|min:0|max:9999999999999',
-            'trimestre_t3'        => 'nullable|numeric|min:0|max:9999999999999',
-            'trimestre_t4'        => 'nullable|numeric|min:0|max:9999999999999',
+            // Fiche annuelle (par année)
+            'trimestres_annees'           => 'nullable|array',
+            'trimestres_annees.*'         => 'nullable|array',
+            'trimestres_annees.*.t1'      => 'nullable|numeric|min:0|max:9999999999999',
+            'trimestres_annees.*.t2'      => 'nullable|numeric|min:0|max:9999999999999',
+            'trimestres_annees.*.t3'      => 'nullable|numeric|min:0|max:9999999999999',
+            'trimestres_annees.*.t4'      => 'nullable|numeric|min:0|max:9999999999999',
             'statut_execution'    => 'nullable|string|max:255',
         ]);
+
+        // Limite de sécurité sur la plage (ex. 12 années max pour éviter les abus).
+        $debut = (int) $validated['annee_debut'];
+        $fin   = (int) $validated['annee_fin'];
+        if (($fin - $debut) > 12) {
+            return back()->withInput()->withErrors([
+                'annee_fin' => 'La plage d\'années est trop large (12 années maximum).',
+            ]);
+        }
+
+        $years = range($debut, $fin);
+
+        // Normalise la répartition par année : clés = années de la plage uniquement.
+        $repartitionInput = $validated['repartition_annees'] ?? [];
+        $repartitionClean = [];
+        foreach ($years as $y) {
+            $repartitionClean[$y] = (isset($repartitionInput[$y]) && $repartitionInput[$y] !== '')
+                ? (float) $repartitionInput[$y]
+                : null;
+        }
+
+        // Normalise les trimestres par année.
+        $trimestresInput = $validated['trimestres_annees'] ?? [];
+        $trimestresClean = [];
+        foreach ($years as $y) {
+            $t = is_array($trimestresInput[$y] ?? null) ? $trimestresInput[$y] : [];
+            $trimestresClean[$y] = [
+                't1' => (isset($t['t1']) && $t['t1'] !== '') ? (float) $t['t1'] : null,
+                't2' => (isset($t['t2']) && $t['t2'] !== '') ? (float) $t['t2'] : null,
+                't3' => (isset($t['t3']) && $t['t3'] !== '') ? (float) $t['t3'] : null,
+                't4' => (isset($t['t4']) && $t['t4'] !== '') ? (float) $t['t4'] : null,
+            ];
+        }
+
+        // Écriture structurée.
+        $validated['annee_debut']        = $debut;
+        $validated['annee_fin']          = $fin;
+        $validated['annee_execution']    = $debut . ' - ' . $fin;
+        $validated['repartition_annees'] = $repartitionClean;
+        $validated['trimestres_annees']  = $trimestresClean;
+
+        // Rétrocompatibilité : alimente aussi les colonnes historiques
+        // (1re année pour le budget annuel / trimestres, 3 premières années pour An1..An3).
+        $firstYear = $years[0];
+        $validated['repartition_an1'] = $repartitionClean[$years[0]] ?? null;
+        $validated['repartition_an2'] = $years[1] ?? null ? ($repartitionClean[$years[1]] ?? null) : null;
+        $validated['repartition_an3'] = $years[2] ?? null ? ($repartitionClean[$years[2]] ?? null) : null;
+        $validated['budget_annuel']    = $repartitionClean[$firstYear] ?? null;
+        $validated['trimestre_t1']     = $trimestresClean[$firstYear]['t1'] ?? null;
+        $validated['trimestre_t2']     = $trimestresClean[$firstYear]['t2'] ?? null;
+        $validated['trimestre_t3']     = $trimestresClean[$firstYear]['t3'] ?? null;
+        $validated['trimestre_t4']     = $trimestresClean[$firstYear]['t4'] ?? null;
+
         $validated['status'] = 'planned';
 
         $existingPlan = $infrastructure->works()->where('status', 'planned')->latest('created_at')->first();
@@ -1027,6 +1082,11 @@ class InfrastructureController extends Controller
             ->paginate(20)
             ->appends($request->except('page'));
 
+        // Années disponibles pour l'export annuel (sélecteur « Exercice »).
+        $exportYears = $infrastructures->getCollection()
+            ->flatMap(fn ($infra) => $infra->works->flatMap(fn ($w) => $w->anneeRangeYears()))
+            ->unique()->sort()->values();
+
         // Lists for filters
         $communes = Infrastructure::query()->visibleTo($user)->select('commune')->distinct()->whereNotNull('commune')->orderBy('commune')->pluck('commune');
         $secteurs = Infrastructure::query()->visibleTo($user)->select('secteur_domaine')->distinct()->whereNotNull('secteur_domaine')->orderBy('secteur_domaine')->pluck('secteur_domaine');
@@ -1034,7 +1094,7 @@ class InfrastructureController extends Controller
         $etats = Infrastructure::query()->visibleTo($user)->select('etat_fonctionnement')->distinct()->whereNotNull('etat_fonctionnement')->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement');
         $niveaux = Infrastructure::query()->visibleTo($user)->select('niveau_degradation')->distinct()->whereNotNull('niveau_degradation')->orderBy('niveau_degradation')->pluck('niveau_degradation');
 
-        return view('infrastructures.planned', compact('infrastructures', 'communes', 'secteurs', 'types', 'etats', 'niveaux'));
+        return view('infrastructures.planned', compact('infrastructures', 'exportYears', 'communes', 'secteurs', 'types', 'etats', 'niveaux'));
     }
 
     /**
@@ -1110,7 +1170,17 @@ class InfrastructureController extends Controller
             $anneeBase = (int) now()->year;
         }
 
-        return compact('infrastructures', 'communeName', 'communeLogoData', 'departement', 'anneeBase');
+        // Bornes réelles de la plage triennale (union des plages des plans).
+        $anneeDebut = $infrastructures->flatMap(fn ($i) => $i->works)
+            ->pluck('annee_debut')->filter()->map(fn ($v) => (int) $v)->min() ?? $anneeBase;
+        $anneeFin = $infrastructures->flatMap(fn ($i) => $i->works)
+            ->pluck('annee_fin')->filter()->map(fn ($v) => (int) $v)->max() ?? ($anneeBase + 2);
+
+        // Année d'export pour la fiche ANNUELLE (sélectionnable par l'admin).
+        $anneeExport = (int) ($request->input('annee_export') ?: $anneeBase);
+        $anneeExport = max($anneeDebut, min($anneeExport, $anneeFin));
+
+        return compact('infrastructures', 'communeName', 'communeLogoData', 'departement', 'anneeBase', 'anneeDebut', 'anneeFin', 'anneeExport');
     }
 
     /**

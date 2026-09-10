@@ -30,11 +30,27 @@ class CommuneAdminDashboardController extends Controller
                     ->join('infrastructure_works', 'infrastructures.id', '=', 'infrastructure_works.infrastructure_id')
                     ->where('infrastructure_works.status', '!=', 'completed')
                     ->count(),
-                'total_agents'          => $commune->mairieAgents()->count(),
+                // Utilisateurs de la commune (tous statuts).
+                'total_users'           => $commune->users()->count(),
+                'active_users'          => $commune->users()
+                    ->where('is_approved', true)
+                    ->count(),
+                // Répartition par rôle (comptes actifs uniquement).
+                'commune_admins'        => $commune->communeAdmins()->count(),
+                'total_agents'          => $commune->agents()->count(),
+                'public_users'          => $commune->users()
+                    ->where('role', 'public_user')
+                    ->where('is_approved', true)
+                    ->count(),
+                // Agents en attente / rejetés.
                 'pending_agents'        => $commune->users()
                     ->where('role', 'agent')
                     ->where('is_approved', false)
                     ->whereNull('rejected_at')
+                    ->count(),
+                'rejected_agents'       => $commune->users()
+                    ->where('role', 'agent')
+                    ->whereNotNull('rejected_at')
                     ->count(),
             ];
 

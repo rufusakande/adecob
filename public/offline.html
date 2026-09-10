@@ -19,13 +19,13 @@
     <link rel="apple-touch-icon" href="/logo.jpg">
 
     <!-- Bootstrap 5.3 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/vendor/pwa/bootstrap.min.css" rel="stylesheet">
 
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="/vendor/pwa/bootstrap-icons.css">
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="/vendor/pwa/fontawesome.min.css">
 
     <!-- Auth Enhancements CSS -->
     <link rel="stylesheet" href="/css/auth-enhancements.css">
@@ -34,11 +34,7 @@
     <link rel="stylesheet" href="/css/mobile-premium.css">
     <link rel="stylesheet" href="/css/pwa-install.css">
 
-    <!-- Google Fonts - Poppins (optionnel pour plus d'élégance) -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-
-    <style>
+<style>
     .infra-stepper{ display:flex; justify-content:space-between; align-items:center; margin: 0 0 1.5rem;
         background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:1rem 1.25rem; box-shadow:0 4px 16px -8px rgba(15,23,42,.1);}
     .infra-stepper .st-item{ display:flex; align-items:center; gap:.6rem; color:#94a3b8; font-weight:500; flex:1; position:relative;}
@@ -141,8 +137,6 @@
     @keyframes geoPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
     .geo-pulse{ animation: geoPulse 1.2s ease-in-out infinite; }
 </style>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
     <style>
         /* Police moderne */
@@ -461,6 +455,9 @@
     <div class="alert alert-danger text-center shadow-sm" style="border-radius: 12px; border: 2px solid #dc3545;">
         <h4 class="fw-bold mb-1"><i class="bi bi-wifi-off me-2"></i> MODE STRICTEMENT HORS-LIGNE</h4>
         <p class="mb-0">Vous êtes actuellement déconnecté du réseau. Vous pouvez saisir les informations de l'infrastructure ici. Elles seront sauvegardées sur votre appareil.</p>
+    </div>
+    <div class="text-center mb-3">
+        <a href="/infrastructures-hors-ligne" class="btn btn-outline-success btn-sm"><i class="fas fa-hdd me-1"></i> Voir mes fiches enregistrées</a>
     </div>
     <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/ARMANI</h2>
     
@@ -2216,27 +2213,16 @@
     </footer>
 
     <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/vendor/pwa/bootstrap.bundle.min.js"></script>
 
     <script src="/js/auth-enhancements.js"></script>
     <script src="/js/mobile-ui.js"></script>
     <script src="/js/pwa-register.js"></script>
     <script src="/js/pwa-install.js"></script>
 
-    
-    <!-- Offline Sync Scripts -->
+    <!-- Offline Sync Scripts (local, une seule fois) -->
     <script src="/vendor/localforage.min.js"></script>
     <script src="/js/offline-sync.js"></script>
-    
-        <!-- Offline Sync Scripts -->
-    <script src="/vendor/localforage.min.js"></script>
     <script src="/js/offline-storage.js"></script>
-    <script src="/js/offline-sync.js"></script>
-
-    
-        <!-- Offline Sync Scripts -->
-    <script src="/vendor/localforage.min.js"></script>
-    <script src="/js/offline-storage.js"></script>
-    <script src="/js/offline-sync.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script><script src="/js/offline-storage.js"></script></body>
+</body>
 </html>

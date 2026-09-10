@@ -493,6 +493,11 @@
                                     </li>
                                     @endif
                                     <li><hr class="dropdown-divider"></li>
+                                    @if(\App\Http\Controllers\GuideController::hasGuide(auth()->user()->role))
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('guide.show') }}" target="_blank" rel="noopener"><i class="fas fa-book-open"></i> Guide d'utilisation</a>
+                                    </li>
+                                    @endif
                                     <li>
                                         <form method="POST" action="{{ route('logout') }}">
                                             @csrf
@@ -562,15 +567,18 @@
     <script src="{{ asset('js/pwa-install.js?v=3') }}"></script>
     <script src="{{ asset('js/ui-confirm.js?v=3') }}"></script>
     <script>
-        // Redirection automatique vers le mode hors ligne (enregistrement + synchronisation)
+        // Redirection automatique vers le formulaire d'ajout hors-ligne
+        // (offline.html = saisie d'infrastructures sans connexion).
+        // La page /infrastructures-hors-ligne (liste des fiches en attente)
+        // reste accessible hors-ligne (aucune redirection pour éviter une boucle).
         (function () {
-            var OFFLINE_PATH = '/infrastructures-hors-ligne';
             var isOfflinePage = function () {
-                return window.location.pathname === OFFLINE_PATH;
+                return window.location.pathname === '/offline.html'
+                    || window.location.pathname === '/infrastructures-hors-ligne';
             };
             var goOffline = function () {
                 if (!isOfflinePage()) {
-                    window.location.href = OFFLINE_PATH;
+                    window.location.href = '/offline.html';
                 }
             };
             // Détection à l'ouverture de la page

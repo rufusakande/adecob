@@ -20,10 +20,20 @@
             <i class="fas fa-file-pdf me-1"></i> Exporter Plan Triennal (tous filtrés)
         </a>
         <span class="vr d-none d-md-inline"></span>
+        <span class="input-group input-group-sm d-inline-flex w-auto align-items-center">
+            <span class="input-group-text">Exercice</span>
+            <select id="annual-year-select" class="form-select form-select-sm">
+                <option value="">— Choisir —</option>
+                @foreach($exportYears ?? [] as $y)
+                    <option value="{{ $y }}" {{ (int) request('annee_export') === (int) $y ? 'selected' : '' }}>{{ $y }}</option>
+                @endforeach
+            </select>
+        </span>
         <button type="button" class="btn btn-info btn-sm text-white" id="export-plan-annual-selected-btn">
             <i class="fas fa-file-pdf me-1"></i> Exporter Plan Annuel (sélection)
         </button>
-        <a href="{{ route('infrastructures.planned.export.annual', array_merge(request()->except(['page','_token']), ['export_scope' => 'filtered'])) }}"
+        <a href="{{ route('infrastructures.planned.export.annual', array_merge(request()->except(['page','_token']), ['export_scope' => 'filtered', 'annee_export' => request('annee_export', '' )])) }}"
+           id="annual-export-filtered-link"
            class="btn btn-outline-info btn-sm export-link-loader">
             <i class="fas fa-file-pdf me-1"></i> Exporter Plan Annuel (tous filtrés)
         </a>
@@ -46,6 +56,7 @@
         @csrf
         <input type="hidden" name="export_scope" value="selected">
         @if(request('commune'))<input type="hidden" name="commune" value="{{ request('commune') }}">@endif
+        <input type="hidden" name="annee_export" id="plan-export-annual-year" value="{{ request('annee_export', '') }}">
         <div id="plan-export-annual-selected-container"></div>
     </form>
 
@@ -176,21 +187,23 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if($plan && $plan->budget_annuel !== null)
-                                        <strong>{{ number_format((float)$plan->budget_annuel, 0, ',', ' ') }}</strong>
+                                    @if($plan)
                                         @php
-                                            $trimestres = [
-                                                'T1' => $plan->trimestre_t1,
-                                                'T2' => $plan->trimestre_t2,
-                                                'T3' => $plan->trimestre_t3,
-                                                'T4' => $plan->trimestre_t4,
-                                            ];
+                                            $pFirstYear = $plan->anneeRangeYears()[0] ?? null;
+                                            $aBudget = $pFirstYear ? $plan->repartitionForYear($pFirstYear) : $plan->budget_annuel;
+                                            $aTris = $pFirstYear ? ($plan->trimestresForYear($pFirstYear) ?? []) : [];
                                         @endphp
-                                        <div class="small text-muted mt-1">
-                                            @foreach($trimestres as $t => $v)
-                                                <span class="badge bg-light text-dark me-1" title="Trimestre {{ $t }}">{{ $t }}: {{ $v !== null ? number_format((float)$v, 0, ',', ' ') : '—' }}</span>
-                                            @endforeach
-                                        </div>
+                                        @if($aBudget !== null)
+                                            <strong>{{ number_format((float)$aBudget, 0, ',', ' ') }}</strong>
+                                            @if($pFirstYear)<div class="small text-muted">Exercice {{ $pFirstYear }}</div>@endif
+                                            <div class="small text-muted mt-1">
+                                                @foreach(['t1'=>'T1','t2'=>'T2','t3'=>'T3','t4'=>'T4'] as $tk => $tlbl)
+                                                    <span class="badge bg-light text-dark me-1" title="Trimestre {{ $tk }}">{{ $tlbl }}: {{ isset($aTris[$tk]) && $aTris[$tk] !== null ? number_format((float)$aTris[$tk], 0, ',', ' ') : '—' }}</span>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
@@ -204,9 +217,12 @@
                                             </div>
                                         @endif
                                         <div class="small text-muted mt-1">
-                                            @if($plan->repartition_an1 !== null)<span class="badge bg-light text-dark me-1" title="Année 1">An1: {{ number_format((float)$plan->repartition_an1, 0, ',', ' ') }}</span>@endif
-                                            @if($plan->repartition_an2 !== null)<span class="badge bg-light text-dark me-1" title="Année 2">An2: {{ number_format((float)$plan->repartition_an2, 0, ',', ' ') }}</span>@endif
-                                            @if($plan->repartition_an3 !== null)<span class="badge bg-light text-dark me-1" title="Année 3">An3: {{ number_format((float)$plan->repartition_an3, 0, ',', ' ') }}</span>@endif
+                                            @foreach($plan->anneeRangeYears() as $yr)
+                                                @php $pv = $plan->repartitionForYear($yr); @endphp
+                                                @if($pv !== null)
+                                                    <span class="badge bg-light text-dark me-1" title="Année {{ $yr }}">{{ $yr }}: {{ number_format((float)$pv, 0, ',', ' ') }}</span>
+                                                @endif
+                                            @endforeach
                                         </div>
                                     @else
                                         <span class="text-muted">—</span>
@@ -345,6 +361,23 @@
         const planAnnualBtn = document.getElementById('export-plan-annual-selected-btn');
         const planAnnualForm = document.getElementById('plan-export-annual-form');
         const planAnnualContainer = document.getElementById('plan-export-annual-selected-container');
+        const annualYearSelect = document.getElementById('annual-year-select');
+        const annualYearHidden = document.getElementById('plan-export-annual-year');
+        const annualFilteredLink = document.getElementById('annual-export-filtered-link');
+
+        // Le sélecteur « Exercice » met à jour le lien « tous filtrés » et le champ caché.
+        if (annualYearSelect) {
+            annualYearSelect.addEventListener('change', function () {
+                const y = annualYearSelect.value;
+                if (annualYearHidden) annualYearHidden.value = y;
+                if (annualFilteredLink) {
+                    const url = new URL(annualFilteredLink.href, window.location.origin);
+                    if (y) { url.searchParams.set('annee_export', y); } else { url.searchParams.delete('annee_export'); }
+                    annualFilteredLink.href = url.pathname + url.search;
+                }
+            });
+        }
+
         if (planAnnualBtn && planAnnualForm && planAnnualContainer) {
             planAnnualBtn.addEventListener('click', function () {
                 const ids = rowCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
@@ -352,6 +385,12 @@
                     alert('Veuillez sélectionner au moins une infrastructure planifiée pour générer le Plan Annuel.');
                     return;
                 }
+                if (!annualYearSelect || !annualYearSelect.value) {
+                    alert('Veuillez choisir l\'année (exercice) à exporter dans le Plan Annuel.');
+                    annualYearSelect && annualYearSelect.focus();
+                    return;
+                }
+                if (annualYearHidden) annualYearHidden.value = annualYearSelect.value;
                 planAnnualContainer.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
                 showExportLoader();
                 planAnnualForm.submit();

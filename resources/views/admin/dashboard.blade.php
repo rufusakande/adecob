@@ -63,8 +63,11 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <h6 class="text-muted text-uppercase small mb-3">Répartition par rôle</h6>
-                    <ul class="list-unstyled mb-0">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-muted text-uppercase small mb-0">Répartition par rôle</h6>
+                        <span class="badge bg-success text-white">{{ $kpis['active_users'] }} actifs</span>
+                    </div>
+                    <ul class="list-unstyled mb-3">
                         <li class="d-flex justify-content-between py-2 border-bottom">
                             <span><i class="fas fa-crown text-danger me-2"></i>Super admins</span>
                             <strong>{{ $kpis['super_admins'] }}</strong>
@@ -73,11 +76,19 @@
                             <span><i class="fas fa-user-shield text-primary me-2"></i>Admins de commune</span>
                             <strong>{{ $kpis['commune_admins'] }}</strong>
                         </li>
-                        <li class="d-flex justify-content-between py-2">
+                        <li class="d-flex justify-content-between py-2 border-bottom">
                             <span><i class="fas fa-user-tie text-success me-2"></i>Agents collecteurs</span>
                             <strong>{{ $kpis['agents'] }}</strong>
                         </li>
+                        <li class="d-flex justify-content-between py-2">
+                            <span><i class="fas fa-user text-secondary me-2"></i>Utilisateurs publics</span>
+                            <strong>{{ $kpis['public_users'] }}</strong>
+                        </li>
                     </ul>
+                    <div class="small text-muted border-top pt-2 d-flex justify-content-between">
+                        <span><i class="fas fa-user-clock text-warning me-1"></i>En attente : <strong>{{ $kpis['pending_users'] }}</strong></span>
+                        <span><i class="fas fa-user-slash text-danger me-1"></i>Rejetés : <strong>{{ $kpis['rejected_users'] }}</strong></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -127,11 +138,12 @@
         <div class="col-md-7">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-white border-bottom">
-                    <h6 class="mb-0"><i class="fas fa-chart-bar text-primary me-2"></i>Utilisateurs par commune (top 10)</h6>
+                    <h6 class="mb-0"><i class="fas fa-chart-bar text-primary me-2"></i>Utilisateurs actifs par commune (top 10)</h6>
                 </div>
                 <div class="card-body">
+                    @php $communeTotal = $usersByCommune->sum('total'); @endphp
                     @forelse($usersByCommune as $row)
-                        @php $pct = $kpis['total_users'] ? round($row->total / max($kpis['total_users'],1) * 100) : 0; @endphp
+                        @php $pct = $communeTotal ? round($row->total / $communeTotal * 100) : 0; @endphp
                         <div class="mb-2">
                             <div class="d-flex justify-content-between small">
                                 <span>{{ $row->commune->name ?? '—' }}</span>

@@ -49,7 +49,7 @@
                         <strong>{{ config('app.name') }}</strong>
                     </p>
                     <p class="text-muted mb-0 small mt-1">
-                        <i class="bi bi-geo-alt"></i> Parakou, République du Bénin
+                        <i class="bi bi-geo-alt"></i> N'Dali, République du Bénin
                         &nbsp;·&nbsp;
                         Conforme à la <em>loi n°2017-20 portant Code du numérique du Bénin</em>
                     </p>
@@ -65,7 +65,7 @@
             <div class="row g-3 small text-muted">
                 <div class="col-md-6">
                     <p class="mb-1"><strong><i class="bi bi-envelope"></i> Contact responsable de traitement :</strong></p>
-                    <p class="mb-0">{{ config('app.name') }} — Parakou, Bénin<br>
+                    <p class="mb-0">{{ config('app.name') }} — ADECOB, N'Dali, Bénin<br>
                         <a href="{{ route('contact.form') }}">Formulaire de contact officiel</a>
                     </p>
                 </div>

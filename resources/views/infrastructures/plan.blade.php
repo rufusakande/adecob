@@ -27,6 +27,17 @@
     $arr = is_array($infrastructure->arrondissement) ? $infrastructure->arrondissement : (json_decode($infrastructure->arrondissement, true) ?: []);
     $existingPlans = $infrastructure->works->where('status', 'planned');
     $existingPlannedWork = isset($existingPlannedWork) ? $existingPlannedWork : null;
+
+    // Plage d'années : structurée si disponible, sinon défaut (année courante → +2).
+    $pYears = optional($existingPlannedWork)->anneeRangeYears();
+    if (empty($pYears)) {
+        $pBase = (int) now()->year;
+        $pYears = range($pBase, $pBase + 2);
+    }
+    $pDebut  = old('annee_debut', optional($existingPlannedWork)->annee_debut) ?: $pYears[0];
+    $pFin    = old('annee_fin', optional($existingPlannedWork)->annee_fin) ?: end($pYears);
+    $pRepart = optional($existingPlannedWork)->repartition_annees ?? [];
+    $pTris   = optional($existingPlannedWork)->trimestres_annees ?? [];
 @endphp
 <div class="container-fluid px-3 px-md-4 py-4">
 
@@ -173,13 +184,18 @@
                             <span class="input-group-text">FCFA</span>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Plage / Année(s) d'exécution <span class="text-danger">*</span></label>
-                        <input type="text" name="annee_execution" class="form-control @error('annee_execution') is-invalid @enderror"
-                               value="{{ old('annee_execution', optional($existingPlannedWork)->annee_execution) }}" 
-                               placeholder="Ex. : 2026 - 2030, 2026-2028, 2027..." required maxlength="255">
-                        <div class="form-text">Indiquez la période ou l'année d'exécution (ex: 2026 - 2030).</div>
-                        @error('annee_execution')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="col-md-3">
+                        <label class="form-label">Année de début <span class="text-danger">*</span></label>
+                        <input type="number" name="annee_debut" id="annee-debut" class="form-control @error('annee_debut') is-invalid @enderror"
+                               min="2000" max="2100" value="{{ $pDebut }}" required>
+                        @error('annee_debut')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Année de fin <span class="text-danger">*</span></label>
+                        <input type="number" name="annee_fin" id="annee-fin" class="form-control @error('annee_fin') is-invalid @enderror"
+                               min="2000" max="2100" value="{{ $pFin }}" required>
+                        <div class="form-text">Ex. : début 2027, fin 2030.</div>
+                        @error('annee_fin')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Acteur(s) concerné(s) <span class="text-danger">*</span></label>
@@ -197,7 +213,7 @@
                     </div>
                 </div>
 
-                <div class="form-section-title"><i class="fas fa-calendar-week me-1"></i> Fiche de planification TRIENNALE <span class="badge bg-success-subtle text-success fs-6 ms-1">{{ now()->year }} → {{ now()->year + 2 }}</span></div>
+                <div class="form-section-title"><i class="fas fa-calendar-week me-1"></i> Fiche de planification TRIENNALE <span class="badge bg-success-subtle text-success fs-6 ms-1" id="triennial-range-badge">{{ $pDebut }} → {{ $pFin }}</span></div>
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">Unité</label>
@@ -227,57 +243,55 @@
                         </select>
                         @error('priorite')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Répartition Année 1 (FCFA)</label>
-                        <input type="number" name="repartition_an1" class="form-control" min="0" step="500" placeholder="Ex. : 2 500 000"
-                               value="{{ old('repartition_an1', optional($existingPlannedWork)->repartition_an1) }}">
-                        @error('repartition_an1')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Répartition Année 2 (FCFA)</label>
-                        <input type="number" name="repartition_an2" class="form-control" min="0" step="500" placeholder="Ex. : 0"
-                               value="{{ old('repartition_an2', optional($existingPlannedWork)->repartition_an2) }}">
-                        @error('repartition_an2')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Répartition Année 3 (FCFA)</label>
-                        <input type="number" name="repartition_an3" class="form-control" min="0" step="500" placeholder="Ex. : 0"
-                               value="{{ old('repartition_an3', optional($existingPlannedWork)->repartition_an3) }}">
-                        @error('repartition_an3')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
                 </div>
 
-                <div class="form-section-title"><i class="fas fa-calendar-day me-1"></i> Fiche de planification ANNUELLE <span class="badge bg-success-subtle text-success fs-6 ms-1">Exercice {{ now()->year }}</span></div>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Budget annuel (FCFA)</label>
-                        <div class="input-group">
-                            <input type="number" name="budget_annuel" class="form-control" min="0" step="500" placeholder="Ex. : 2 500 000"
-                                   value="{{ old('budget_annuel', optional($existingPlannedWork)->budget_annuel) }}">
-                            <span class="input-group-text">FCFA</span>
+                {{-- Répartition par année — générée automatiquement selon la plage --}}
+                <div id="triennial-repartition-fields" class="row g-3">
+                    @foreach($pYears as $yr)
+                        <div class="col-md-4">
+                            <label class="form-label">Répartition {{ $yr }} (FCFA)</label>
+                            <input type="number" name="repartition_annees[{{ $yr }}]" class="form-control repartition-input"
+                                   min="0" step="500" placeholder="Ex. : 2 500 000" data-year="{{ $yr }}"
+                                   value="{{ old('repartition_annees.' . $yr, $pRepart[$yr] ?? '') }}">
                         </div>
-                        @error('budget_annuel')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Trimestre 1 (FCFA)</label>
-                        <input type="number" name="trimestre_t1" class="form-control" min="0" step="500" value="{{ old('trimestre_t1', optional($existingPlannedWork)->trimestre_t1) }}">
-                        @error('trimestre_t1')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Trimestre 2 (FCFA)</label>
-                        <input type="number" name="trimestre_t2" class="form-control" min="0" step="500" value="{{ old('trimestre_t2', optional($existingPlannedWork)->trimestre_t2) }}">
-                        @error('trimestre_t2')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Trimestre 3 (FCFA)</label>
-                        <input type="number" name="trimestre_t3" class="form-control" min="0" step="500" value="{{ old('trimestre_t3', optional($existingPlannedWork)->trimestre_t3) }}">
-                        @error('trimestre_t3')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Trimestre 4 (FCFA)</label>
-                        <input type="number" name="trimestre_t4" class="form-control" min="0" step="500" value="{{ old('trimestre_t4', optional($existingPlannedWork)->trimestre_t4) }}">
-                        @error('trimestre_t4')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
+                    @endforeach
+                </div>
+                <div class="form-text">Les champs de répartition se génèrent automatiquement selon la plage d'années définie ci-dessus.</div>
+
+                {{-- Fiche annuelle --}}
+                <div class="infra-card p-4 mt-3">
+                <div class="form-section-title mb-0"><i class="fas fa-calendar-day me-1"></i> Fiche de planification ANNUELLE <span class="badge bg-success-subtle text-success fs-6 ms-1">Exercices {{ $pDebut }} → {{ $pFin }}</span></div>
+                <div id="annual-fields" class="row g-3">
+                    @foreach($pYears as $yr)
+                        @php $q = $pTris[$yr] ?? []; @endphp
+                        <div class="col-12 annual-year-block" data-year="{{ $yr }}">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-success-subtle text-success fs-6">Exercice {{ $yr }}</span>
+                                <span class="small text-muted">Budget annuel repris automatiquement de la répartition triennale.</span>
+                            </div>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label">Budget annuel (FCFA)</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control annual-budget-input" readonly tabindex="-1"
+                                               value="{{ old('repartition_annees.' . $yr, $pRepart[$yr] ?? '') ? number_format((float)(old('repartition_annees.' . $yr, $pRepart[$yr] ?? '')), 0, ',', ' ') : '' }}">
+                                        <span class="input-group-text">FCFA</span>
+                                    </div>
+                                </div>
+                                @foreach(['t1'=>'Trimestre 1','t2'=>'Trimestre 2','t3'=>'Trimestre 3','t4'=>'Trimestre 4'] as $qk => $qlbl)
+                                    <div class="col-6 col-md-2">
+                                        <label class="form-label">{{ $qlbl }} (FCFA)</label>
+                                        <input type="number" name="trimestres_annees[{{ $yr }}][{{ $qk }}]" class="form-control quarter-input"
+                                               min="0" step="500" data-quarter="{{ $qk }}"
+                                               value="{{ old('trimestres_annees.' . $yr . '.' . $qk, $q[$qk] ?? '') }}">
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="row g-3 mt-1">
                     <div class="col-md-4">
                         <label class="form-label">Statut d'exécution</label>
                         <select name="statut_execution" class="form-select @error('statut_execution') is-invalid @enderror">
@@ -289,8 +303,9 @@
                         @error('statut_execution')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
+            </div>
 
-                <div class="form-section-title">Observations complémentaires</div>
+            <div class="form-section-title">Observations complémentaires</div>
                 <textarea name="observations" rows="3" class="form-control" maxlength="5000" placeholder="Ex. : Priorité très élevée, contraintes saisonnières…">{{ old('observations', optional($existingPlannedWork)->observations) }}</textarea>
 
 
@@ -328,4 +343,130 @@
 </script>
 @endpush
 @endif
+
+@push('scripts')
+<script>
+(function () {
+    'use strict';
+    const debutInput  = document.getElementById('annee-debut');
+    const finInput    = document.getElementById('annee-fin');
+    const trienBadge  = document.getElementById('triennial-range-badge');
+    const trienFields = document.getElementById('triennial-repartition-fields');
+    const annFields   = document.getElementById('annual-fields');
+    if (!debutInput || !finInput || !trienFields || !annFields) return;
+
+    function fmtMoney(v) {
+        const n = parseFloat(v);
+        return isFinite(n) ? n.toLocaleString('fr-FR') : '';
+    }
+
+    function yearsRange() {
+        if (!/^\d{4}$/.test(String(debutInput.value).trim()) || !/^\d{4}$/.test(String(finInput.value).trim())) return [];
+        const d = parseInt(debutInput.value, 10);
+        const f = parseInt(finInput.value, 10);
+        if (!isFinite(d) || !isFinite(f) || f < d || (f - d) > 12) return [];
+        return Array.from({ length: f - d + 1 }, function (_, i) { return d + i; });
+    }
+
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Sauvegarde des valeurs saisies avant reconstruction (changement de plage).
+    function readValues() {
+        const rep = {};
+        trienFields.querySelectorAll('.repartition-input').forEach(function (inp) {
+            const y = inp.getAttribute('data-year');
+            if (y) rep[y] = inp.value;
+        });
+        const tri = {};
+        annFields.querySelectorAll('.annual-year-block').forEach(function (blk) {
+            const y = blk.getAttribute('data-year');
+            const q = {};
+            blk.querySelectorAll('.quarter-input').forEach(function (inp) {
+                const k = inp.getAttribute('data-quarter');
+                if (k) q[k] = inp.value;
+            });
+            tri[y] = q;
+        });
+        return { rep: rep, tri: tri };
+    }
+
+    function buildFields() {
+        const saved = readValues();
+        const years = yearsRange();
+        if (trienBadge) trienBadge.textContent = years.length ? (years[0] + ' → ' + years[years.length - 1]) : '—';
+
+        // Répartition triennale : un champ par année.
+        trienFields.innerHTML = '';
+        years.forEach(function (y) {
+            const col = document.createElement('div');
+            col.className = 'col-md-4';
+            col.innerHTML = '<label class="form-label">Répartition ' + y + ' (FCFA)</label>' +
+                '<input type="number" name="repartition_annees[' + y + ']" class="form-control repartition-input" min="0" step="500" ' +
+                'placeholder="Ex. : 2 500 000" data-year="' + y + '" value="' + esc(saved.rep[y] || '') + '">';
+            trienFields.appendChild(col);
+        });
+
+        // Fiche annuelle : un bloc par année (budget auto + 4 trimestres).
+        annFields.innerHTML = '';
+        years.forEach(function (y) {
+            const q = saved.tri[y] || {};
+            const blk = document.createElement('div');
+            blk.className = 'col-12 annual-year-block';
+            blk.setAttribute('data-year', y);
+            const quarters = ['t1', 't2', 't3', 't4'];
+            const qInputs = quarters.map(function (qn) {
+                return '<div class="col-6 col-md-2"><label class="form-label">Trimestre ' + qn.toUpperCase() + ' (FCFA)</label>' +
+                    '<input type="number" name="trimestres_annees[' + y + '][' + qn + ']" class="form-control quarter-input" ' +
+                    'min="0" step="500" data-quarter="' + qn + '" value="' + esc(q[qn] || '') + '"></div>';
+            }).join('');
+            blk.innerHTML =
+                '<div class="d-flex align-items-center gap-2 mb-2">' +
+                '<span class="badge bg-success-subtle text-success fs-6">Exercice ' + y + '</span>' +
+                '<span class="small text-muted">Budget annuel repris automatiquement de la répartition triennale.</span></div>' +
+                '<div class="row g-2 align-items-end">' +
+                '<div class="col-md-4"><label class="form-label">Budget annuel (FCFA)</label>' +
+                '<div class="input-group"><input type="text" class="form-control annual-budget-input" readonly tabindex="-1" value="">' +
+                '<span class="input-group-text">FCFA</span></div></div>' +
+                qInputs +
+                '</div>';
+            annFields.appendChild(blk);
+        });
+
+        syncAnnualBudgets();
+    }
+
+    // Le budget annuel d'une année = répartition triennale de cette année.
+    function syncAnnualBudgets() {
+        annFields.querySelectorAll('.annual-year-block').forEach(function (blk) {
+            const y = blk.getAttribute('data-year');
+            const repInput = trienFields.querySelector('.repartition-input[data-year="' + y + '"]');
+            const budgetInput = blk.querySelector('.annual-budget-input');
+            if (repInput && budgetInput) {
+                budgetInput.value = fmtMoney(repInput.value);
+            }
+        });
+    }
+
+    trienFields.addEventListener('input', function (e) {
+        if (e.target.classList && e.target.classList.contains('repartition-input')) {
+            syncAnnualBudgets();
+        }
+    });
+
+    function rebuildOnRangeChange() {
+        // Ne reconstruit que lorsque la plage est complète et valide
+        // (évite de générer des champs pendant la saisie partielle d'un millésime).
+        if (yearsRange().length > 0) buildFields();
+    }
+    debutInput.addEventListener('change', rebuildOnRangeChange);
+    finInput.addEventListener('change', rebuildOnRangeChange);
+    debutInput.addEventListener('input', rebuildOnRangeChange);
+    finInput.addEventListener('input', rebuildOnRangeChange);
+
+    buildFields();
+})();
+</script>
+@endpush
 @endsection
