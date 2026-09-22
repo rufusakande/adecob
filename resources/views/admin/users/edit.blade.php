@@ -69,42 +69,7 @@
                         @endif
                     </div>
 
-                    {{-- ═══════════════════════════════════════════════════════════════
-                         CAS SPÉCIAL : l'utilisateur est déjà Super Admin
-                         Le formulaire de rôle ne s'applique pas — seul toggleSuperAdmin
-                         permet de retirer ce rôle.
-                    ═══════════════════════════════════════════════════════════════ --}}
-                    @if($user->role === 'super_admin')
-                        <div class="alert alert-danger border-0 rounded-3 mb-4">
-                            <div class="d-flex align-items-start">
-                                <i class="bi bi-shield-lock me-3" style="font-size: 1.5rem;"></i>
-                                <div>
-                                    <h6 class="mb-1 fw-bold">Cet utilisateur est Super Administrateur</h6>
-                                    <p class="mb-2 small">
-                                        Le rôle Super Admin ne peut pas être modifié via ce formulaire.
-                                        Utilisez le bouton ci-dessous pour rétrograder cet utilisateur en Agent Collecteur.
-                                    </p>
-                                    <form action="{{ route('admin.users.toggle-admin', $user->id) }}" method="POST" class="d-inline js-confirm-submit"
-                                          data-confirm-title="Retirer le rôle Super Admin"
-                                          data-confirm-message="Êtes-vous sûr de vouloir retirer le rôle Super Admin à {{ $user->prenom }} {{ $user->name }} ? Il sera déconnecté et deviendra Agent Collecteur."
-                                          data-confirm-icon="warning"
-                                          data-confirm-ok="Retirer"
-                                          data-loader-text="Mise à jour du rôle en cours...">
-                                        @csrf
-                                        @method('PUT')
-                                        <button type="submit" class="btn btn-warning btn-sm">
-                                            <i class="bi bi-arrow-down-circle me-1"></i> Retirer le rôle Super Admin
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                    {{-- ═══════════════════════════════════════════════════════════════
-                         CAS NORMAL : modifier le rôle (agent, commune_admin, public_user)
-                    ═══════════════════════════════════════════════════════════════ --}}
-                    @else
-                        <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
+                    <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
                             @csrf
                             @method('PUT')
 
@@ -120,6 +85,9 @@
                                 <label for="role" class="form-label fw-bold">Rôle</label>
                                 <select name="role" id="role" class="form-select @error('role') is-invalid @enderror" onchange="updateRoleUI()">
                                     <option value="">-- Sélectionnez un rôle --</option>
+                                    <option value="super_admin" {{ $user->role === 'super_admin' ? 'selected' : '' }}>
+                                        Super Administrateur (Accès complet à la plateforme)
+                                    </option>
                                     <option value="commune_admin" {{ $user->role === 'commune_admin' ? 'selected' : '' }}>
                                         Admin Commune (Gestion de sa commune)
                                     </option>
@@ -134,6 +102,7 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <small class="form-text text-muted mt-2">
+                                    <strong>Super Admin:</strong> Accès complet à toutes les communes (aucune commune d'attachement)<br>
                                     <strong>Admin Commune:</strong> Gère les infrastructures et agents de sa commune d'inscription<br>
                                     <strong>Agent:</strong> Collecte les données d'infrastructure pour sa commune<br>
                                     <strong>Public User:</strong> Consulte les statistiques publiques
@@ -147,7 +116,7 @@
                                     <option value="">-- Sélectionnez une commune --</option>
                                     @foreach($communes as $commune)
                                         <option value="{{ $commune->id }}" {{ $user->commune_id == $commune->id ? 'selected' : '' }}>
-                                            {{ $commune->name }} ({{ $commune->code }})
+                                            {{ $commune->name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -188,33 +157,6 @@
                                 </button>
                             </div>
                         </form>
-
-                        <!-- Séparateur pour la promotion Super Admin -->
-                        @if($user->role === 'agent')
-                            <hr class="my-4">
-                            <div class="p-3 border rounded-3" style="border-color: #dc3545 !important;">
-                                <h6 class="fw-bold text-danger mb-2">
-                                    <i class="bi bi-shield-plus me-1"></i> Promotion Super Admin
-                                </h6>
-                                <p class="small text-muted mb-3">
-                                    Promouvoir cet agent en Super Administrateur lui donnera un accès complet à toute la plateforme.
-                                    <strong>Cette action est irréversible via ce formulaire — seul un autre Super Admin pourra retirer ce rôle.</strong>
-                                </p>
-                                <form action="{{ route('admin.users.toggle-admin', $user->id) }}" method="POST" class="d-inline js-confirm-submit"
-                                      data-confirm-title="Promouvoir en Super Admin"
-                                      data-confirm-message="Êtes-vous sûr de vouloir promouvoir {{ $user->prenom }} {{ $user->name }} en Super Admin ? Il sera déconnecté et recevra un accès complet à la plateforme."
-                                      data-confirm-icon="danger"
-                                      data-confirm-ok="Promouvoir"
-                                      data-loader-text="Promotion en cours...">
-                                    @csrf
-                                    @method('PUT')
-                                    <button type="submit" class="btn btn-danger btn-sm">
-                                        <i class="bi bi-shield-plus me-1"></i> Promouvoir en Super Admin
-                                    </button>
-                                </form>
-                            </div>
-                        @endif
-                    @endif
 
                     <!-- Audit trail -->
                     <div class="mt-5 p-3 bg-light rounded">

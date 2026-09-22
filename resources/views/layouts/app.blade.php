@@ -594,8 +594,6 @@
     <!-- Offline Sync Scripts -->
     <script src="{{ asset('vendor/localforage.min.js') }}"></script>
     <script src="{{ asset('js/offline-sync.js') }}"></script>
-    
-    @stack('scripts')
 
     @auth
     <!-- Keep-alive ping to prevent session/CSRF timeout -->

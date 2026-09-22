@@ -52,13 +52,8 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-4">
-                            <p><strong>Nom :</strong> {{ $commune->name }}</p>
-                            <p><strong>Code :</strong> <code>{{ $commune->code }}</code></p>
-                        </div>
-                        <div class="col-md-4">
-                            <p><strong>Région :</strong> {{ $commune->region ?? 'Non définie' }}</p>
-                            <p><strong>Département :</strong> {{ $commune->department ?? 'Non défini' }}</p>
+                        <div class="col-md-8">
+                            <p class="mb-0"><strong>Nom :</strong> {{ $commune->name }}</p>
                         </div>
                         <div class="col-md-4 border-start">
                             <strong>Logo de la commune :</strong>
@@ -82,99 +77,49 @@
         </div>
     </div>
 
-    <!-- Infrastructures -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-building"></i> Infrastructures ({{ $infrastructures->total() }})</h5>
-                    <a href="{{ route('infrastructures.create') }}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-plus"></i> Ajouter
-                    </a>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th>Nom</th>
-                                <th>Type</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($infrastructures as $infrastructure)
-                                <tr>
-                                    <td>{{ $infrastructure->name }}</td>
-                                    <td>{{ $infrastructure->type ?? 'N/A' }}</td>
-                                    <td>
-                                        <span class="badge bg-success">
-                                            {{ ucfirst($infrastructure->status ?? 'active') }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('infrastructures.show', $infrastructure) }}" class="btn btn-sm btn-info" title="Voir">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('infrastructures.edit', $infrastructure) }}" class="btn btn-sm btn-warning" title="Éditer">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">
-                                        <i class="fas fa-inbox"></i> Aucune infrastructure trouvée
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                @if ($infrastructures->hasPages())
-                    <div class="card-footer border-top-0 bg-light">
-                        {{ $infrastructures->links() }}
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-
     <!-- Agents de mairie -->
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-users"></i> Agents de Mairie ({{ $mairieAgents->total() }})</h5>
-                    <a href="{{ route('mairie-agent.form') }}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-plus"></i> Ajouter
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Agents de Mairie ({{ $agents->total() }})</h5>
+                    <a href="{{ route('admin.pending-registrations', ['status' => 'approved']) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-list"></i> Gérer les agents
                     </a>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="bg-light">
                             <tr>
-                                <th>Nom</th>
+                                <th>Nom et prénoms</th>
                                 <th>Contact</th>
-                                <th>Fonction</th>
+                                <th>Statut</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($mairieAgents as $agent)
+                            @forelse ($agents as $agent)
                                 <tr>
                                     <td>
-                                        <strong>{{ $agent->firstname ?? '' }} {{ $agent->lastname ?? '' }}</strong>
+                                        <strong>{{ trim(($agent->prenom ?? '') . ' ' . ($agent->name ?? '')) ?: '—' }}</strong>
                                     </td>
                                     <td>
                                         <small>
-                                            {{ $agent->email ?? 'N/A' }}<br>
-                                            {{ $agent->phone ?? 'N/A' }}
+                                            {{ $agent->email ?? '—' }}<br>
+                                            {{ $agent->telephone ?? '—' }}
                                         </small>
                                     </td>
-                                    <td>{{ $agent->fonction ?? 'N/A' }}</td>
                                     <td>
-                                        <a href="{{ route('mairie-agent.form', $agent->id) }}" class="btn btn-sm btn-warning" title="Éditer">
+                                        @if($agent->rejected_at)
+                                            <span class="badge bg-danger">Rejeté</span>
+                                        @elseif($agent->is_approved)
+                                            <span class="badge bg-success">Approuvé</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark">En attente</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('admin.pending-registrations', ['status' => 'approved']) }}" class="btn btn-sm btn-warning" title="Gérer cet agent">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     </td>
@@ -189,9 +134,9 @@
                         </tbody>
                     </table>
                 </div>
-                @if ($mairieAgents->hasPages())
+                @if ($agents->hasPages())
                     <div class="card-footer border-top-0 bg-light">
-                        {{ $mairieAgents->links() }}
+                        {{ $agents->links() }}
                     </div>
                 @endif
             </div>

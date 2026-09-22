@@ -52,11 +52,14 @@ class UserValidationController extends Controller
             $countQuery->where('commune_id', $admin->commune_id);
         }
 
-        $pendingCount = (clone $countQuery)->where('is_approved', false)->whereNull('rejected_at')->count();
+        $pendingCount  = (clone $countQuery)->where('is_approved', false)->whereNull('rejected_at')->count();
         $approvedCount = (clone $countQuery)->where('is_approved', true)->count();
-        $totalUsers = (clone $countQuery)->count();
+        $rejectedCount = (clone $countQuery)->whereNotNull('rejected_at')->count();
+        $totalUsers    = (clone $countQuery)->count();
 
-        return view('admin.pending-registrations-new', compact('users', 'pendingCount', 'approvedCount', 'totalUsers', 'status'));
+        return view('admin.pending-registrations-new', compact(
+            'users', 'pendingCount', 'approvedCount', 'rejectedCount', 'totalUsers', 'status'
+        ));
     }
 
     /**

@@ -171,12 +171,71 @@ class InfrastructurePlanningExportTest extends TestCase
 		$response = $this->actingAs($admin)->get(route('infrastructures.planned'));
 
 		$response->assertOk();
-		$response->assertSee('Exporter Plan Annuel (sélection)', false);
-		$response->assertSee('Exporter Plan Triennal (sélection)', false);
+		// Barre d'export regroupée en 2 menus déroulants (PDF / Excel).
+		$response->assertSee('Exporter en PDF', false);
+		$response->assertSee('Exporter en Excel', false);
+		$response->assertSee('Plan Triennal', false);
+		$response->assertSee('Plan Annuel', false);
+		$response->assertSee('annualExportModal', false);
 		$response->assertSee('Plan annuel (FCFA)', false);
 		$response->assertSee('Plan triennal (FCFA)', false);
 		$response->assertSee('Priorité', false);
 		$response->assertSee('Statut exécution', false);
+	}
+
+	public function test_annual_export_year_select_lists_a_wide_calendar_style_range()
+	{
+		$admin = $this->makeSuperAdmin();
+		$this->makePlannedInfrastructure();
+
+		$response = $this->actingAs($admin)->get(route('infrastructures.planned'));
+
+		$response->assertOk();
+
+		// Sélecteur (et non saisie libre) alimenté par une large plage d'années.
+		$response->assertSee('<select id="annual-year-select"', false);
+		$response->assertDontSee('id="annual-year-input"', false);
+
+		$currentYear = (int) now()->year;
+		// Année courante et années lointaines (au-delà de la plage du plan) disponibles.
+		foreach ([$currentYear, $currentYear + 40, $currentYear - 10] as $y) {
+			$response->assertSee('<option value="' . $y . '"', false);
+		}
+
+		// L'année courante est présélectionnée.
+		$response->assertSee('value="' . $currentYear . '" selected', false);
+
+		// La mention obsolète « modèle MDGL » a été retirée de la barre d'outils.
+		$response->assertDontSee('modèle MDGL', false);
+	}
+
+	public function test_annual_export_accepts_any_year_without_limit()
+	{
+		$admin = $this->makeSuperAdmin();
+		$infra = $this->makePlannedInfrastructure(); // plan borné à l'année courante → +2
+
+		$this->actingAs($admin);
+
+		$ctrl = new \App\Http\Controllers\InfrastructureController();
+		$method = new \ReflectionMethod($ctrl, 'plannedExportData');
+		$method->setAccessible(true);
+
+		// Des années très éloignées de la plage du plan comme de l'année courante sont honorées telles quelles.
+		foreach ([1900, (int) now()->year + 40, 2100] as $requested) {
+			$data = $method->invoke($ctrl, new \Illuminate\Http\Request(['annee_export' => $requested]));
+			$this->assertSame($requested, $data['anneeExport'], "L'année {$requested} doit être respectée sans limite.");
+		}
+
+		// Et chaque export correspondant produit bien un PDF.
+		$response = $this->actingAs($admin)->get(route('infrastructures.planned.export.annual', [
+			'export_scope' => 'filtered',
+			'annee_export' => (int) now()->year + 40,
+		]));
+
+		$response->assertOk();
+		$this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+
+		$this->assertNotNull($infra);
 	}
 
 	public function test_plan_form_shows_annual_and_triennial_sections()

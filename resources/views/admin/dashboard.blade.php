@@ -6,7 +6,6 @@
 <div class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <span class="badge bg-danger text-white mb-2">Super Administrateur</span>
             <h2 class="fw-bold mb-1">Bonjour, {{ auth()->user()->prenom ?? auth()->user()->name }} 👋</h2>
             <p class="text-muted mb-0">Vue d'ensemble de la plateforme {{ config('app.name') }}.</p>
         </div>
@@ -67,24 +66,41 @@
                         <h6 class="text-muted text-uppercase small mb-0">Répartition par rôle</h6>
                         <span class="badge bg-success text-white">{{ $kpis['active_users'] }} actifs</span>
                     </div>
-                    <ul class="list-unstyled mb-3">
-                        <li class="d-flex justify-content-between py-2 border-bottom">
+                    <ul class="list-unstyled mb-3 role-list">
+                        <li class="role-row d-flex justify-content-between align-items-center py-2 border-bottom"
+                            role="button" tabindex="0" data-role="super_admin" data-label="Super admins">
                             <span><i class="fas fa-crown text-danger me-2"></i>Super admins</span>
-                            <strong>{{ $kpis['super_admins'] }}</strong>
+                            <span class="d-flex align-items-center gap-2">
+                                <strong>{{ $kpis['super_admins'] }}</strong>
+                                <i class="fas fa-chevron-right text-muted" style="font-size:.7rem;"></i>
+                            </span>
                         </li>
-                        <li class="d-flex justify-content-between py-2 border-bottom">
+                        <li class="role-row d-flex justify-content-between align-items-center py-2 border-bottom"
+                            role="button" tabindex="0" data-role="commune_admin" data-label="Admins de commune">
                             <span><i class="fas fa-user-shield text-primary me-2"></i>Admins de commune</span>
-                            <strong>{{ $kpis['commune_admins'] }}</strong>
+                            <span class="d-flex align-items-center gap-2">
+                                <strong>{{ $kpis['commune_admins'] }}</strong>
+                                <i class="fas fa-chevron-right text-muted" style="font-size:.7rem;"></i>
+                            </span>
                         </li>
-                        <li class="d-flex justify-content-between py-2 border-bottom">
+                        <li class="role-row d-flex justify-content-between align-items-center py-2 border-bottom"
+                            role="button" tabindex="0" data-role="agent" data-label="Agents collecteurs">
                             <span><i class="fas fa-user-tie text-success me-2"></i>Agents collecteurs</span>
-                            <strong>{{ $kpis['agents'] }}</strong>
+                            <span class="d-flex align-items-center gap-2">
+                                <strong>{{ $kpis['agents'] }}</strong>
+                                <i class="fas fa-chevron-right text-muted" style="font-size:.7rem;"></i>
+                            </span>
                         </li>
-                        <li class="d-flex justify-content-between py-2">
+                        <li class="role-row d-flex justify-content-between align-items-center py-2"
+                            role="button" tabindex="0" data-role="public_user" data-label="Utilisateurs publics">
                             <span><i class="fas fa-user text-secondary me-2"></i>Utilisateurs publics</span>
-                            <strong>{{ $kpis['public_users'] }}</strong>
+                            <span class="d-flex align-items-center gap-2">
+                                <strong>{{ $kpis['public_users'] }}</strong>
+                                <i class="fas fa-chevron-right text-muted" style="font-size:.7rem;"></i>
+                            </span>
                         </li>
                     </ul>
+                    <div class="form-text mb-2"><i class="fas fa-hand-pointer me-1"></i>Cliquez sur un rôle pour voir la liste des utilisateurs.</div>
                     <div class="small text-muted border-top pt-2 d-flex justify-content-between">
                         <span><i class="fas fa-user-clock text-warning me-1"></i>En attente : <strong>{{ $kpis['pending_users'] }}</strong></span>
                         <span><i class="fas fa-user-slash text-danger me-1"></i>Rejetés : <strong>{{ $kpis['rejected_users'] }}</strong></span>
@@ -189,4 +205,95 @@
         </div>
     </div>
 </div>
+
+{{-- Modale : liste des utilisateurs d'un rôle --}}
+<div class="modal fade" id="roleUsersModal" tabindex="-1" aria-labelledby="roleUsersModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleUsersModalTitle">
+                    <i class="fas fa-users me-2"></i><span id="roleUsersModalLabel">Utilisateurs</span>
+                    <span class="badge bg-success ms-2" id="roleUsersModalCount">0</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive" style="max-height:60vh; overflow:auto;">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th style="width:60px;">#</th>
+                                <th>Nom et prénoms</th>
+                                <th>Commune</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roleUsersModalBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Données des utilisateurs par rôle (alimente la modale) --}}
+<script type="application/json" id="role-users-data">@json($roleUsers ?? [])</script>
 @endsection
+
+@push('styles')
+<style>
+    .role-row { cursor: pointer; border-radius: .35rem; transition: background .15s ease; }
+    .role-row:hover, .role-row:focus { background: rgba(11, 102, 35, .07); outline: none; }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+(function () {
+    'use strict';
+    const modalEl = document.getElementById('roleUsersModal');
+    if (!modalEl) return;
+
+    const dataEl = document.getElementById('role-users-data');
+    let data = {};
+    try { data = JSON.parse(dataEl ? dataEl.textContent : '{}'); } catch (e) { data = {}; }
+
+    const modalLabel = document.getElementById('roleUsersModalLabel');
+    const modalCount = document.getElementById('roleUsersModalCount');
+    const modalBody  = document.getElementById('roleUsersModalBody');
+    const bsModal    = window.bootstrap ? new bootstrap.Modal(modalEl) : null;
+
+    function esc(v) {
+        return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function openRole(role, label) {
+        const users = Array.isArray(data[role]) ? data[role] : [];
+        modalLabel.textContent = label || 'Utilisateurs';
+        modalCount.textContent = users.length;
+        modalBody.innerHTML = users.length
+            ? users.map(function (u, i) {
+                return '<tr><td class="text-muted">' + (i + 1) + '</td>' +
+                       '<td><strong>' + esc(u.name) + '</strong></td>' +
+                       '<td>' + (u.commune ? esc(u.commune) : '<span class="text-muted">—</span>') + '</td></tr>';
+              }).join('')
+            : '<tr><td colspan="3" class="text-center text-muted py-4"><i class="fas fa-inbox me-1"></i>Aucun utilisateur actif pour ce rôle.</td></tr>';
+        if (bsModal) { bsModal.show(); }
+    }
+
+    document.querySelectorAll('.role-row').forEach(function (row) {
+        const handler = function () {
+            openRole(row.getAttribute('data-role'), row.getAttribute('data-label'));
+        };
+        row.addEventListener('click', handler);
+        row.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
+        });
+    });
+})();
+</script>
+@endpush

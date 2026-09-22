@@ -53,7 +53,9 @@ class InfrastructureAssignmentController extends Controller
         if ($user->isCommuneAdmin()) {
             $agentsQuery->where('commune_id', $user->commune_id);
         }
-        $agents = $agentsQuery->orderBy('name')->get(['id', 'name', 'prenom', 'commune_id']);
+        $agents = $agentsQuery->with('commune:id,name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'prenom', 'commune_id']);
 
         // Nombre d'infrastructures actuellement affectées à chaque agent (affectations actives).
         $agentAssignCounts = InfrastructureAssignment::query()
@@ -85,7 +87,7 @@ class InfrastructureAssignmentController extends Controller
         $infraList = $this->buildInfraList($request, $user);
 
         // Toutes les affectations concernant les infrastructures visibles.
-        $assignments = InfrastructureAssignment::with(['infrastructure', 'agent', 'assigner', 'reviewer'])
+        $assignments = InfrastructureAssignment::with(['infrastructure', 'agent.commune:id,name', 'assigner', 'reviewer'])
             ->whereHas('infrastructure', fn ($q) => $q->visibleTo($user))
             ->orderByDesc('id')
             ->paginate(20)

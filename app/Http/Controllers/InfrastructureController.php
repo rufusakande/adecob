@@ -1082,10 +1082,13 @@ class InfrastructureController extends Controller
             ->paginate(20)
             ->appends($request->except('page'));
 
-        // Années disponibles pour l'export annuel (sélecteur « Exercice »).
-        $exportYears = $infrastructures->getCollection()
-            ->flatMap(fn ($infra) => $infra->works->flatMap(fn ($w) => $w->anneeRangeYears()))
-            ->unique()->sort()->values();
+        // Années proposées pour l'export annuel : sélecteur large façon « calendrier ».
+        // La plage est calculée automatiquement autour de l'année courante, donc recalculée
+        // à chaque changement d'année civile. Ajuster ces 2 constantes pour élargir/réduire la liste.
+        $exportYearStart   = (int) now()->year - 10;
+        $exportYearEnd     = (int) now()->year + 40;
+        $exportYears       = collect(range($exportYearStart, $exportYearEnd));
+        $exportYearDefault = (int) now()->year;
 
         // Lists for filters
         $communes = Infrastructure::query()->visibleTo($user)->select('commune')->distinct()->whereNotNull('commune')->orderBy('commune')->pluck('commune');
@@ -1094,7 +1097,7 @@ class InfrastructureController extends Controller
         $etats = Infrastructure::query()->visibleTo($user)->select('etat_fonctionnement')->distinct()->whereNotNull('etat_fonctionnement')->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement');
         $niveaux = Infrastructure::query()->visibleTo($user)->select('niveau_degradation')->distinct()->whereNotNull('niveau_degradation')->orderBy('niveau_degradation')->pluck('niveau_degradation');
 
-        return view('infrastructures.planned', compact('infrastructures', 'exportYears', 'communes', 'secteurs', 'types', 'etats', 'niveaux'));
+        return view('infrastructures.planned', compact('infrastructures', 'exportYears', 'exportYearDefault', 'communes', 'secteurs', 'types', 'etats', 'niveaux'));
     }
 
     /**
@@ -1176,9 +1179,12 @@ class InfrastructureController extends Controller
         $anneeFin = $infrastructures->flatMap(fn ($i) => $i->works)
             ->pluck('annee_fin')->filter()->map(fn ($v) => (int) $v)->max() ?? ($anneeBase + 2);
 
-        // Année d'export pour la fiche ANNUELLE (sélectionnable par l'admin).
-        $anneeExport = (int) ($request->input('annee_export') ?: $anneeBase);
-        $anneeExport = max($anneeDebut, min($anneeExport, $anneeFin));
+        // Année d'export pour la fiche ANNUELLE : saisie librement par l'administrateur (aucune limite).
+        // Seule contrainte : un nombre valide. Sinon on retombe sur l'année de base du plan.
+        $anneeExport = (int) $request->input('annee_export');
+        if ($anneeExport <= 0) {
+            $anneeExport = $anneeBase;
+        }
 
         return compact('infrastructures', 'communeName', 'communeLogoData', 'departement', 'anneeBase', 'anneeDebut', 'anneeFin', 'anneeExport');
     }

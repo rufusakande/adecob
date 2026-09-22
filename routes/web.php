@@ -221,7 +221,6 @@ Route::middleware(['auth', 'super.admin', 'mfa.verified'])->group(function () {
     Route::get('/admin/users', [App\Http\Controllers\Admin\UserManagementController::class, 'index'])->name('admin.users.index');
     Route::get('/admin/users/{user}/edit', [App\Http\Controllers\Admin\UserManagementController::class, 'edit'])->name('admin.users.edit');
     Route::put('/admin/users/{user}', [App\Http\Controllers\Admin\UserManagementController::class, 'update'])->name('admin.users.update');
-    Route::put('/admin/users/{user}/toggle-admin', [App\Http\Controllers\Admin\UserManagementController::class, 'toggleSuperAdmin'])->name('admin.users.toggle-admin');
     Route::delete('/admin/users/{user}', [App\Http\Controllers\Admin\UserManagementController::class, 'destroy'])->name('admin.users.destroy');
 
     // Routes pour la gestion des communes

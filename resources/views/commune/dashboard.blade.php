@@ -117,19 +117,32 @@
                 </div>
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
-                        <li class="d-flex justify-content-between py-2 border-bottom">
+                        <li class="role-row d-flex justify-content-between align-items-center py-2 border-bottom"
+                            role="button" tabindex="0" data-role="commune_admin" data-label="Admins de commune">
                             <span><i class="fas fa-user-shield text-primary me-2"></i>Admins de commune</span>
-                            <strong>{{ $stats['commune_admins'] }}</strong>
+                            <span class="d-flex align-items-center gap-2">
+                                <strong>{{ $stats['commune_admins'] }}</strong>
+                                <i class="fas fa-chevron-right text-muted" style="font-size:.7rem;"></i>
+                            </span>
                         </li>
-                        <li class="d-flex justify-content-between py-2 border-bottom">
+                        <li class="role-row d-flex justify-content-between align-items-center py-2 border-bottom"
+                            role="button" tabindex="0" data-role="agent" data-label="Agents collecteurs">
                             <span><i class="fas fa-user-tie text-danger me-2"></i>Agents collecteurs</span>
-                            <strong>{{ $stats['total_agents'] }}</strong>
+                            <span class="d-flex align-items-center gap-2">
+                                <strong>{{ $stats['total_agents'] }}</strong>
+                                <i class="fas fa-chevron-right text-muted" style="font-size:.7rem;"></i>
+                            </span>
                         </li>
-                        <li class="d-flex justify-content-between py-2">
+                        <li class="role-row d-flex justify-content-between align-items-center py-2"
+                            role="button" tabindex="0" data-role="public_user" data-label="Utilisateurs publics">
                             <span><i class="fas fa-user text-secondary me-2"></i>Utilisateurs publics</span>
-                            <strong>{{ $stats['public_users'] }}</strong>
+                            <span class="d-flex align-items-center gap-2">
+                                <strong>{{ $stats['public_users'] }}</strong>
+                                <i class="fas fa-chevron-right text-muted" style="font-size:.7rem;"></i>
+                            </span>
                         </li>
                     </ul>
+                    <div class="form-text mb-2"><i class="fas fa-hand-pointer me-1"></i>Cliquez sur un rôle pour voir la liste des utilisateurs.</div>
                     <div class="small text-muted border-top pt-2 d-flex justify-content-between mt-2">
                         <span><i class="fas fa-user-clock text-warning me-1"></i>En attente : <strong>{{ $stats['pending_agents'] }}</strong></span>
                         <span><i class="fas fa-user-slash text-danger me-1"></i>Rejetés : <strong>{{ $stats['rejected_agents'] }}</strong></span>
@@ -139,7 +152,7 @@
         </div>
 
         <!-- Actions rapides -->
-        <div class="col-md-4 mb-4">
+        <div class="col-md-8 mb-4">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-light border-0">
                     <h5 class="mb-0"><i class="fas fa-cogs"></i> Actions rapides</h5>
@@ -158,34 +171,42 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- Informations de la commune -->
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-light border-0">
-                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informations de la commune</h5>
+{{-- Modale : liste des utilisateurs d'un rôle (commune) --}}
+<div class="modal fade" id="roleUsersModal" tabindex="-1" aria-labelledby="roleUsersModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleUsersModalTitle">
+                    <i class="fas fa-users me-2"></i><span id="roleUsersModalLabel">Utilisateurs</span>
+                    <span class="badge bg-success ms-2" id="roleUsersModalCount">0</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive" style="max-height:60vh; overflow:auto;">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th style="width:60px;">#</th>
+                                <th>Nom et prénoms</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roleUsersModalBody"></tbody>
+                    </table>
                 </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-4">Nom :</dt>
-                        <dd class="col-sm-8">{{ $commune->name }}</dd>
-
-                        <dt class="col-sm-4">Code :</dt>
-                        <dd class="col-sm-8">
-                            <code>{{ $commune->code }}</code>
-                        </dd>
-
-                        <dt class="col-sm-4">Région :</dt>
-                        <dd class="col-sm-8">{{ $commune->region ?? 'Non définie' }}</dd>
-
-                        <dt class="col-sm-4">Département :</dt>
-                        <dd class="col-sm-8">{{ $commune->department ?? 'Non défini' }}</dd>
-                    </dl>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
             </div>
         </div>
     </div>
 </div>
+
+{{-- Données des utilisateurs par rôle (alimente la modale) --}}
+<script type="application/json" id="role-users-data">@json($roleUsers ?? [])</script>
 
 <style>
     .card {
@@ -201,5 +222,56 @@
         background-color: #f8f9fa;
         border-left: 4px solid #2e8b57;
     }
+
+    .role-row { cursor: pointer; border-radius: .35rem; transition: background .15s ease; }
+    .role-row:hover, .role-row:focus { background: rgba(11, 102, 35, .07); outline: none; }
 </style>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    'use strict';
+    const modalEl = document.getElementById('roleUsersModal');
+    if (!modalEl) return;
+
+    const dataEl = document.getElementById('role-users-data');
+    let data = {};
+    try { data = JSON.parse(dataEl ? dataEl.textContent : '{}'); } catch (e) { data = {}; }
+
+    const modalLabel = document.getElementById('roleUsersModalLabel');
+    const modalCount = document.getElementById('roleUsersModalCount');
+    const modalBody  = document.getElementById('roleUsersModalBody');
+    const bsModal    = window.bootstrap ? new bootstrap.Modal(modalEl) : null;
+
+    function esc(v) {
+        return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function openRole(role, label) {
+        const users = Array.isArray(data[role]) ? data[role] : [];
+        modalLabel.textContent = label || 'Utilisateurs';
+        modalCount.textContent = users.length;
+        modalBody.innerHTML = users.length
+            ? users.map(function (u, i) {
+                return '<tr><td class="text-muted">' + (i + 1) + '</td>' +
+                       '<td><strong>' + esc(u.name) + '</strong></td></tr>';
+              }).join('')
+            : '<tr><td colspan="2" class="text-center text-muted py-4"><i class="fas fa-inbox me-1"></i>Aucun utilisateur actif pour ce rôle.</td></tr>';
+        if (bsModal) { bsModal.show(); }
+    }
+
+    document.querySelectorAll('.role-row').forEach(function (row) {
+        const handler = function () {
+            openRole(row.getAttribute('data-role'), row.getAttribute('data-label'));
+        };
+        row.addEventListener('click', handler);
+        row.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
+        });
+    });
+})();
+</script>
+@endpush

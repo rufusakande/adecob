@@ -57,7 +57,7 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="agent_ids[]" value="{{ $agent->id }}" id="agent_{{ $agent->id }}">
                                     <label class="form-check-label" for="agent_{{ $agent->id }}">
-                                        <i class="fas fa-user text-muted me-1"></i>{{ trim($agent->prenom . ' ' . $agent->name) }}
+                                        <i class="fas fa-user text-muted me-1"></i>{{ trim($agent->prenom . ' ' . $agent->name) }}@if($agent->commune) <span class="text-muted">({{ $agent->commune->name }})</span>@endif
                                     </label>
                                 </div>
                                 <span class="badge {{ $agentCount > 0 ? 'bg-success' : 'bg-light text-muted border' }}"
@@ -193,7 +193,7 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="fw-semibold">{{ trim(optional($a->agent)->prenom . ' ' . optional($a->agent)->name) ?: ('#' . $a->assigned_to) }}</div>
+                                <div class="fw-semibold">{{ trim(optional($a->agent)->prenom . ' ' . optional($a->agent)->name) ?: ('#' . $a->assigned_to) }}@if(optional($a->agent)->commune) <span class="text-muted fw-normal">({{ $a->agent->commune->name }})</span>@endif</div>
                                 <div class="text-muted small">par {{ trim(optional($a->assigner)->prenom . ' ' . optional($a->assigner)->name) ?: '—' }}</div>
                             </td>
                             <td>

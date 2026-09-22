@@ -70,8 +70,41 @@ class SuperAdminDashboardController extends Controller
                 $q->where('role', 'commune_admin');
             })->orderBy('name')->get(['id', 'name']);
 
+        // Listes nominatives par rôle (pour la modale « Répartition par rôle »).
+        $roleUsers = $this->usersByRole();
+
         return view('admin.dashboard', compact(
-            'kpis', 'recentPending', 'usersByCommune', 'communesWithoutAdmin'
+            'kpis', 'recentPending', 'usersByCommune', 'communesWithoutAdmin', 'roleUsers'
         ));
+    }
+
+    /**
+     * Utilisateurs actifs regroupés par rôle (nom + commune).
+     * Alimente les modales du tableau de bord.
+     */
+    private function usersByRole(): array
+    {
+        $format = fn ($u) => [
+            'name'    => trim(($u->prenom ?? '') . ' ' . $u->name),
+            'commune' => optional($u->commune)->name,
+        ];
+
+        $approved = fn (string $role) => User::with('commune:id,name')
+            ->where('role', $role)
+            ->where('is_approved', true)
+            ->orderBy('prenom')->orderBy('name')
+            ->get()
+            ->map($format)->values();
+
+        return [
+            // Les super-administrateurs sont toujours actifs (pas de filtre d'approbation).
+            'super_admin'   => User::with('commune:id,name')
+                                    ->where('role', 'super_admin')
+                                    ->orderBy('prenom')->orderBy('name')
+                                    ->get()->map($format)->values(),
+            'commune_admin' => $approved('commune_admin'),
+            'agent'         => $approved('agent'),
+            'public_user'   => $approved('public_user'),
+        ];
     }
 }

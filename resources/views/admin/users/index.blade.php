@@ -40,9 +40,13 @@
                                         <td>{{ $user->name }}</td>
                                         <td>{{ $user->email }}</td>
                                         <td>
-                                            <span class="badge bg-{{ $user->is_approved ? 'success' : 'warning' }}">
-                                                {{ $user->is_approved ? 'Approuvé' : 'En attente' }}
-                                            </span>
+                                            @if($user->rejected_at)
+                                                <span class="badge bg-danger">Rejeté</span>
+                                            @elseif($user->is_approved)
+                                                <span class="badge bg-success">Approuvé</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark">En attente</span>
+                                            @endif
                                         </td>
                                         <td>
                                             @php
@@ -69,22 +73,6 @@
                                                 <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-outline-primary" title="Gérer les rôles et communes">
                                                     <i class="bi bi-pencil"></i> Gérer
                                                 </a>
-
-                                                @if(in_array($user->role, ['super_admin', 'agent']))
-                                                    <form action="{{ route('admin.users.toggle-admin', $user) }}" method="POST" class="d-inline js-confirm-submit"
-                                                          data-confirm-title="{{ $user->role === 'super_admin' ? 'Retirer les privilèges Super Admin' : 'Nommer Super Admin' }}"
-                                                          data-confirm-message="Voulez-vous vraiment {{ $user->role === 'super_admin' ? 'retirer' : 'donner' }} les privilèges de Super Admin à {{ $user->prenom }} {{ $user->name }} ?"
-                                                          data-confirm-icon="warning"
-                                                          data-confirm-ok="{{ $user->role === 'super_admin' ? 'Retirer' : 'Nommer' }}"
-                                                          data-loader-text="Mise à jour du rôle en cours...">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <button type="submit" class="btn btn-sm {{ $user->role === 'super_admin' ? 'btn-danger' : 'btn-outline-danger' }}" title="{{ $user->role === 'super_admin' ? 'Rétrograder en agent' : 'Promouvoir Super Admin' }}">
-                                                            <i class="bi bi-shield-lock-fill"></i>
-                                                            {{ $user->role === 'super_admin' ? 'Retirer Super Admin' : 'Nommer Super Admin' }}
-                                                        </button>
-                                                    </form>
-                                                @endif
 
                                                 @if(!$user->isSuperAdmin())
                                                     <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline js-confirm-submit"

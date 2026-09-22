@@ -365,15 +365,15 @@
             <div class="stat-value">{{ $approvedCount ?? 0 }}</div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px; color: var(--color-info);">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        <a href="{{ route('admin.pending-registrations', ['status' => 'rejected']) }}" class="stat-card text-decoration-none" style="display:block; color:inherit;">
+            <div class="stat-icon" style="background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(239, 83, 80, 0.1));">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px; color: var(--color-error);">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
-            <div class="stat-label">Total</div>
-            <div class="stat-value">{{ $totalUsers ?? 0 }}</div>
-        </div>
+            <div class="stat-label">Rejetés</div>
+            <div class="stat-value">{{ $rejectedCount ?? 0 }}</div>
+        </a>
     </div>
 
     <!-- Filtres -->

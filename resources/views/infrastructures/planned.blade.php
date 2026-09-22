@@ -11,36 +11,103 @@
         <a href="{{ route('infrastructures.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Retour au tableau</a>
     </div>
 
+    {{-- Barre d'export : 2 boutons déroulants (PDF / Excel) --}}
     <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
-        <button type="button" class="btn btn-danger btn-sm" id="export-plan-selected-btn">
-            <i class="fas fa-file-pdf me-1"></i> Exporter Plan Triennal (sélection)
-        </button>
-        <a href="{{ route('infrastructures.planned.export', array_merge(request()->except(['page','_token']), ['export_scope' => 'filtered'])) }}"
-           class="btn btn-outline-danger btn-sm export-link-loader">
-            <i class="fas fa-file-pdf me-1"></i> Exporter Plan Triennal (tous filtrés)
-        </a>
-        <span class="vr d-none d-md-inline"></span>
-        <span class="input-group input-group-sm d-inline-flex w-auto align-items-center">
-            <span class="input-group-text">Exercice</span>
-            <select id="annual-year-select" class="form-select form-select-sm">
-                <option value="">— Choisir —</option>
-                @foreach($exportYears ?? [] as $y)
-                    <option value="{{ $y }}" {{ (int) request('annee_export') === (int) $y ? 'selected' : '' }}>{{ $y }}</option>
-                @endforeach
-            </select>
-        </span>
-        <button type="button" class="btn btn-info btn-sm text-white" id="export-plan-annual-selected-btn">
-            <i class="fas fa-file-pdf me-1"></i> Exporter Plan Annuel (sélection)
-        </button>
-        <a href="{{ route('infrastructures.planned.export.annual', array_merge(request()->except(['page','_token']), ['export_scope' => 'filtered', 'annee_export' => request('annee_export', '' )])) }}"
-           id="annual-export-filtered-link"
-           class="btn btn-outline-info btn-sm export-link-loader">
-            <i class="fas fa-file-pdf me-1"></i> Exporter Plan Annuel (tous filtrés)
-        </a>
-        <span class="vr d-none d-md-inline"></span>
-        <button type="button" class="btn btn-primary btn-sm" id="export-selected-btn"><i class="fas fa-file-excel me-1"></i> Excel (sélection)</button>
-        <a href="{{ route('infrastructures.export', array_merge(request()->query(), ['format' => 'excel', 'export_scope' => 'filtered', 'source' => 'planned'])) }}" class="btn btn-outline-primary btn-sm export-link-loader"><i class="fas fa-file-excel me-1"></i> Excel (tous filtrés)</a>
-        <span class="ms-auto small text-muted">Fiches annuelle et triennale conformes au modèle MDGL — République du Bénin.</span>
+        {{-- Export PDF --}}
+        <div class="dropdown">
+            <button class="btn btn-danger btn-sm dropdown-toggle" type="button" id="pdfExportDropdown"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-file-pdf me-1"></i> Exporter en PDF
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="pdfExportDropdown">
+                <li><h6 class="dropdown-header"><i class="fas fa-calendar-alt me-1"></i>Plan Triennal</h6></li>
+                <li>
+                    <button type="button" class="dropdown-item" id="export-plan-selected-btn">
+                        <i class="fas fa-check-square me-2 text-muted"></i>De la sélection
+                    </button>
+                </li>
+                <li>
+                    <a href="{{ route('infrastructures.planned.export', array_merge(request()->except(['page','_token']), ['export_scope' => 'filtered'])) }}"
+                       class="dropdown-item export-link-loader">
+                        <i class="fas fa-filter me-2 text-muted"></i>Tous les filtrés
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header"><i class="fas fa-calendar-day me-1"></i>Plan Annuel (par exercice)</h6></li>
+                <li>
+                    <button type="button" class="dropdown-item" id="open-annual-selected">
+                        <i class="fas fa-check-square me-2 text-muted"></i>De la sélection…
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item" id="open-annual-filtered">
+                        <i class="fas fa-filter me-2 text-muted"></i>Tous les filtrés…
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        {{-- Export Excel --}}
+        <div class="dropdown">
+            <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="excelExportDropdown"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-file-excel me-1"></i> Exporter en Excel
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="excelExportDropdown">
+                <li>
+                    <button type="button" class="dropdown-item" id="export-selected-btn">
+                        <i class="fas fa-check-square me-2 text-muted"></i>De la sélection
+                    </button>
+                </li>
+                <li>
+                    <a href="{{ route('infrastructures.export', array_merge(request()->query(), ['format' => 'excel', 'export_scope' => 'filtered', 'source' => 'planned'])) }}"
+                       class="dropdown-item export-link-loader">
+                        <i class="fas fa-filter me-2 text-muted"></i>Tous les filtrés
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    {{-- Modal : choix dynamique de l'exercice pour l'export du Plan Annuel --}}
+    <div class="modal fade" id="annualExportModal" tabindex="-1" aria-labelledby="annualExportModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="annualExportModalTitle">
+                        <i class="fas fa-calendar-day me-2 text-info"></i>Exporter le Plan Annuel
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="annual-year-select" class="form-label fw-semibold">
+                        Exercice (année) à exporter <span class="text-danger">*</span>
+                    </label>
+                    <select id="annual-year-select" class="form-select">
+                        @foreach($exportYears ?? [] as $y)
+                            <option value="{{ $y }}" {{ (int) request('annee_export', $exportYearDefault ?? now()->year) === (int) $y ? 'selected' : '' }}>{{ $y }}</option>
+                        @endforeach
+                    </select>
+                    <div class="form-text">
+                        Choisissez l'exercice budgétaire : le budget annuel et les trimestres de cette année seront
+                        repris pour chaque infrastructure planifiée.
+                    </div>
+                    <div class="alert alert-warning py-2 px-3 mt-3 mb-0 small" id="annual-year-warning" style="display:none;">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Veuillez choisir une année (ex. {{ $exportYearDefault ?? now()->year }}) pour continuer.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <a href="{{ route('infrastructures.planned.export.annual', array_merge(request()->except(['page','_token']), ['export_scope' => 'filtered'])) }}"
+                       id="annual-export-filtered-link" class="btn btn-outline-info export-link-loader">
+                        <i class="fas fa-filter me-1"></i> Tous les filtrés
+                    </a>
+                    <button type="button" class="btn btn-info text-white" id="export-plan-annual-selected-btn">
+                        <i class="fas fa-check-square me-1"></i> De la sélection
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- Formulaire caché pour l'export PDF Triennal de la sélection --}}
@@ -357,41 +424,75 @@
             });
         }
 
-        // Export PDF Plan Annuel (sélection)
-        const planAnnualBtn = document.getElementById('export-plan-annual-selected-btn');
-        const planAnnualForm = document.getElementById('plan-export-annual-form');
-        const planAnnualContainer = document.getElementById('plan-export-annual-selected-container');
-        const annualYearSelect = document.getElementById('annual-year-select');
-        const annualYearHidden = document.getElementById('plan-export-annual-year');
-        const annualFilteredLink = document.getElementById('annual-export-filtered-link');
+        // ---- Export PDF Plan Annuel : modal de choix de l'exercice ----
+        const planAnnualBtn     = document.getElementById('export-plan-annual-selected-btn');
+        const planAnnualForm    = document.getElementById('plan-export-annual-form');
+        const planAnnualCont    = document.getElementById('plan-export-annual-selected-container');
+        const annualYearSelect  = document.getElementById('annual-year-select');
+        const annualYearHidden  = document.getElementById('plan-export-annual-year');
+        const annualFilteredLink= document.getElementById('annual-export-filtered-link');
+        const annualModalEl     = document.getElementById('annualExportModal');
+        const annualWarning     = document.getElementById('annual-year-warning');
+        const annualModal       = (annualModalEl && window.bootstrap) ? new bootstrap.Modal(annualModalEl) : null;
 
-        // Le sélecteur « Exercice » met à jour le lien « tous filtrés » et le champ caché.
+        // Année retenue : on exige seulement un nombre (liste large façon « calendrier »).
+        const readAnnualYear = function () {
+            const raw = annualYearSelect ? String(annualYearSelect.value || '').trim() : '';
+            return /^\d{1,5}$/.test(raw) ? raw : '';
+        };
+
+        // Reporte l'année choisie sur le champ caché et sur le lien « tous les filtrés ».
+        const syncAnnualYear = function () {
+            const y = readAnnualYear();
+            if (annualYearHidden) annualYearHidden.value = y;
+            if (annualFilteredLink) {
+                const url = new URL(annualFilteredLink.href, window.location.origin);
+                if (y) { url.searchParams.set('annee_export', y); } else { url.searchParams.delete('annee_export'); }
+                annualFilteredLink.href = url.pathname + url.search;
+            }
+            if (annualWarning && y) annualWarning.style.display = 'none';
+        };
+
         if (annualYearSelect) {
-            annualYearSelect.addEventListener('change', function () {
-                const y = annualYearSelect.value;
-                if (annualYearHidden) annualYearHidden.value = y;
-                if (annualFilteredLink) {
-                    const url = new URL(annualFilteredLink.href, window.location.origin);
-                    if (y) { url.searchParams.set('annee_export', y); } else { url.searchParams.delete('annee_export'); }
-                    annualFilteredLink.href = url.pathname + url.search;
+            annualYearSelect.addEventListener('change', syncAnnualYear);
+        }
+
+        // Ouverture du modal depuis le menu déroulant PDF.
+        const openAnnualModal = function () {
+            syncAnnualYear();
+            if (annualWarning) annualWarning.style.display = 'none';
+            if (annualModal) { annualModal.show(); }
+        };
+        const openAnnualSelectedBtn  = document.getElementById('open-annual-selected');
+        const openAnnualFilteredBtn  = document.getElementById('open-annual-filtered');
+        if (openAnnualSelectedBtn) openAnnualSelectedBtn.addEventListener('click', openAnnualModal);
+        if (openAnnualFilteredBtn) openAnnualFilteredBtn.addEventListener('click', openAnnualModal);
+
+        // Export « tous les filtrés » : une année est obligatoire.
+        if (annualFilteredLink) {
+            annualFilteredLink.addEventListener('click', function (e) {
+                if (!readAnnualYear()) {
+                    e.preventDefault();
+                    if (annualWarning) annualWarning.style.display = 'block';
                 }
             });
         }
 
-        if (planAnnualBtn && planAnnualForm && planAnnualContainer) {
+        // Export « de la sélection » : une année est obligatoire.
+        if (planAnnualBtn && planAnnualForm && planAnnualCont) {
             planAnnualBtn.addEventListener('click', function () {
                 const ids = rowCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
                 if (!ids.length) {
                     alert('Veuillez sélectionner au moins une infrastructure planifiée pour générer le Plan Annuel.');
                     return;
                 }
-                if (!annualYearSelect || !annualYearSelect.value) {
-                    alert('Veuillez choisir l\'année (exercice) à exporter dans le Plan Annuel.');
+                if (!readAnnualYear()) {
+                    if (annualWarning) annualWarning.style.display = 'block';
                     annualYearSelect && annualYearSelect.focus();
                     return;
                 }
-                if (annualYearHidden) annualYearHidden.value = annualYearSelect.value;
-                planAnnualContainer.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
+                syncAnnualYear();
+                planAnnualCont.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
                 showExportLoader();
                 planAnnualForm.submit();
             });

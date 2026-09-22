@@ -54,7 +54,10 @@ class CommuneAdminDashboardController extends Controller
                     ->count(),
             ];
 
-            return view('commune.dashboard', compact('commune', 'stats'));
+            // Listes nominatives par rôle (pour la modale « Utilisateurs »).
+            $roleUsers = $this->communeUsersByRole($commune);
+
+            return view('commune.dashboard', compact('commune', 'stats', 'roleUsers'));
 
         } catch (\Exception $e) {
             \Log::error('Erreur tableau de bord commune admin: ' . $e->getMessage(), [
@@ -65,6 +68,28 @@ class CommuneAdminDashboardController extends Controller
             return redirect()->route('home')
                 ->with('error', 'Une erreur est survenue lors du chargement du tableau de bord.');
         }
+    }
+
+    /**
+     * Listes nominatives des utilisateurs actifs de la commune, par rôle.
+     * Alimente la modale « Utilisateurs » du tableau de bord.
+     */
+    private function communeUsersByRole($commune): array
+    {
+        $format = fn ($u) => ['name' => trim(($u->prenom ?? '') . ' ' . $u->name)];
+
+        $approved = fn (string $role) => $commune->users()
+            ->where('role', $role)
+            ->where('is_approved', true)
+            ->orderBy('prenom')->orderBy('name')
+            ->get()
+            ->map($format)->values();
+
+        return [
+            'commune_admin' => $approved('commune_admin'),
+            'agent'         => $approved('agent'),
+            'public_user'   => $approved('public_user'),
+        ];
     }
 
     /**
@@ -79,11 +104,12 @@ class CommuneAdminDashboardController extends Controller
                 abort(403, 'Accès refusé. Vous devez être administrateur de commune.');
             }
 
-            $commune         = $user->commune;
-            $infrastructures = $commune->infrastructures()->latest()->paginate(15);
-            $agents          = $commune->mairieAgents()->latest()->paginate(15);
+            $commune = $user->commune;
+            // Liste des agents de la commune (la liste des infrastructures n'est
+            // plus affichée sur cette page : voir la page « Infrastructures »).
+            $agents  = $commune->mairieAgents()->latest()->paginate(15);
 
-            return view('commune.details', compact('commune', 'infrastructures', 'agents'));
+            return view('commune.details', compact('commune', 'agents'));
 
         } catch (\Exception $e) {
             \Log::error('Erreur détails commune: ' . $e->getMessage(), ['user_id' => auth()->id()]);
