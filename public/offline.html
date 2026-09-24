@@ -27,6 +27,9 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="/vendor/pwa/fontawesome.min.css">
 
+    <!-- Leaflet (hébergé localement : indispensable hors-ligne) -->
+    <link rel="stylesheet" href="/vendor/pwa/leaflet/leaflet.css">
+
     <!-- Auth Enhancements CSS -->
     <link rel="stylesheet" href="/css/auth-enhancements.css">
 
@@ -132,6 +135,23 @@
     .geo-accuracy-badge.medium{ background:#fef3c7; color:#92400e;}
     .geo-accuracy-badge.poor{ background:#fee2e2; color:#991b1b;}
     #geo-map{ height: 400px; width:100%; border-radius:12px; border:1px solid #d1fae5; margin-top:.5rem; z-index:0;}
+    /* Repli hors-ligne : la carte n'est pas disponible, on affiche un message clair
+       et la saisie manuelle des coordonnées reste possible. */
+    #geo-map.geo-map--fallback{
+        display:flex; align-items:center; justify-content:center;
+        background:repeating-linear-gradient(45deg,#f8fafc,#f8fafc 12px,#f1f5f9 12px,#f1f5f9 24px);
+        border-style:dashed;
+    }
+    #geo-map .geo-map__fallback-inner{ text-align:center; color:#64748b; padding:1rem; }
+    #geo-map .geo-map__fallback-inner i{ font-size:2rem; color:#94a3b8; }
+    #geo-map .geo-map__fallback-inner p{ margin:.6rem 0 .2rem; font-weight:600; color:#475569; }
+    #geo-map .geo-map__fallback-inner small{ font-size:.78rem; }
+    /* Fond neutre quand les tuiles OSM ne sont pas joignables (hors-ligne). */
+    .leaflet-container{ background:#eef2f5; }
+    .geo-tiles-hint{
+        font-size:.78rem; color:#92400e; background:#fef3c7; border-radius:8px;
+        padding:.35rem .6rem; margin-top:.4rem; display:none;
+    }
     .geo-fields .form-control[readonly]{ background:#f9fafb;}
     .geo-locked-note{ font-size:.72rem; color:#6b7280; margin-top:.15rem;}
     @keyframes geoPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
@@ -453,13 +473,12 @@
         <img src="/logo.jpg" alt="Logo ARMANI" class="img-fluid" style="max-height: 100px;">
     </div>
     <div class="alert alert-danger text-center shadow-sm" style="border-radius: 12px; border: 2px solid #dc3545;">
-        <h4 class="fw-bold mb-1"><i class="bi bi-wifi-off me-2"></i> MODE STRICTEMENT HORS-LIGNE</h4>
+        <h4 class="fw-bold mb-1"><i class="bi bi-wifi-off me-2"></i> MODE HORS-LIGNE</h4>
         <p class="mb-0">Vous êtes actuellement déconnecté du réseau. Vous pouvez saisir les informations de l'infrastructure ici. Elles seront sauvegardées sur votre appareil.</p>
     </div>
     <div class="text-center mb-3">
         <a href="/infrastructures-hors-ligne" class="btn btn-outline-success btn-sm"><i class="fas fa-hdd me-1"></i> Voir mes fiches enregistrées</a>
     </div>
-    <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/ARMANI</h2>
     
     <form action="#" method="POST" enctype="multipart/form-data" class="bg-white p-4 rounded shadow-sm" data-loader id="infraForm" novalidate>
     <input type="hidden" name="_token" value="" autocomplete="off">    
@@ -641,6 +660,10 @@
                     </p>
                     <div id="geo-status" class="geo-status info" style="display:none;"></div>
                     <div id="geo-map" aria-label="Carte pour ajuster la position"></div>
+                    <div id="geo-tiles-hint" class="geo-tiles-hint">
+                        <i class="fas fa-wifi me-1"></i>
+                        Fond de carte indisponible hors-ligne. Vous pouvez tout de même placer le repère ou saisir les coordonnées : elles seront synchronisées dès le retour de la connexion.
+                    </div>
                 </div>
             </div>
             <div class="col-12 col-md-6 geo-fields">
@@ -1924,13 +1947,32 @@
             });
         }
 
+        // Leaflet est servi depuis nos propres assets (public/vendor/pwa/leaflet) :
+        // un CDN est injoignable en mode hors-ligne, ce qui laissait la carte vide.
+        const LEAFLET_JS = '/vendor/pwa/leaflet/leaflet.js';
+
+        function setMapFallbackNotice(message){
+            if (!mapEl) return;
+            mapEl.classList.add('geo-map--fallback');
+            mapEl.innerHTML = '<div class="geo-map__fallback-inner">'
+                + '<i class="fas fa-map-location-dot"></i>'
+                + '<p>' + message + '</p>'
+                + '<small>Saisissez la latitude et la longitude dans les champs ci-dessous.</small>'
+                + '</div>';
+        }
+
         function ensureLeaflet(cb){
             if (window.L) return cb();
+            if (mapEl && mapEl.dataset.leafletFailed === '1') return; // déjà échoué : ne pas boucler
             const s = document.createElement('script');
-            s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-            s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
-            s.crossOrigin = '';
+            s.src = LEAFLET_JS;
             s.onload = cb;
+            s.onerror = function () {
+                // Pas de carte disponible : on ne bloque surtout pas la saisie hors-ligne.
+                if (mapEl) mapEl.dataset.leafletFailed = '1';
+                setMapFallbackNotice('Carte indisponible hors-ligne.');
+                showStatus('info', '<i class="fas fa-map-location-dot"></i> Carte non disponible : saisissez la position manuellement ou utilisez le GPS.');
+            };
             document.head.appendChild(s);
         }
 
@@ -1954,6 +1996,15 @@
             </span>`;
         }
 
+        // Hors-ligne, l'altitude n'est disponible que si l'appareil possède une puce GPS
+        // (qui renseigne coords.altitude). Sinon elle est complétée automatiquement lors
+        // de la synchronisation (voir resolveMissingAltitude() dans offline-sync.js).
+        function altitudeNoteIfMissing(){
+            if (!altEl || altEl.value) return '';
+            return '<br><small>Altitude non fournie par cet appareil hors-ligne : elle sera '
+                 + 'complétée automatiquement lors de la synchronisation.</small>';
+        }
+
         function setFields(lat, lng, alt, acc){
             latEl.value = Number(lat).toFixed(6);
             lngEl.value = Number(lng).toFixed(6);
@@ -1966,20 +2017,35 @@
             if (alt !== undefined && alt !== null && !isNaN(alt)) {
                 altEl.value = Number(alt).toFixed(2);
             } else if (!altEl.value && lat && lng) {
-                altEl.placeholder = 'Recherche...';
-                fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data && data.elevation && data.elevation.length > 0) {
-                            altEl.value = Number(data.elevation[0]).toFixed(2);
-                        } else {
-                            altEl.placeholder = 'Altitude';
-                        }
-                    }).catch(e => {
-                        console.error(e);
-                        altEl.placeholder = 'Altitude';
-                    });
+                fetchElevationOffline(lat, lng);
             }
+        }
+
+        // Altitude : appel réseau impossible hors-ligne. On ne bloque jamais la saisie :
+        // sans connexion, on indique simplement que le champ peut être rempli à la main.
+        function fetchElevationOffline(lat, lng){
+            const reset = () => { altEl.placeholder = 'Altitude'; };
+
+            if (navigator.onLine === false) {
+                reset();
+                return;
+            }
+
+            altEl.placeholder = 'Recherche...';
+
+            const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, 8000);
+
+            fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`,
+                  ctrl ? { signal: ctrl.signal } : undefined)
+                .then(res => res.json())
+                .then(data => {
+                    const v = (data && Array.isArray(data.elevation) && data.elevation.length) ? data.elevation[0] : null;
+                    if (v !== null && !isNaN(v)) altEl.value = Number(v).toFixed(2);
+                    else reset();
+                })
+                .catch(() => reset())
+                .finally(() => clearTimeout(timer));
         }
 
         window.invalidateGeoMap = function() {
@@ -1998,17 +2064,32 @@
                     hasStart ? [startLat, startLng] : BENIN_CENTER,
                     hasStart ? 16 : 6
                 );
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+                // Fond neutre immédiat : hors-ligne, les tuiles OSM ne peuvent pas être
+                // téléchargées, mais la carte reste utilisable (clic + repère déplaçable).
+                const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
-                    attribution: '&copy; OpenStreetMap'
+                    attribution: '&copy; OpenStreetMap',
+                    errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
                 }).addTo(map);
+
+                // Informer une seule fois si le fond de carte n'est pas joignable.
+                let tilesWarned = false;
+                const warnNoTiles = () => {
+                    if (tilesWarned) return;
+                    tilesWarned = true;
+                    const hint = document.getElementById('geo-tiles-hint');
+                    if (hint) hint.style.display = 'block';
+                };
+                tiles.on('tileerror', warnNoTiles);
+                navigator.onLine === false && warnNoTiles();
 
                 if (hasStart) placeMarker(startLat, startLng);
 
                 map.on('click', (e) => {
                     placeMarker(e.latlng.lat, e.latlng.lng);
                     setFields(e.latlng.lat, e.latlng.lng);
-                    showStatus('info', '<i class="fas fa-hand-pointer"></i> Position ajustée manuellement sur la carte.');
+                    showStatus('info', '<i class="fas fa-hand-pointer"></i> Position ajustée manuellement sur la carte.' + altitudeNoteIfMissing());
                 });
 
                 setTimeout(() => map.invalidateSize(), 200);
@@ -2086,7 +2167,7 @@
                 btn.disabled = false;
                 btn.classList.remove('geo-pulse');
                 btnLabel.innerHTML = 'Mettre à jour ma position';
-                showStatus(status, msg);
+                showStatus(status, msg + altitudeNoteIfMissing());
             }
         }
 

@@ -143,6 +143,9 @@
         // Loader automatique pour les opérations d'écriture (sans empêcher la soumission native)
         var method = getFormMethod(form);
         if (['POST', 'PUT', 'PATCH', 'DELETE'].indexOf(method) !== -1) {
+            // Ne jamais afficher le loader si un autre handler a annulé la soumission
+            // (sinon l'overlay « Veuillez patienter... » reste affiché alors que rien ne part).
+            if (e.defaultPrevented) return;
             // Ne pas afficher le loader si la validation HTML native bloque la soumission
             if (form.checkValidity()) {
                 showLoader(form.getAttribute('data-loader-text') || undefined);

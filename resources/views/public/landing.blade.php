@@ -212,7 +212,7 @@
             </div>
             <div class="col-lg-6">
                 <div class="lp-card">
-                    <h5 class="fw-bold mb-1"><i class="fas fa-tools me-2" style="color:var(--lp-green);"></i>Top types d'infrastructures</h5>
+                    <h5 class="fw-bold mb-1"><i class="fas fa-tools me-2" style="color:var(--lp-green);"></i>Types d'infrastructures</h5>
                     <p class="lp-sub small mb-4">Les catégories les plus représentées dans le territoire.</p>
                     @php $maxT = (int) ($byType->max('total') ?: 1); @endphp
                     @forelse($byType as $row)

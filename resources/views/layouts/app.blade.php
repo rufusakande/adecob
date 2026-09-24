@@ -195,7 +195,8 @@
             left: auto;
             right: 0;
         }
-        .app-nav .dropdown-menu.show {
+        .app-nav .dropdown-menu.show,
+        .app-nav .nav-item.dropdown.is-open > .dropdown-menu {
             transform: translateY(0);
             opacity: 1;
             visibility: visible;
@@ -207,6 +208,18 @@
                 opacity: 1;
                 visibility: visible;
                 pointer-events: auto;
+            }
+            /* « Pont » invisible : comble l'écart de 10px entre le lien et le menu, afin que
+               le survol ne soit jamais perdu pendant que la souris rejoint le menu.
+               Le pont n'est actif que lorsque le menu est visible (pointer-events: auto),
+               donc il n'élargit pas la zone de déclenchement quand le menu est fermé. */
+            .app-nav .nav-item.dropdown > .dropdown-menu::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: -14px;   /* écart réel (10px) + marge de sécurité */
+                height: 14px;
             }
         }
         .app-nav .dropdown-item {
@@ -562,10 +575,10 @@
 
     <script src="{{ asset('js/auth-enhancements.js?v=3') }}"></script>
     <script src="{{ asset('js/mobile-ui.js?v=5') }}"></script>
-    <script src="{{ asset('js/header-dropdown.js?v=1') }}"></script>
+    <script src="{{ asset('js/header-dropdown.js?v=3') }}"></script>
     <script src="{{ asset('js/pwa-register.js?v=3') }}"></script>
     <script src="{{ asset('js/pwa-install.js?v=3') }}"></script>
-    <script src="{{ asset('js/ui-confirm.js?v=3') }}"></script>
+    <script src="{{ asset('js/ui-confirm.js?v=4') }}"></script>
     <script>
         // Redirection automatique vers le formulaire d'ajout hors-ligne
         // (offline.html = saisie d'infrastructures sans connexion).

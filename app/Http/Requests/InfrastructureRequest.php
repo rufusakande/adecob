@@ -28,8 +28,18 @@ class InfrastructureRequest extends FormRequest
             'hameau' => 'nullable|string|max:120',
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'altitude' => ['nullable', 'numeric', 'between:-500,9000', 'required_with:latitude'],
-            'precision' => ['nullable', 'numeric', 'gt:0', 'lt:5', 'required_with:latitude'],
+            // L'altitude n'est plus obligatoire avec une position : hors-ligne elle ne peut
+            // pas toujours être obtenue (l'appareil ne fournit `coords.altitude` que s'il a une
+            // puce GPS, et le service d'altitude est injoignable sans réseau). Elle est
+            // complétée automatiquement lors de la synchronisation des fiches hors-ligne
+            // (voir resolveMissingAltitude() dans public/js/offline-sync.js).
+            // On ne perd jamais une fiche terrain pour une altitude manquante.
+            'altitude' => ['nullable', 'numeric', 'between:-500,9000'],
+            // La précision GPS n'est plus bloquante : sur un PC (position réseau) elle vaut
+            // couramment 100 à 2000 m, et sur le terrain elle dépasse souvent 5 m. Bloquer à
+            // 5 m rendait la saisie impossible. On garde seulement un garde-fou de cohérence ;
+            // la qualité de la mesure est signalée à l'utilisateur (badge « Faible précision »).
+            'precision' => ['nullable', 'numeric', 'gt:0', 'max:100000', 'required_with:latitude'],
             'secteur_domaine' => ['nullable', 'string', 'max:120'],
             'type_infrastructure' => 'nullable|string|max:180',
             'nom_infrastructure' => 'nullable|string|max:200',
@@ -63,10 +73,10 @@ class InfrastructureRequest extends FormRequest
             'numero_telephone.regex' => 'Le numéro doit être au format Bénin (+229 XX XX XX XX).',
             'latitude.between' => 'La latitude doit être comprise entre -90 et 90.',
             'longitude.between' => 'La longitude doit être comprise entre -180 et 180.',
-            'altitude.required_with' => 'L\'altitude est requise lorsque la position est renseignée.',
+            'altitude.between' => 'L\'altitude indiquée est invalide (entre -500 et 9000 m).',
             'precision.required_with' => 'La précision GPS est requise lorsque la position est renseignée.',
             'precision.gt' => 'La précision GPS doit être supérieure à 0.',
-            'precision.lt' => 'La précision GPS doit être strictement inférieure à 5 mètres.',
+            'precision.max' => 'La précision GPS indiquée est invalide.',
             'annee_realisation.between' => 'L\'année de réalisation doit être plausible (1900 → année en cours).',
             'date.before_or_equal' => 'La date de l\'enquête ne peut pas être dans le futur.',
         ];

@@ -69,9 +69,42 @@ function getCsrfToken() {
     return input ? input.value : '';
 }
 
+// Complète l'altitude manquante au moment de la synchronisation.
+//
+// Hors-ligne, la position est bien obtenue (l'API Geolocation du navigateur n'utilise
+// pas le réseau), mais l'altitude n'est fournie par l'appareil que s'il possède une puce
+// GPS. Pour les autres appareils on passait par un service web, injoignable hors-ligne :
+// la fiche était donc enregistrée sans altitude. On la complète ici, une fois le réseau
+// revenu, via le proxy serveur /infrastructures/elevation.
+async function resolveMissingAltitude(data) {
+    const hasCoords = data && data.latitude && data.longitude;
+    const hasAltitude = data && data.altitude !== undefined && data.altitude !== null
+        && String(data.altitude).trim() !== '';
+
+    if (!hasCoords || hasAltitude) return data;
+
+    try {
+        const url = '/infrastructures/elevation?lat=' + encodeURIComponent(data.latitude)
+                  + '&lng=' + encodeURIComponent(data.longitude);
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) return data;
+
+        const payload = await res.json();
+        const elevation = payload ? payload.elevation : null;
+        if (elevation !== null && elevation !== undefined && !isNaN(elevation)) {
+            data.altitude = Number(elevation).toFixed(2);
+        }
+    } catch (e) {
+        // Jamais bloquant : la fiche sera synchronisée sans altitude plutôt qu'être perdue.
+    }
+    return data;
+}
+
 // Envoie une seule fiche au serveur. Retourne { ok, message }
 async function pushOfflineItem(data) {
     try {
+        data = await resolveMissingAltitude(data);
+
         const formData = new FormData();
         formData.append('_token', getCsrfToken());
 

@@ -10,7 +10,7 @@
  *  - Navigation : réseau d'abord, sinon cache, sinon -> page offline.html.
  *  - Statiques (css/js/images) : cache d'abord, sinon réseau + mise en cache.
  */
-const VERSION = '2026-08-26-v1';
+const VERSION = '2026-09-24-v4';
 const OFFLINE_URL = '/offline.html';
 const PAGE_CACHE = 'adecob-pages-' + VERSION;
 const STATIC_CACHE = 'adecob-static-' + VERSION;
@@ -45,6 +45,14 @@ const STATIC_ASSETS = [
   '/vendor/pwa/webfonts/fa-solid-900.woff2',
   '/vendor/pwa/webfonts/fa-brands-400.woff2',
   '/vendor/pwa/webfonts/fa-regular-400.woff2',
+  /* Leaflet en local : indispensable pour la carte du formulaire hors-ligne */
+  '/vendor/pwa/leaflet/leaflet.js',
+  '/vendor/pwa/leaflet/leaflet.css',
+  '/vendor/pwa/leaflet/images/marker-icon.png',
+  '/vendor/pwa/leaflet/images/marker-icon-2x.png',
+  '/vendor/pwa/leaflet/images/marker-shadow.png',
+  '/vendor/pwa/leaflet/images/layers.png',
+  '/vendor/pwa/leaflet/images/layers-2x.png',
 ];
 
 self.addEventListener('install', (event) => {

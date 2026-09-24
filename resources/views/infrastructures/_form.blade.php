@@ -108,8 +108,9 @@
 @endpush
 
 @push('styles')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+{{-- Leaflet hébergé localement (public/vendor/pwa/leaflet) : fonctionne hors-ligne et
+     ne dépend plus d'un CDN, conformément à la CSP du projet. --}}
+<link rel="stylesheet" href="{{ asset('vendor/pwa/leaflet/leaflet.css') }}">
 @endpush
 
 @php
@@ -677,6 +678,9 @@
             </div>
         </div>
 
+        {{-- Alertes de soumission : affichées ici (visible sur l'étape 3) et non dans la zone GPS de l'étape 2 --}}
+        <div id="submit-alert" class="alert d-none" role="alert" aria-live="assertive"></div>
+
         <div class="d-flex justify-content-between">
             <button type="button" class="btn btn-secondary" onclick="prevStep(3)">
                 <i class="fas fa-arrow-left me-2"></i> Précédent
@@ -1111,13 +1115,19 @@
             });
         }
 
+        // Leaflet servi depuis nos propres assets : un CDN est injoignable hors-ligne
+        // et bloqué par la CSP ; la carte ne s'affichait donc pas.
         function ensureLeaflet(cb){
             if (window.L) return cb();
+            if (mapEl && mapEl.dataset.leafletFailed === '1') return;
             const s = document.createElement('script');
-            s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-            s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
-            s.crossOrigin = '';
+            s.src = '{{ asset('vendor/pwa/leaflet/leaflet.js') }}';
             s.onload = cb;
+            s.onerror = function () {
+                // On ne bloque jamais la saisie si la carte est indisponible.
+                if (mapEl) mapEl.dataset.leafletFailed = '1';
+                showStatus('info', '<i class="fas fa-map-location-dot"></i> Carte non disponible : saisissez la latitude et la longitude manuellement.');
+            };
             document.head.appendChild(s);
         }
 
@@ -1153,20 +1163,44 @@
             if (alt !== undefined && alt !== null && !isNaN(alt)) {
                 altEl.value = Number(alt).toFixed(2);
             } else if (!altEl.value && lat && lng) {
-                altEl.placeholder = 'Recherche...';
-                fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`)
+                fetchElevation(lat, lng);
+            }
+        }
+
+        // Altitude : on passe d'abord par le proxy serveur (CSP stricte respectée, coordonnées
+        // non transmises au tiers depuis le navigateur), puis repli direct si le proxy échoue.
+        const ELEVATION_ENDPOINT = @json(route('infrastructures.elevation'));
+
+        function applyElevation(value){
+            if (value !== null && value !== undefined && value !== '' && !isNaN(value)) {
+                altEl.value = Number(value).toFixed(2);
+                altEl.placeholder = 'Altitude';
+                return true;
+            }
+            return false;
+        }
+
+        function fetchElevation(lat, lng){
+            altEl.placeholder = 'Recherche...';
+
+            const viaProxy = fetch(`${ELEVATION_ENDPOINT}?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`, {
+                headers: { 'Accept': 'application/json' },
+            })
+                .then(res => res.ok ? res.json() : Promise.reject(new Error('proxy HTTP ' + res.status)))
+                .then(data => {
+                    if (!applyElevation(data && data.elevation)) throw new Error('altitude indisponible');
+                });
+
+            viaProxy.catch(() => {
+                // Repli : appel direct de l'API (autorisée en connect-src).
+                return fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`)
                     .then(res => res.json())
                     .then(data => {
-                        if (data && data.elevation && data.elevation.length > 0) {
-                            altEl.value = Number(data.elevation[0]).toFixed(2);
-                        } else {
-                            altEl.placeholder = 'Altitude';
-                        }
-                    }).catch(e => {
-                        console.error(e);
-                        altEl.placeholder = 'Altitude';
-                    });
-            }
+                        const v = (data && Array.isArray(data.elevation) && data.elevation.length) ? data.elevation[0] : null;
+                        if (!applyElevation(v)) altEl.placeholder = 'Altitude';
+                    })
+                    .catch(() => { altEl.placeholder = 'Altitude'; });
+            });
         }
 
         window.invalidateGeoMap = function() {
@@ -1230,7 +1264,7 @@
                 return;
             }
             btn.disabled = true;
-            btnLabel.innerHTML = 'Recherche (objectif < 5 m)...';
+            btnLabel.innerHTML = 'Recherche de la meilleure précision...';
             btn.classList.add('geo-pulse');
             showStatus('info', '<i class="fas fa-spinner fa-spin"></i> Ajustement GPS en cours...');
             
@@ -1263,13 +1297,16 @@
             let timeoutId = setTimeout(() => {
                 navigator.geolocation.clearWatch(tempWatchId);
                 if (bestPos) {
-                    if (bestPos.coords.accuracy >= 5) {
-                        finalizeLocate('err', `<i class="fas fa-circle-exclamation"></i> Position obtenue (±${Math.round(bestPos.coords.accuracy)} m) — précision insuffisante. Objectif : < 5 m. Réessayez ou ajustez le repère.`);
+                    // La précision n'est plus une condition de validité : la fiche peut être
+                    // enregistrée quelle que soit la mesure. On informe simplement l'agent.
+                    const acc = Math.round(bestPos.coords.accuracy);
+                    if (acc >= 50) {
+                        finalizeLocate('info', `<i class="fas fa-circle-info"></i> Position enregistrée (±${acc} m). Précision faible — vous pouvez tout de même soumettre la fiche, ou ajuster le repère sur la carte.`);
                     } else {
-                        finalizeLocate('ok', `<i class="fas fa-circle-check"></i> Meilleure position trouvée (±${Math.round(bestPos.coords.accuracy)} m).`);
+                        finalizeLocate('ok', `<i class="fas fa-circle-check"></i> Position obtenue (±${acc} m).`);
                     }
                 } else {
-                    finalizeLocate('err', '<i class="fas fa-circle-exclamation"></i> Impossible d\'obtenir une position précise.');
+                    finalizeLocate('err', '<i class="fas fa-circle-exclamation"></i> Impossible d\'obtenir une position.');
                 }
             }, 15000);
 
@@ -1297,7 +1334,7 @@
             initMap();
             watchLabel.textContent = 'Arrêter le suivi';
             watchBtn.classList.add('geo-pulse');
-            showStatus('info', '<i class="fas fa-satellite fa-beat"></i> Suivi actif : les coordonnées s\'affinent (objectif ≤ 5m).');
+            showStatus('info', '<i class="fas fa-satellite fa-beat"></i> Suivi actif : la position s\'affine en continu.');
             watchId = navigator.geolocation.watchPosition(pos => {
                 const { latitude, longitude, altitude, accuracy } = pos.coords;
                 setFields(latitude, longitude, altitude, accuracy);
@@ -1341,24 +1378,69 @@
         watchBtn?.addEventListener('click', toggleWatch);
         clearBtn?.addEventListener('click', clearAll);
 
-        // Validation géolocalisation à la soumission : si une position est saisie,
-        // la précision doit être < 5 m (strict) et l'altitude renseignée.
+        // Alertes de soumission : affichées à l'étape 3, près du bouton « Soumettre »
+        // (auparavant écrites dans la zone GPS de l'étape 2, donc invisibles).
+        const submitAlertEl = document.getElementById('submit-alert');
+
+        function showSubmitAlert(html, kind) {
+            if (!submitAlertEl) return;
+            submitAlertEl.className = 'alert alert-' + (kind || 'danger');
+            submitAlertEl.innerHTML = html;
+            submitAlertEl.classList.remove('d-none');
+            try { submitAlertEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+        }
+
+        function hideSubmitAlert() {
+            if (!submitAlertEl) return;
+            submitAlertEl.classList.add('d-none');
+            submitAlertEl.innerHTML = '';
+        }
+
+        // Retour à l'étape 2 pour corriger un champ de position, sans recharger la page.
+        function goToStep2ForFix() {
+            const cur = document.getElementById('step-3');
+            const target = document.getElementById('step-2');
+            if (cur && target) {
+                cur.style.display = 'none';
+                target.style.display = 'block';
+                if (typeof syncStepper === 'function') syncStepper(2);
+                if (typeof window.invalidateGeoMap === 'function') setTimeout(() => window.invalidateGeoMap(), 100);
+            }
+        }
+
+        // Validation géolocalisation à la soumission.
+        // La PRÉCISION n'est plus bloquante : on enregistre la fiche et la qualité de la mesure
+        // reste signalée à l'étape 2 (badge « Faible précision »). Seule l'ALTITUDE est requise
+        // lorsqu'une position est renseignée (règle serveur : required_with:latitude).
         document.getElementById('infraForm')?.addEventListener('submit', function(e) {
+            hideSubmitAlert();
+
             const la = parseFloat(latEl.value), ln = parseFloat(lngEl.value);
-            if (isNaN(la) || isNaN(ln)) return; // pas de position -> rien à vérifier
+            if (isNaN(la) || isNaN(ln)) return; // pas de position -> aucun contrôle GPS
+
             const prec = parseFloat(accEl.value);
             const alt = parseFloat(altEl.value);
+
             if (isNaN(alt)) {
                 e.preventDefault();
-                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> L\'altitude est obligatoire lorsque la position est renseignée.');
-                altEl.focus();
+                goToStep2ForFix();
+                showSubmitAlert(
+                    '<i class="fas fa-triangle-exclamation me-1"></i> <strong>Fiche non envoyée.</strong> '
+                    + 'L\'altitude est obligatoire lorsqu\'une position est renseignée : saisissez-la dans le champ '
+                    + '« Altitude (m) » de l\'étape 2, puis soumettez à nouveau.',
+                    'danger'
+                );
+                setTimeout(() => { altEl.focus(); }, 400);
                 return;
             }
-            if (isNaN(prec) || prec <= 0 || prec >= 5) {
-                e.preventDefault();
-                showStatus('err', '<i class="fas fa-triangle-exclamation"></i> La précision GPS doit être strictement inférieure à 5 mètres. Relancez la géolocalisation ou corrigez la valeur.');
-                accEl.focus();
-                return;
+
+            // Avertissement non bloquant : la mesure est imprécise mais la fiche part quand même.
+            if (!isNaN(prec) && prec >= 5) {
+                showSubmitAlert(
+                    '<i class="fas fa-circle-info me-1"></i> Précision GPS faible (±' + Math.round(prec) + ' m). '
+                    + 'La fiche est enregistrée ; vous pourrez affiner la position plus tard si nécessaire.',
+                    'warning'
+                );
             }
         });
 

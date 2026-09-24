@@ -6,7 +6,7 @@
 <div class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h2 class="fw-bold mb-1">Bonjour, {{ auth()->user()->prenom ?? auth()->user()->name }} 👋</h2>
+            <h2 class="fw-bold mb-1">Bonjour, {{ auth()->user()->prenom ?? auth()->user()->name }}</h2>
             <p class="text-muted mb-0">Vue d'ensemble de la plateforme {{ config('app.name') }}.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">

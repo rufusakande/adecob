@@ -125,6 +125,140 @@ class InfrastructurePlanningExportTest extends TestCase
 		$this->assertTrue(Route::has('infrastructures.planned.export.annual'));
 	}
 
+	public function test_excel_export_routes_are_registered()
+	{
+		$this->assertTrue(Route::has('infrastructures.planned.export.excel'));
+		$this->assertTrue(Route::has('infrastructures.planned.export.excel.annual'));
+	}
+
+	public function test_triennal_excel_export_generates_a_file()
+	{
+		$admin = $this->makeSuperAdmin();
+		$this->makePlannedInfrastructure();
+
+		$response = $this->actingAs($admin)->get(route('infrastructures.planned.export.excel', [
+			'export_scope' => 'filtered',
+		]));
+
+		$response->assertOk();
+		$this->assertStringContainsString(
+			'spreadsheetml',
+			(string) $response->headers->get('Content-Type'),
+			'Le fichier exporté doit être un classeur Excel (.xlsx).'
+		);
+	}
+
+	public function test_annual_excel_export_generates_a_file()
+	{
+		$admin = $this->makeSuperAdmin();
+		$this->makePlannedInfrastructure();
+
+		$response = $this->actingAs($admin)->get(route('infrastructures.planned.export.excel.annual', [
+			'export_scope' => 'filtered',
+			'annee_export' => now()->year,
+		]));
+
+		$response->assertOk();
+		$this->assertStringContainsString('spreadsheetml', (string) $response->headers->get('Content-Type'));
+	}
+
+	/**
+	 * Le classeur Excel doit reprendre la présentation du PDF :
+	 * en-tête institutionnel (avec les logos) + titre + bloc de renseignements.
+	 */
+	public function test_excel_export_mirrors_the_pdf_presentation()
+	{
+		$admin = $this->makeSuperAdmin();
+		$this->makePlannedInfrastructure();
+
+		// L'appel direct du contrôleur nécessite une session authentifiée.
+		$this->actingAs($admin);
+
+		$controller = new \App\Http\Controllers\InfrastructureController();
+		$method = new \ReflectionMethod($controller, 'plannedExportData');
+		$method->setAccessible(true);
+
+		$data = $method->invoke($controller, new \Illuminate\Http\Request(['export_scope' => 'filtered']));
+		$this->assertNotNull($data, 'Les données d\'export doivent être disponibles.');
+
+		$export = new \App\Exports\PlannedPlanExport(
+			$data['infrastructures'],
+			\App\Exports\PlannedPlanExport::MODE_TRIENNAL,
+			[
+				'communeName'     => $data['communeName'],
+				'departement'     => $data['departement'],
+				'anneeBase'       => $data['anneeBase'],
+				'anneeDebut'      => $data['anneeDebut'],
+				'anneeFin'        => $data['anneeFin'],
+				'anneeExport'     => $data['anneeExport'],
+				'dateElaboration' => now()->locale('fr')->isoFormat('D MMMM YYYY'),
+			],
+			null,
+			null
+		);
+
+		$path = storage_path('app/_test_export_plan.xlsx');
+		\Maatwebsite\Excel\Facades\Excel::store($export, '_test_export_plan.xlsx', 'local');
+		$this->assertFileExists($path);
+
+		$sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path)->getActiveSheet();
+
+		// Bandeau institutionnel
+		$this->assertStringContainsString('RÉPUBLIQUE DU BÉNIN', (string) $sheet->getCell('B2')->getValue());
+		$this->assertStringContainsString('MINISTÈRE', (string) $sheet->getCell('B3')->getValue());
+
+		// Titre de la fiche
+		$this->assertStringContainsString('FICHE DE PLANIFICATION TRIENNAL', (string) $sheet->getCell('A5')->getValue());
+
+		// Bloc de renseignements
+		$this->assertStringContainsString('Département', (string) $sheet->getCell('A7')->getValue());
+		$this->assertStringContainsString('Exercices budgétaires', (string) $sheet->getCell('A10')->getValue());
+
+		// Tableau
+		$this->assertSame('ID', $sheet->getCell('A12')->getValue());
+		$this->assertTrue($sheet->getStyle('A12')->getFont()->getBold());
+		$this->assertSame('landscape', $sheet->getPageSetup()->getOrientation());
+
+		@unlink($path);
+	}
+
+	public function test_excel_export_includes_both_logos_when_available()
+	{
+		$admin = $this->makeSuperAdmin();
+		$this->makePlannedInfrastructure();
+
+		// Fichiers images temporaires jouant le rôle des logos.
+		$tempDir = storage_path('app/_test_logos');
+		if (!is_dir($tempDir)) {
+			mkdir($tempDir, 0777, true);
+		}
+		$armoiries = $tempDir . '/armoiries.png';
+		$logo      = $tempDir . '/commune.png';
+		foreach ([$armoiries, $logo] as $img) {
+			file_put_contents($img, base64_decode(
+				'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+			));
+		}
+
+		$export = new \App\Exports\PlannedPlanExport(
+			collect(),
+			\App\Exports\PlannedPlanExport::MODE_TRIENNAL,
+			[],
+			$armoiries,
+			$logo
+		);
+
+		$drawings = $export->drawings();
+		$this->assertCount(2, $drawings, 'Les deux logos doivent être intégrés au classeur.');
+		$this->assertSame('A1', $drawings[0]->getCoordinates(), 'Les armoiries sont ancrées en haut à gauche.');
+
+		// En-tête : le logo commune est ancré sur la dernière colonne du triennal (K).
+		$this->assertSame('K1', $drawings[1]->getCoordinates(), 'Le logo de la commune est ancré à droite de l\'en-tête.');
+
+		@unlink($armoiries);
+		@unlink($logo);
+	}
+
 	public function test_annual_export_with_year_selection_generates_pdf()
 	{
 		$admin = $this->makeSuperAdmin();
@@ -180,7 +314,7 @@ class InfrastructurePlanningExportTest extends TestCase
 		$response->assertSee('Plan annuel (FCFA)', false);
 		$response->assertSee('Plan triennal (FCFA)', false);
 		$response->assertSee('Priorité', false);
-		$response->assertSee('Statut exécution', false);
+		$response->assertSee('Statut d\'exécution', false);
 	}
 
 	public function test_annual_export_year_select_lists_a_wide_calendar_style_range()
@@ -250,7 +384,10 @@ class InfrastructurePlanningExportTest extends TestCase
 		$response->assertSee('Fiche de planification ANNUELLE', false);
 		$response->assertSee('Budget annuel (FCFA)', false);
 		$response->assertSee('Coût unitaire (FCFA)', false);
-		$response->assertSee('Statut d\'exécution', false);
+		$response->assertSee('Coût total (FCFA)', false);
+		// Le statut d'exécution se définit désormais depuis la liste des infrastructures
+		// planifiées, plus depuis ce formulaire.
+		$response->assertDontSee('name="statut_execution"', false);
 	}
 
 	public function test_pdf_headers_show_real_years_instead_of_n()

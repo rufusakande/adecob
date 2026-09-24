@@ -156,17 +156,155 @@
     </form>
 
     {{-- Liste des affectations --}}
-    <div class="card shadow-sm border-0 mt-4">
-        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-            <div>
-                <strong class="text-muted"><i class="fas fa-list-check me-1"></i>Affectations existantes</strong>
-                <div class="small text-muted">Mise à jour soumise → à valider ou rejeter. Validée → l'agent n'a plus accès.</div>
+    @php
+        $assignStatusMeta = [
+            'assigned'  => ['secondary', 'Affectée'],
+            'submitted' => ['warning', 'Mise à jour soumise'],
+            'validated' => ['success', 'Validée'],
+            'rejected'  => ['danger', 'Rejetée'],
+        ];
+        $assignFilterParams = collect(['a_q', 'a_statut', 'a_commune', 'a_secteur', 'a_agent'])
+            ->mapWithKeys(fn ($n) => [$n => request($n)])
+            ->filter(fn ($v) => $v !== null && $v !== '')
+            ->all();
+        $hasAssignFilters = ! empty($assignFilterParams);
+    @endphp
+
+    <div class="card shadow-sm border-0 mt-4" id="assignmentsCard">
+        <div class="card-header bg-white border-0 pb-0">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <strong class="text-muted"><i class="fas fa-list-check me-1"></i>Affectations existantes</strong>
+                    <div class="small text-muted">Mise à jour soumise → à valider ou rejeter. Validée → l'agent n'a plus accès.</div>
+                </div>
+                <div class="d-flex gap-1 flex-wrap">
+                    @foreach($assignStatusMeta as $statusKey => $statusMeta)
+                        @php $statusCount = (int) ($assignStatusCounts[$statusKey] ?? 0); @endphp
+                        @continue($statusCount === 0)
+                        <a href="{{ route('infrastructure-assignments.index', array_merge($assignFilterParams, ['a_statut' => $statusKey])) }}"
+                           data-assign-status="{{ $statusKey }}"
+                           class="badge text-decoration-none bg-{{ $statusMeta[0] }} {{ request('a_statut') === $statusKey ? 'border border-2 border-dark' : '' }}"
+                           title="Afficher seulement les affectations « {{ $statusMeta[1] }} »">
+                            {{ $statusMeta[1] }} : {{ number_format($statusCount, 0, ',', ' ') }}
+                        </a>
+                    @endforeach
+                </div>
             </div>
+
+            {{-- Filtres dynamiques : les listes s'appliquent automatiquement au changement --}}
+            <form method="GET" action="{{ route('infrastructure-assignments.index') }}" id="assignFilterForm"
+                  class="row g-2 align-items-end mt-3 pb-3 border-bottom">
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1" for="a_q">Recherche</label>
+                    <input type="text" name="a_q" id="a_q" class="form-control form-control-sm"
+                           value="{{ request('a_q') }}" autocomplete="off"
+                           placeholder="Infrastructure, agent, village, commune...">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1" for="a_statut">Statut</label>
+                    <select name="a_statut" id="a_statut" class="form-select form-select-sm">
+                        <option value="">Tous les statuts</option>
+                        @foreach($assignStatusMeta as $statusKey => $statusMeta)
+                            <option value="{{ $statusKey }}" @selected(request('a_statut') === $statusKey)>{{ $statusMeta[1] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1" for="a_agent">Agent</label>
+                    <select name="a_agent" id="a_agent" class="form-select form-select-sm">
+                        <option value="">Tous les agents</option>
+                        @foreach($assignAgents as $ag)
+                            <option value="{{ $ag->id }}" @selected((string) request('a_agent') === (string) $ag->id)>
+                                {{ trim($ag->prenom . ' ' . $ag->name) }}@if($ag->commune) ({{ $ag->commune->name }})@endif
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1" for="a_commune">Commune</label>
+                    <select name="a_commune" id="a_commune" class="form-select form-select-sm">
+                        <option value="">Toutes les communes</option>
+                        @foreach($assignCommunes as $c)
+                            <option value="{{ $c }}" @selected(request('a_commune') === $c)>{{ $c }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1" for="a_secteur">Secteur</label>
+                    <select name="a_secteur" id="a_secteur" class="form-select form-select-sm">
+                        <option value="">Tous les secteurs</option>
+                        @foreach($assignSecteurs as $s)
+                            <option value="{{ $s }}" @selected(request('a_secteur') === $s)>{{ $s }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 col-md-1 d-grid">
+                    <button class="btn btn-sm btn-success" type="submit" title="Appliquer les filtres"><i class="fas fa-filter"></i></button>
+                </div>
+                <div class="col-12 d-flex align-items-center gap-2 flex-wrap {{ $hasAssignFilters ? '' : 'd-none' }}" id="assign-filter-summary">
+                    <a href="{{ route('infrastructure-assignments.index') }}" id="assign-reset-filters" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-undo me-1"></i>Réinitialiser les filtres
+                    </a>
+                    <span class="small text-muted" id="assign-result-count">{{ number_format($assignments->total(), 0, ',', ' ') }} affectation(s) correspondante(s)</span>
+                </div>
+            </form>
         </div>
+
+        {{-- Zone rechargée en AJAX lors du filtrage : le reste de la page est préservé
+             (notamment la sélection d'infrastructures et d'agents de la section 2). --}}
+        <div id="assignmentsCardInner">
+
+        {{-- Formulaire de retrait en lot : les cases à cocher du tableau y sont rattachées
+             via l'attribut form="bulkRevokeForm" (le tableau ne peut pas être imbriqué
+             dans un <form> car chaque ligne contient déjà ses propres formulaires). --}}
+        <form method="POST" action="{{ route('infrastructure-assignments.bulk-revoke') }}" id="bulkRevokeForm" class="d-none">
+            @csrf
+            <input type="hidden" name="select_all" id="bulkSelectAll" value="">
+            @foreach($assignFilterParams as $filterName => $filterValue)
+                <input type="hidden" name="{{ $filterName }}" value="{{ $filterValue }}">
+            @endforeach
+        </form>
+
+        {{-- Barre d'actions de retrait --}}
+        <div class="px-3 pt-2 pb-1">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 bg-light border rounded px-3 py-2">
+                <span class="small">
+                    <i class="fas fa-check-square me-1 text-primary"></i>
+                    <strong id="bulk-selected-count">0</strong> affectation(s) sélectionnée(s)
+                    @if($assignments->total() > 0)
+                        <span class="text-muted">sur {{ number_format($assignments->total(), 0, ',', ' ') }} affichée(s)</span>
+                    @endif
+                </span>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" id="btn-bulk-clear" class="btn btn-sm btn-link text-muted p-0">Tout désélectionner</button>
+                    <button type="button" id="btn-bulk-revoke" class="btn btn-sm btn-danger" disabled>
+                        <i class="fas fa-unlink me-1"></i>Retirer la sélection
+                    </button>
+                    @if($assignRevocableCount > 0)
+                        <button type="button" id="btn-bulk-revoke-all" class="btn btn-sm btn-outline-danger"
+                                data-count="{{ (int) $assignRevocableCount }}"
+                                data-filtered="{{ $hasAssignFilters ? 1 : 0 }}">
+                            <i class="fas fa-trash-alt me-1"></i>
+                            Retirer {{ $hasAssignFilters ? 'toutes les affectations filtrées' : 'toutes les affectations' }}
+                            ({{ number_format($assignRevocableCount, 0, ',', ' ') }})
+                        </button>
+                    @endif
+                </div>
+            </div>
+            @if($assignRevocableCount === 0 && $assignments->total() > 0)
+                <div class="small text-muted mt-1">
+                    <i class="fas fa-info-circle me-1"></i>Aucune affectation retirable ici : les affectations validées sont définitivement closes.
+                </div>
+            @endif
+        </div>
+
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
+                        <th style="width:38px" class="text-center">
+                            <input class="form-check-input" type="checkbox" id="assign-check-all" title="Tout sélectionner (page)">
+                        </th>
                         <th>Infrastructure</th>
                         <th>Agent</th>
                         <th>Statut</th>
@@ -185,7 +323,13 @@
                                 default     => ['secondary', $a->status],
                             };
                         @endphp
-                        <tr>
+                        <tr class="{{ $a->isValidated() ? 'text-muted' : '' }}">
+                            <td class="text-center">
+                                <input class="form-check-input assign-check" type="checkbox"
+                                       form="bulkRevokeForm" name="assignment_ids[]" value="{{ $a->id }}"
+                                       @disabled($a->isValidated())
+                                       title="{{ $a->isValidated() ? 'Affectation validée : ne peut plus être retirée' : 'Sélectionner pour retrait' }}">
+                            </td>
                             <td>
                                 <div class="fw-semibold">{{ Str::limit($a->infrastructure?->nom_infrastructure ?: ('#' . $a->infrastructure_id), 45) }}</div>
                                 <div class="text-muted small">{{ Str::limit($a->infrastructure?->type_infrastructure, 35) }}
@@ -233,18 +377,22 @@
                                           data-confirm-message="Retirer cette affectation ? L'agent perdra l'accès à cette infrastructure."
                                           data-confirm-icon="warning" data-confirm-ok="Retirer">
                                         @csrf @method('DELETE')
+                                        @foreach($assignFilterParams as $filterName => $filterValue)
+                                            <input type="hidden" name="{{ $filterName }}" value="{{ $filterValue }}">
+                                        @endforeach
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Retirer"><i class="fas fa-unlink"></i></button>
                                     </form>
                                 @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="text-center text-muted py-4">Aucune affectation pour le moment.</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">Aucune affectation pour le moment.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
         <div class="card-footer bg-white">{{ $assignments->links('pagination::bootstrap-5') }}</div>
+        </div>{{-- /#assignmentsCardInner --}}
     </div>
 </div>
 
@@ -524,6 +672,215 @@
     // État initial
     updateAssignedStates();
     updateSelectAllCount();
+})();
+
+/* ============================================================
+   Section « Affectations existantes » : filtres dynamiques (AJAX),
+   sélection multiple et retrait en lot.
+
+   Le filtrage ne recharge que cette section : la sélection
+   d'infrastructures et d'agents de la section 2 est ainsi préservée.
+   ============================================================ */
+(function () {
+    'use strict';
+
+    const card       = document.getElementById('assignmentsCard');
+    const inner      = document.getElementById('assignmentsCardInner');
+    const filterForm = document.getElementById('assignFilterForm');
+    if (!card || !inner || !filterForm) return;
+
+    const FILTER_NAMES = ['a_q', 'a_statut', 'a_commune', 'a_secteur', 'a_agent'];
+    const INDEX_URL    = '{{ route('infrastructure-assignments.index') }}';
+    const format       = n => n.toLocaleString('fr-FR');
+
+    /* ---------- Filtres ---------- */
+    function filterParams(page) {
+        const params = new URLSearchParams();
+        FILTER_NAMES.forEach(function (name) {
+            const input = filterForm.querySelector('[name="' + name + '"]');
+            if (input && input.value) params.set(name, input.value);
+        });
+        if (page) params.set('page', page);
+        return params;
+    }
+
+    let loading = false;
+
+    function loadAssignments(page) {
+        if (loading) return;
+        loading = true;
+
+        const params = filterParams(page);
+        inner.classList.add('opacity-50');
+
+        fetch(INDEX_URL + (params.toString() ? '?' + params.toString() : ''), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (r) { return r.text(); })
+            .then(function (html) {
+                const doc   = new DOMParser().parseFromString(html, 'text/html');
+                const fresh = doc.getElementById('assignmentsCardInner');
+                if (!fresh) return;
+
+                inner.innerHTML = fresh.innerHTML;
+                syncHeader(doc, params);
+                refreshSelection();
+
+                // URL synchronisée : la page reste partageable / rafraîchissable.
+                const url = new URL(window.location.href);
+                url.search = params.toString();
+                history.replaceState(null, '', url.toString());
+            })
+            .catch(function () {})
+            .finally(function () {
+                loading = false;
+                inner.classList.remove('opacity-50');
+            });
+    }
+
+    /** Resynchronise les éléments d'en-tête restés hors de la zone rechargée. */
+    function syncHeader(doc, params) {
+        const summary = document.getElementById('assign-filter-summary');
+        if (summary) summary.classList.toggle('d-none', params.toString() === '');
+
+        const count    = document.getElementById('assign-result-count');
+        const freshCnt = doc.getElementById('assign-result-count');
+        if (count && freshCnt) count.textContent = freshCnt.textContent.trim();
+
+        const statut = params.get('a_statut') || '';
+        card.querySelectorAll('[data-assign-status]').forEach(function (badge) {
+            const active = badge.getAttribute('data-assign-status') === statut;
+            badge.classList.toggle('border', active);
+            badge.classList.toggle('border-2', active);
+            badge.classList.toggle('border-dark', active);
+        });
+    }
+
+    filterForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        loadAssignments();
+    });
+
+    filterForm.querySelectorAll('select').forEach(function (select) {
+        select.addEventListener('change', function () { loadAssignments(); });
+    });
+
+    const assignQ = filterForm.querySelector('[name="a_q"]');
+    if (assignQ) {
+        // Recherche appliquée à la validation ou à la perte du focus
+        // (évite un appel réseau à chaque frappe).
+        assignQ.addEventListener('change', function () { loadAssignments(); });
+        assignQ.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); loadAssignments(); }
+        });
+    }
+
+    const resetLink = document.getElementById('assign-reset-filters');
+    if (resetLink) {
+        resetLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            FILTER_NAMES.forEach(function (name) {
+                const input = filterForm.querySelector('[name="' + name + '"]');
+                if (input) input.value = '';
+            });
+            loadAssignments();
+        });
+    }
+
+    /* ---------- Sélection en lot ---------- */
+    const boxes        = () => Array.from(inner.querySelectorAll('.assign-check:not(:disabled)'));
+    const checkedBoxes = () => Array.from(inner.querySelectorAll('.assign-check:checked'));
+
+    function refreshSelection() {
+        const checked   = checkedBoxes();
+        const all       = boxes();
+        const countEl   = inner.querySelector('#bulk-selected-count');
+        const revokeBtn = inner.querySelector('#btn-bulk-revoke');
+        const checkAll  = inner.querySelector('#assign-check-all');
+
+        if (countEl) countEl.textContent = checked.length;
+        if (revokeBtn) revokeBtn.disabled = checked.length === 0;
+        if (checkAll) {
+            checkAll.checked = all.length > 0 && checked.length === all.length;
+            checkAll.indeterminate = checked.length > 0 && checked.length < all.length;
+        }
+    }
+
+    function runConfirmation(title, message, wholeScope) {
+        const submit = function () {
+            const form      = inner.querySelector('#bulkRevokeForm');
+            const selectAll = inner.querySelector('#bulkSelectAll');
+            if (selectAll) selectAll.value = wholeScope ? '1' : '';
+            if (window.adecobUI) { window.adecobUI.showLoader('Retrait des affectations...'); }
+            // Soumission programmatique : elle n'émet pas l'événement submit,
+            // donc aucun autre handler n'intervient (pas de double loader).
+            if (form) form.submit();
+        };
+        if (window.adecobUI) {
+            window.adecobUI.confirm({ title: title, message: message, icon: 'danger', okText: 'Retirer', onConfirm: submit });
+        } else if (confirm(message)) {
+            submit();
+        }
+    }
+
+    // Délégation d'événements : le contenu de #assignmentsCardInner est
+    // intégralement remplacé à chaque rechargement, ses écouteurs avec.
+    inner.addEventListener('change', function (e) {
+        if (!e.target || !e.target.classList) return;
+
+        if (e.target.classList.contains('assign-check')) {
+            refreshSelection();
+            return;
+        }
+        if (e.target.id === 'assign-check-all') {
+            const state = e.target.checked;
+            boxes().forEach(function (cb) { cb.checked = state; });
+            refreshSelection();
+        }
+    });
+
+    inner.addEventListener('click', function (e) {
+        if (!e.target || !e.target.closest) return;
+
+        if (e.target.closest('#btn-bulk-clear')) {
+            boxes().forEach(function (cb) { cb.checked = false; });
+            refreshSelection();
+            return;
+        }
+
+        if (e.target.closest('#btn-bulk-revoke')) {
+            const checked = checkedBoxes();
+            if (!checked.length) return;
+            runConfirmation(
+                'Retirer la sélection',
+                format(checked.length) + ' affectation(s) seront retirées. Les agents concernés perdront l\'accès à ces infrastructures.',
+                false
+            );
+            return;
+        }
+
+        const revokeAll = e.target.closest('#btn-bulk-revoke-all');
+        if (revokeAll) {
+            const n = parseInt(revokeAll.getAttribute('data-count') || '0', 10);
+            if (n <= 0) return;
+            const scope = revokeAll.getAttribute('data-filtered') === '1' ? ' correspondant aux filtres actuels' : '';
+            runConfirmation(
+                'Retirer les affectations',
+                format(n) + ' affectation(s)' + scope + ' seront retirées. Les agents concernés perdront l\'accès. Les affectations validées sont conservées.',
+                true
+            );
+            return;
+        }
+
+        const pageLink = e.target.closest('a.page-link');
+        if (pageLink) {
+            e.preventDefault();
+            const target = new URL(pageLink.href, window.location.origin);
+            loadAssignments(target.searchParams.get('page'));
+        }
+    });
+
+    refreshSelection();
 })();
 </script>
 @endpush

@@ -151,10 +151,21 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Type de travail <span class="text-danger">*</span></label>
+                        @php
+                            // Anciens libellés encore présents en base : on les rattache au nouveau libellé
+                            // pour que la sélection reste correcte lors d'une modification.
+                            $wtAliases = [
+                                'Entretien courant'  => 'Entretien',
+                                'Réparation urgente' => 'Réparation',
+                                'Construction neuve' => 'Nouvelle construction',
+                            ];
+                            $wtCurrent = old('work_type', optional($existingPlannedWork)->work_type);
+                            $wtCurrent = $wtAliases[$wtCurrent] ?? $wtCurrent;
+                        @endphp
                         <select name="work_type" class="form-select @error('work_type') is-invalid @enderror" required>
                             <option value="">— Choisir —</option>
-                            @foreach(['Entretien courant','Réhabilitation','Réparation urgente','Extension','Construction neuve','Nettoyage','Autre'] as $wt)
-                                <option value="{{ $wt }}" @selected(old('work_type', optional($existingPlannedWork)->work_type)=== $wt)>{{ $wt }}</option>
+                            @foreach(['Entretien','Réhabilitation','Réparation','Extension','Nouvelle construction',"Achat d'équipements",'Nettoyage','Autre'] as $wt)
+                                <option value="{{ $wt }}" @selected($wtCurrent === $wt)>{{ $wt }}</option>
                             @endforeach
                         </select>
                         @error('work_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -177,25 +188,28 @@
 
                 <div class="form-section-title">Budget & acteurs</div>
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Coût estimé (FCFA) <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <input type="number" name="cost" class="form-control cost-input" min="0" step="500" value="{{ old('cost', optional($existingPlannedWork)->cost) }}" required>
-                            <span class="input-group-text">FCFA</span>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label">Année de début <span class="text-danger">*</span></label>
                         <input type="number" name="annee_debut" id="annee-debut" class="form-control @error('annee_debut') is-invalid @enderror"
                                min="2000" max="2100" value="{{ $pDebut }}" required>
                         @error('annee_debut')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label">Année de fin <span class="text-danger">*</span></label>
                         <input type="number" name="annee_fin" id="annee-fin" class="form-control @error('annee_fin') is-invalid @enderror"
                                min="2000" max="2100" value="{{ $pFin }}" required>
                         <div class="form-text">Ex. : début 2027, fin 2030.</div>
                         @error('annee_fin')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Priorité</label>
+                        <select name="priorite" class="form-select @error('priorite') is-invalid @enderror">
+                            <option value="">— Non définie —</option>
+                            @foreach(['Urgent','Élevée','Moyenne','Faible'] as $pr)
+                                <option value="{{ $pr }}" @selected(old('priorite', optional($existingPlannedWork)->priorite) === $pr)>{{ $pr }}</option>
+                            @endforeach
+                        </select>
+                        @error('priorite')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Acteur(s) concerné(s) <span class="text-danger">*</span></label>
@@ -233,15 +247,20 @@
                                value="{{ old('cout_unitaire', optional($existingPlannedWork)->cout_unitaire) }}">
                         @error('cout_unitaire')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    {{-- Coût total : généré automatiquement (quantité × coût unitaire).
+                         Un champ caché porte la valeur soumise (sans séparateurs de milliers),
+                         et un champ d'affichage formaté montre le montant à l'utilisateur. --}}
                     <div class="col-md-3">
-                        <label class="form-label">Priorité</label>
-                        <select name="priorite" class="form-select @error('priorite') is-invalid @enderror">
-                            <option value="">— Non définie —</option>
-                            @foreach(['Urgent','Élevée','Moyenne','Faible'] as $pr)
-                                <option value="{{ $pr }}" @selected(old('priorite', optional($existingPlannedWork)->priorite) === $pr)>{{ $pr }}</option>
-                            @endforeach
-                        </select>
-                        @error('priorite')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <label class="form-label">Coût total (FCFA)</label>
+                        <div class="input-group">
+                            <input type="text" id="cout-total-display" class="form-control cost-input" readonly tabindex="-1"
+                                   placeholder="—"
+                                   value="{{ old('cost', optional($existingPlannedWork)->cost) ? number_format((float) old('cost', optional($existingPlannedWork)->cost), 0, ',', ' ') : '' }}">
+                            <span class="input-group-text">FCFA</span>
+                        </div>
+                        <input type="hidden" name="cost" id="cout-total" value="{{ old('cost', optional($existingPlannedWork)->cost) }}">
+                        <div class="form-text">Calculé automatiquement : quantité × coût unitaire.</div>
+                        @error('cost')<div class="text-danger small">{{ $message }}</div>@enderror
                     </div>
                 </div>
 
@@ -290,19 +309,8 @@
                         </div>
                     @endforeach
                 </div>
-
-                <div class="row g-3 mt-1">
-                    <div class="col-md-4">
-                        <label class="form-label">Statut d'exécution</label>
-                        <select name="statut_execution" class="form-select @error('statut_execution') is-invalid @enderror">
-                            <option value="">— Non défini —</option>
-                            @foreach(['Non démarré','En cours','Partiellement exécuté','Terminé','Suspendu'] as $se)
-                                <option value="{{ $se }}" @selected(old('statut_execution', optional($existingPlannedWork)->statut_execution) === $se)>{{ $se }}</option>
-                            @endforeach
-                        </select>
-                        @error('statut_execution')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                </div>
+                {{-- Le statut d'exécution n'est plus saisi ici : il se définit directement
+                     depuis la liste des infrastructures planifiées (select par ligne). --}}
             </div>
 
             <div class="form-section-title">Observations complémentaires</div>
@@ -464,6 +472,45 @@
     finInput.addEventListener('change', rebuildOnRangeChange);
     debutInput.addEventListener('input', rebuildOnRangeChange);
     finInput.addEventListener('input', rebuildOnRangeChange);
+
+    // ---- Coût total = quantité × coût unitaire (calcul automatique) ----
+    const quantiteInput   = document.querySelector('input[name="quantite"]');
+    const coutUnitInput   = document.querySelector('input[name="cout_unitaire"]');
+    const coutTotalEl     = document.getElementById('cout-total');          // champ caché soumis
+    const coutTotalDisp   = document.getElementById('cout-total-display');  // affichage formaté
+
+    // clearIfMissing : efface le coût quand les valeurs nécessaires au calcul disparaissent.
+    // À l'initialisation on passe false pour ne pas effacer un coût déjà enregistré
+    // (anciennes planifications où quantité / coût unitaire ne sont pas renseignés).
+    function syncCoutTotal(clearIfMissing) {
+        if (!coutTotalEl) return;
+
+        const qte = parseFloat(quantiteInput ? quantiteInput.value : '');
+        const cu  = parseFloat(coutUnitInput ? coutUnitInput.value : '');
+
+        if (isFinite(qte) && isFinite(cu)) {
+            const total = Math.round(qte * cu);
+            coutTotalEl.value = total;
+            if (coutTotalDisp) coutTotalDisp.value = fmtMoney(total);
+        } else if (clearIfMissing) {
+            coutTotalEl.value = '';
+            if (coutTotalDisp) coutTotalDisp.value = '';
+        }
+    }
+
+    [quantiteInput, coutUnitInput].forEach(function (inp) {
+        if (!inp) return;
+        inp.addEventListener('input', function () { syncCoutTotal(true); });
+        inp.addEventListener('change', function () { syncCoutTotal(true); });
+    });
+
+    (function initCoutTotal() {
+        // Affiche le coût existant formaté, puis tente une première synchronisation.
+        if (coutTotalDisp && coutTotalEl && coutTotalEl.value) {
+            coutTotalDisp.value = fmtMoney(coutTotalEl.value);
+        }
+        syncCoutTotal(false);
+    })();
 
     buildFields();
 })();

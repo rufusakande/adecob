@@ -59,7 +59,7 @@
 
         <form method="GET" action="{{ route('public.infrastructures') }}" class="public-toolbar mb-4">
             <div class="row g-3 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Commune</label>
                     <select name="commune_id" class="form-select">
                         <option value="">Toutes les communes</option>
@@ -68,7 +68,16 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Secteur</label>
+                    <select name="secteur" class="form-select">
+                        <option value="">Tous les secteurs</option>
+                        @foreach($secteurs ?? [] as $s)
+                            <option value="{{ $s }}" @selected(request('secteur') === $s)>{{ $s }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Type d'infrastructure</label>
                     <select name="type" class="form-select">
                         <option value="">Tous les types</option>
@@ -77,7 +86,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label fw-semibold">État</label>
                     <select name="etat" class="form-select">
                         <option value="">Tous les états</option>
@@ -89,6 +98,13 @@
                 <div class="col-md-1 d-grid">
                     <button class="btn btn-success" type="submit"><i class="fas fa-filter"></i></button>
                 </div>
+                @if(request()->hasAny(['commune_id', 'secteur', 'type', 'etat']))
+                    <div class="col-12">
+                        <a href="{{ route('public.infrastructures') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times"></i> Réinitialiser les filtres
+                        </a>
+                    </div>
+                @endif
             </div>
         </form>
 
@@ -119,6 +135,11 @@
                                                 <i class="fas fa-layer-group"></i> {{ $infra->type_infrastructure ?? '—' }}
                                                 @if($infra->annee_realisation) · {{ $infra->annee_realisation }} @endif
                                             </div>
+                                            @if($infra->secteur_domaine)
+                                                <div class="meta">
+                                                    <i class="fas fa-tags"></i> {{ $infra->secteur_domaine }}
+                                                </div>
+                                            @endif
                                         </div>
                                         @if($infra->etat_fonctionnement)
                                             <span class="badge-etat etat-{{ \Illuminate\Support\Str::slug($infra->etat_fonctionnement, '') }}">
@@ -201,6 +222,7 @@
                 <strong>${p.name ?? 'Infrastructure'}</strong><br>
                 <small>${p.type ?? ''}</small><br>
                 <small>${p.commune ?? ''}</small>
+                ${p.secteur ? '<br><small><em>' + p.secteur + '</em></small>' : ''}
                 ${p.etat ? '<br><em>État : ' + p.etat + '</em>' : ''}
             `);
 

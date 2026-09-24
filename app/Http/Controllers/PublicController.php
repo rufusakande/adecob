@@ -62,6 +62,12 @@ class PublicController extends Controller
             ->distinct()
             ->orderBy('type_infrastructure')
             ->pluck('type_infrastructure');
+        $secteurs = Infrastructure::query()
+            ->whereNotNull('secteur_domaine')
+            ->where('secteur_domaine', '!=', '')
+            ->distinct()
+            ->orderBy('secteur_domaine')
+            ->pluck('secteur_domaine');
 
         $query = Infrastructure::query()
             ->select([
@@ -77,6 +83,9 @@ class PublicController extends Controller
         }
         if ($request->filled('type')) {
             $query->where('type_infrastructure', $request->string('type'));
+        }
+        if ($request->filled('secteur')) {
+            $query->where('secteur_domaine', $request->string('secteur'));
         }
         if ($request->filled('etat')) {
             $query->where('etat_fonctionnement', $request->string('etat'));
@@ -100,12 +109,13 @@ class PublicController extends Controller
                 'name'  => $i->nom_infrastructure ?? $i->type_infrastructure,
                 'type'  => $i->type_infrastructure,
                 'commune' => $i->communeModel?->name,
+                'secteur' => $i->secteur_domaine,
                 'etat'  => $i->etat_fonctionnement,
             ])
             ->values();
 
         return view('public.infrastructures', compact(
-            'infrastructures', 'communes', 'types', 'mapPoints'
+            'infrastructures', 'communes', 'types', 'secteurs', 'mapPoints'
         ));
     }
 }

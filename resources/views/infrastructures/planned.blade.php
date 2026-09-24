@@ -2,6 +2,20 @@
 @section('title', 'Infrastructures planifiées')
 
 @section('content')
+@php
+    // Statuts d'exécution (source unique : InfrastructureWork::STATUTS_EXECUTION).
+    // Chaque statut a une couleur qui sert à la fois au badge, au select et au fond de ligne.
+    $statutsExecution = \App\Models\InfrastructureWork::STATUTS_EXECUTION;
+    $statutClass = fn ($s) => \App\Models\InfrastructureWork::statutExecutionClass($s);
+
+    // URLs des exports annuels « tous les filtrés ».
+    // Calculées ici et passées au JS via @json() sur des variables simples :
+    // une expression imbriquée directement dans @json(...) n'est pas correctement
+    // analysée par Blade (la parenthèse est fermée trop tôt).
+    $queryFiltres = request()->except(['page', '_token']);
+    $annualPdfUrl   = route('infrastructures.planned.export.annual', array_merge($queryFiltres, ['export_scope' => 'filtered']));
+    $annualExcelUrl = route('infrastructures.planned.export.excel.annual', array_merge($queryFiltres, ['export_scope' => 'filtered']));
+@endphp
 <div class="container-fluid px-3 px-md-4 py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
@@ -35,41 +49,55 @@
                 <li><hr class="dropdown-divider"></li>
                 <li><h6 class="dropdown-header"><i class="fas fa-calendar-day me-1"></i>Plan Annuel (par exercice)</h6></li>
                 <li>
-                    <button type="button" class="dropdown-item" id="open-annual-selected">
+                    <button type="button" class="dropdown-item open-annual-modal" data-format="pdf" data-scope="selected">
                         <i class="fas fa-check-square me-2 text-muted"></i>De la sélection…
                     </button>
                 </li>
                 <li>
-                    <button type="button" class="dropdown-item" id="open-annual-filtered">
+                    <button type="button" class="dropdown-item open-annual-modal" data-format="pdf" data-scope="filtered">
                         <i class="fas fa-filter me-2 text-muted"></i>Tous les filtrés…
                     </button>
                 </li>
             </ul>
         </div>
 
-        {{-- Export Excel --}}
+        {{-- Export Excel : même structure que le PDF (Plan Triennal / Plan Annuel) --}}
         <div class="dropdown">
             <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="excelExportDropdown"
                     data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-file-excel me-1"></i> Exporter en Excel
             </button>
             <ul class="dropdown-menu" aria-labelledby="excelExportDropdown">
+                <li><h6 class="dropdown-header"><i class="fas fa-calendar-alt me-1"></i>Plan Triennal</h6></li>
                 <li>
-                    <button type="button" class="dropdown-item" id="export-selected-btn">
+                    <button type="button" class="dropdown-item" id="export-excel-selected-btn">
                         <i class="fas fa-check-square me-2 text-muted"></i>De la sélection
                     </button>
                 </li>
                 <li>
-                    <a href="{{ route('infrastructures.export', array_merge(request()->query(), ['format' => 'excel', 'export_scope' => 'filtered', 'source' => 'planned'])) }}"
+                    <a href="{{ route('infrastructures.planned.export.excel', array_merge(request()->except(['page','_token']), ['export_scope' => 'filtered'])) }}"
                        class="dropdown-item export-link-loader">
                         <i class="fas fa-filter me-2 text-muted"></i>Tous les filtrés
                     </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header"><i class="fas fa-calendar-day me-1"></i>Plan Annuel (par exercice)</h6></li>
+                <li>
+                    <button type="button" class="dropdown-item open-annual-modal" data-format="excel" data-scope="selected">
+                        <i class="fas fa-check-square me-2 text-muted"></i>De la sélection…
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item open-annual-modal" data-format="excel" data-scope="filtered">
+                        <i class="fas fa-filter me-2 text-muted"></i>Tous les filtrés…
+                    </button>
                 </li>
             </ul>
         </div>
     </div>
 
-    {{-- Modal : choix dynamique de l'exercice pour l'export du Plan Annuel --}}
+    {{-- Modal : choix dynamique de l'exercice pour l'export du Plan Annuel.
+         Le format (PDF ou Excel) dépend du menu déroulant utilisé pour l'ouvrir. --}}
     <div class="modal fade" id="annualExportModal" tabindex="-1" aria-labelledby="annualExportModalTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -106,6 +134,10 @@
                         <i class="fas fa-check-square me-1"></i> De la sélection
                     </button>
                 </div>
+                <div class="modal-footer pt-0 border-0">
+                    <span class="small text-muted me-auto">Le format dépend du bouton d'export utilisé : PDF ou Excel.</span>
+                    <span class="badge bg-secondary" id="annual-export-format-badge">PDF</span>
+                </div>
             </div>
         </div>
     </div>
@@ -125,6 +157,23 @@
         @if(request('commune'))<input type="hidden" name="commune" value="{{ request('commune') }}">@endif
         <input type="hidden" name="annee_export" id="plan-export-annual-year" value="{{ request('annee_export', '') }}">
         <div id="plan-export-annual-selected-container"></div>
+    </form>
+
+    {{-- Formulaire caché pour l'export EXCEL Triennal de la sélection --}}
+    <form id="plan-export-excel-form" method="POST" action="{{ route('infrastructures.planned.export.excel') }}" style="display:none">
+        @csrf
+        <input type="hidden" name="export_scope" value="selected">
+        @if(request('commune'))<input type="hidden" name="commune" value="{{ request('commune') }}">@endif
+        <div id="plan-export-excel-selected-container"></div>
+    </form>
+
+    {{-- Formulaire caché pour l'export EXCEL Annuel de la sélection --}}
+    <form id="plan-export-excel-annual-form" method="POST" action="{{ route('infrastructures.planned.export.excel.annual') }}" style="display:none">
+        @csrf
+        <input type="hidden" name="export_scope" value="selected">
+        @if(request('commune'))<input type="hidden" name="commune" value="{{ request('commune') }}">@endif
+        <input type="hidden" name="annee_export" id="plan-export-excel-annual-year" value="{{ request('annee_export', '') }}">
+        <div id="plan-export-excel-annual-selected-container"></div>
     </form>
 
     <div class="card mb-3">
@@ -171,8 +220,24 @@
                     </select>
                 </div>
                 <div class="col-auto">
+                    <select name="statut_execution" id="filter-statut-execution" class="form-select form-select-sm">
+                        <option value="">Tous les statuts d'exécution</option>
+                        @foreach($statutsExecution as $se)
+                            <option value="{{ $se }}" {{ request('statut_execution') === $se ? 'selected' : '' }}>{{ $se }}</option>
+                        @endforeach
+                        <option value="__none__" {{ request('statut_execution') === '__none__' ? 'selected' : '' }}>— Non défini —</option>
+                    </select>
+                </div>
+                <div class="col-auto">
                     <button class="btn btn-sm btn-outline-secondary" type="submit">Filtrer</button>
                 </div>
+                @if(request()->hasAny(['commune','secteur_domaine','type_infrastructure','etat_fonctionnement','niveau_degradation','statut_execution']))
+                    <div class="col-auto">
+                        <a href="{{ route('infrastructures.planned') }}" class="btn btn-sm btn-outline-danger" title="Réinitialiser les filtres">
+                            <i class="fas fa-times me-1"></i> Réinitialiser
+                        </a>
+                    </div>
+                @endif
             </form>
         </div>
     </div>
@@ -208,7 +273,7 @@
                             <th>Plan annuel (FCFA)</th>
                             <th>Plan triennal (FCFA)</th>
                             <th>Priorité</th>
-                            <th>Statut exécution</th>
+                            <th style="min-width:175px;">Statut d'exécution</th>
                             <th>Coût total (FCFA)</th>
                             <th>Prochaine échéance</th>
                             <th width="150">Actions</th>
@@ -220,18 +285,17 @@
                                 $plans = $infra->works;
                                 $totalCost = $plans->sum('cost');
                                 $next = $plans->sortBy('completion_date')->first();
-                                $isRehabilitated = !empty($infra->rehabilitation) && strtolower($infra->rehabilitation) === 'réhabilitée';
                                 $plan = $plans->where('status', 'planned')->sortBy('completion_date')->first();
+                                // Statut d'exécution porté par la ligne = celui de la 1re intervention planifiée.
+                                $statutLigne = $plan?->statut_execution ?: null;
+                                $statutColorLigne = $statutClass($statutLigne);
                             @endphp
-                            <tr class="{{ $isRehabilitated ? 'table-success' : '' }}">
+                            <tr class="{{ $statutColorLigne ? 'table-' . $statutColorLigne : '' }}">
                                 <td><input type="checkbox" name="selected_ids[]" value="{{ $infra->id }}" class="row-select" /></td>
                                 <td><strong>{{ $infra->id }}</strong></td>
                                 <td>
                                     <strong>{{ $infra->nom_infrastructure ?: 'Sans nom' }}</strong><br>
                                     <small class="text-muted">{{ $infra->secteur_domaine }}</small>
-                                    @if($isRehabilitated)
-                                        <span class="badge bg-success d-inline-block mt-1"><i class="fas fa-check-double"></i> Réhabilitée</span>
-                                    @endif
                                 </td>
                                 <td>
                                     {{ $infra->commune }}
@@ -242,9 +306,6 @@
                                     <span class="badge bg-info text-white">{{ $plans->count() }} plan(s)</span>
                                     @if($infra->isExported())
                                         <span class="badge bg-success ms-1">Exportée</span>
-                                    @endif
-                                    @if(!empty($infra->rehabilitation) && strtolower($infra->rehabilitation) === 'réhabilitée')
-                                        <span class="badge bg-warning text-dark ms-1">Réhabilitée</span>
                                     @endif
                                     <div class="small text-muted mt-1">
                                         @foreach($plans->take(2) as $p)
@@ -311,20 +372,20 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($plan && $plan->statut_execution)
-                                        @php
-                                            $statutClass = match($plan->statut_execution) {
-                                                'Terminé', 'Termine' => 'bg-success',
-                                                'En cours' => 'bg-info text-white',
-                                                'Partiellement exécuté' => 'bg-warning text-dark',
-                                                'Suspendu' => 'bg-danger',
-                                                default => 'bg-secondary',
-                                            };
-                                        @endphp
-                                        <span class="badge {{ $statutClass }}">{{ $plan->statut_execution }}</span>
-                                    @else
-                                        <span class="text-muted">—</span>
-                                    @endif
+                                    {{-- Définition directe du statut d'exécution : chaque option porte sa couleur
+                                         (bg-*), la ligne reprend la même couleur via table-*. --}}
+                                    <select class="form-select form-select-sm statut-execution-select
+                                                   {{ $statutColorLigne ? 'bg-' . $statutColorLigne . ($statutColorLigne === 'warning' ? ' text-dark' : ' text-white') : '' }}"
+                                            data-url="{{ route('infrastructures.update-status', $infra) }}"
+                                            aria-label="Statut d'exécution de l'infrastructure {{ $infra->id }}"
+                                            title="Définir le statut d'exécution">
+                                        <option value="">— Non défini —</option>
+                                        @foreach($statutsExecution as $se)
+                                            <option value="{{ $se }}"
+                                                    class="bg-{{ $statutClass($se) }} {{ $statutClass($se) === 'warning' ? 'text-dark' : 'text-white' }}"
+                                                    @selected($statutLigne === $se)>{{ $se }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td><strong>{{ number_format($totalCost, 0, ',', ' ') }}</strong></td>
                                 <td>{{ $next ? $next->completion_date->format('d/m/Y') : '—' }}</td>
@@ -336,15 +397,6 @@
                                         <a href="{{ route('infrastructures.plan', $infra) }}" class="btn btn-sm btn-success action-loader-btn" title="Modifier la planification">
                                             <i class="fas fa-calendar-plus me-1"></i> Modifier
                                         </a>
-                                        @if(!$isRehabilitated)
-                                        <button class="btn btn-sm btn-warning text-dark fw-semibold rehab-btn" type="button" title="Marquer réhabilitée" data-url="{{ route('infrastructures.mark-rehabilitated', $infra) }}">
-                                            <i class="fas fa-check-double me-1"></i> Réhabilitée
-                                        </button>
-                                        @else
-                                        <span class="btn btn-sm btn-success disabled" title="Déjà réhabilitée">
-                                            <i class="fas fa-check-double me-1"></i> Réhabilitée
-                                        </span>
-                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -367,37 +419,30 @@
     </div>
 </div>
 
-{{-- Formulaire maître caché pour la réhabilitation (hors du formulaire d'export) --}}
-<form id="master-rehab-form" method="POST" style="display:none;">
+{{-- Formulaire maître caché : définition du statut d'exécution (hors du formulaire d'export) --}}
+<form id="master-status-form" method="POST" style="display:none;">
     @csrf
+    <input type="hidden" name="statut_execution" id="master-status-value" value="">
 </form>
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const exportBtn = document.getElementById('export-selected-btn');
-        const selectionForm = document.getElementById('selection-form');
         const rowCheckboxes = Array.from(document.querySelectorAll('.row-select'));
         const selectAll = document.getElementById('select-all');
 
-        if (!exportBtn || !selectionForm) {
-            return;
-        }
+        const anyChecked = () => rowCheckboxes.some(cb => cb.checked);
+
+        // Active/désactive les boutons « De la sélection » (PDF et Excel).
+        const selectionButtons = [
+            document.getElementById('export-plan-selected-btn'),
+            document.getElementById('export-excel-selected-btn'),
+        ].filter(Boolean);
 
         const updateExportState = () => {
-            const anyChecked = rowCheckboxes.some(cb => cb.checked);
-            exportBtn.disabled = !anyChecked;
+            const checked = anyChecked();
+            selectionButtons.forEach(b => { b.disabled = !checked; });
         };
-
-        exportBtn.addEventListener('click', function (event) {
-            event.preventDefault();
-            if (!rowCheckboxes.some(cb => cb.checked)) {
-                alert('Veuillez sélectionner au moins une infrastructure avant d\'exporter.');
-                return;
-            }
-            showExportLoader();
-            selectionForm.submit();
-        });
 
         rowCheckboxes.forEach(cb => cb.addEventListener('change', updateExportState));
         if (selectAll) {
@@ -407,33 +452,73 @@
             });
         }
 
-        // Export PDF Plan Triennal (sélection)
-        const planBtn = document.getElementById('export-plan-selected-btn');
-        const planForm = document.getElementById('plan-export-form');
-        const planContainer = document.getElementById('plan-export-selected-container');
-        if (planBtn && planForm && planContainer) {
-            planBtn.addEventListener('click', function () {
+        // ---- Export Plan Triennal de la sélection (PDF et Excel) ----
+        // Chaque entrée relie un bouton à son formulaire caché et au conteneur
+        // où sont injectés les identifiants sélectionnés.
+        const triennialTargets = [
+            {
+                btnId: 'export-plan-selected-btn',
+                formId: 'plan-export-form',
+                containerId: 'plan-export-selected-container',
+                label: 'PDF',
+            },
+            {
+                btnId: 'export-excel-selected-btn',
+                formId: 'plan-export-excel-form',
+                containerId: 'plan-export-excel-selected-container',
+                label: 'Excel',
+            },
+        ];
+
+        triennialTargets.forEach(function (target) {
+            const btn = document.getElementById(target.btnId);
+            const form = document.getElementById(target.formId);
+            const container = document.getElementById(target.containerId);
+            if (!btn || !form || !container) return;
+
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
                 const ids = rowCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
                 if (!ids.length) {
                     alert('Veuillez sélectionner au moins une infrastructure planifiée pour générer le Plan Triennal.');
                     return;
                 }
-                planContainer.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
-                showExportLoader();
-                planForm.submit();
+                container.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
+                showExportLoader('Génération du fichier ' + target.label + '...');
+                form.submit();
             });
-        }
+        });
 
-        // ---- Export PDF Plan Annuel : modal de choix de l'exercice ----
-        const planAnnualBtn     = document.getElementById('export-plan-annual-selected-btn');
-        const planAnnualForm    = document.getElementById('plan-export-annual-form');
-        const planAnnualCont    = document.getElementById('plan-export-annual-selected-container');
+        // ---- Export Plan Annuel : modal de choix de l'exercice (PDF ou Excel) ----
         const annualYearSelect  = document.getElementById('annual-year-select');
-        const annualYearHidden  = document.getElementById('plan-export-annual-year');
         const annualFilteredLink= document.getElementById('annual-export-filtered-link');
         const annualModalEl     = document.getElementById('annualExportModal');
         const annualWarning     = document.getElementById('annual-year-warning');
+        const annualFormatBadge = document.getElementById('annual-export-format-badge');
+        const annualSelectedBtn = document.getElementById('export-plan-annual-selected-btn');
         const annualModal       = (annualModalEl && window.bootstrap) ? new bootstrap.Modal(annualModalEl) : null;
+
+        // Un seul modal pour les deux formats : la cible dépend du menu utilisé.
+        const annualTargets = {
+            pdf: {
+                form:      document.getElementById('plan-export-annual-form'),
+                container: document.getElementById('plan-export-annual-selected-container'),
+                yearInput: document.getElementById('plan-export-annual-year'),
+                filteredUrl: @json($annualPdfUrl),
+                badgeClass: 'bg-danger',
+            },
+            excel: {
+                form:      document.getElementById('plan-export-excel-annual-form'),
+                container: document.getElementById('plan-export-excel-annual-selected-container'),
+                yearInput: document.getElementById('plan-export-excel-annual-year'),
+                filteredUrl: @json($annualExcelUrl),
+                badgeClass: 'bg-primary',
+            },
+        };
+
+        let annualFormat = 'pdf';
+
+        const currentTarget = () => annualTargets[annualFormat] || annualTargets.pdf;
 
         // Année retenue : on exige seulement un nombre (liste large façon « calendrier »).
         const readAnnualYear = function () {
@@ -441,15 +526,23 @@
             return /^\d{1,5}$/.test(raw) ? raw : '';
         };
 
-        // Reporte l'année choisie sur le champ caché et sur le lien « tous les filtrés ».
+        // Reporte l'année choisie sur les champs cachés et sur le lien « tous les filtrés »
+        // du format actif (l'autre format reste synchronisé pour un changement immédiat).
         const syncAnnualYear = function () {
             const y = readAnnualYear();
-            if (annualYearHidden) annualYearHidden.value = y;
+
+            Object.keys(annualTargets).forEach(function (key) {
+                const t = annualTargets[key];
+                if (t.yearInput) t.yearInput.value = y;
+            });
+
             if (annualFilteredLink) {
-                const url = new URL(annualFilteredLink.href, window.location.origin);
+                const target = currentTarget();
+                const url = new URL(target.filteredUrl, window.location.origin);
                 if (y) { url.searchParams.set('annee_export', y); } else { url.searchParams.delete('annee_export'); }
                 annualFilteredLink.href = url.pathname + url.search;
             }
+
             if (annualWarning && y) annualWarning.style.display = 'none';
         };
 
@@ -457,16 +550,30 @@
             annualYearSelect.addEventListener('change', syncAnnualYear);
         }
 
-        // Ouverture du modal depuis le menu déroulant PDF.
-        const openAnnualModal = function () {
+        // Ouverture du modal : le format et la portée viennent du bouton cliqué.
+        const openAnnualModal = function (format) {
+            annualFormat = (format === 'excel') ? 'excel' : 'pdf';
+
+            if (annualFormatBadge) {
+                annualFormatBadge.className = 'badge ' + currentTarget().badgeClass;
+                annualFormatBadge.textContent = annualFormat === 'excel' ? 'Excel (.xlsx)' : 'PDF';
+            }
+            if (annualSelectedBtn) {
+                annualSelectedBtn.className = annualFormat === 'excel'
+                    ? 'btn btn-primary text-white'
+                    : 'btn btn-info text-white';
+            }
+
             syncAnnualYear();
             if (annualWarning) annualWarning.style.display = 'none';
             if (annualModal) { annualModal.show(); }
         };
-        const openAnnualSelectedBtn  = document.getElementById('open-annual-selected');
-        const openAnnualFilteredBtn  = document.getElementById('open-annual-filtered');
-        if (openAnnualSelectedBtn) openAnnualSelectedBtn.addEventListener('click', openAnnualModal);
-        if (openAnnualFilteredBtn) openAnnualFilteredBtn.addEventListener('click', openAnnualModal);
+
+        document.querySelectorAll('.open-annual-modal').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                openAnnualModal(btn.getAttribute('data-format'));
+            });
+        });
 
         // Export « tous les filtrés » : une année est obligatoire.
         if (annualFilteredLink) {
@@ -479,8 +586,8 @@
         }
 
         // Export « de la sélection » : une année est obligatoire.
-        if (planAnnualBtn && planAnnualForm && planAnnualCont) {
-            planAnnualBtn.addEventListener('click', function () {
+        if (annualSelectedBtn) {
+            annualSelectedBtn.addEventListener('click', function () {
                 const ids = rowCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
                 if (!ids.length) {
                     alert('Veuillez sélectionner au moins une infrastructure planifiée pour générer le Plan Annuel.');
@@ -491,53 +598,93 @@
                     annualYearSelect && annualYearSelect.focus();
                     return;
                 }
+
+                const target = currentTarget();
+                if (!target.form || !target.container) return;
+
                 syncAnnualYear();
-                planAnnualCont.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
-                showExportLoader();
-                planAnnualForm.submit();
+                target.container.innerHTML = ids.map(id => `<input type="hidden" name="selected_ids[]" value="${id}">`).join('');
+                showExportLoader('Génération du fichier ' + (annualFormat === 'excel' ? 'Excel' : 'PDF') + '...');
+                target.form.submit();
             });
         }
 
         updateExportState();
-        // Confirmation premium + loader global pour les boutons "Réhabilitée"
-        const masterRehabForm = document.getElementById('master-rehab-form');
-        document.querySelectorAll('.rehab-btn').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const url = btn.getAttribute('data-url');
+
+        // --- Définition directe du statut d'exécution depuis chaque ligne ---
+        // Le tableau est à l'intérieur du formulaire d'export : on ne peut pas imbriquer
+        // un <form> par ligne, on passe donc par un formulaire maître caché.
+        const masterStatusForm  = document.getElementById('master-status-form');
+        const masterStatusValue = document.getElementById('master-status-value');
+        const statutSelects     = document.querySelectorAll('.statut-execution-select');
+
+        statutSelects.forEach(function (sel) {
+            // Mémorise la valeur d'origine pour pouvoir revenir en arrière si on annule.
+            sel.dataset.initial = sel.value;
+
+            // Colore le select lui-même selon l'option choisie.
+            const paintSelect = function () {
+                sel.classList.remove('bg-secondary', 'bg-info', 'bg-warning', 'bg-success', 'bg-danger',
+                                     'text-white', 'text-dark');
+                const opt = sel.options[sel.selectedIndex];
+                if (!opt || !sel.value) return;
+                const bg = Array.from(opt.classList).find(c => c.startsWith('bg-'));
+                if (bg) sel.classList.add(bg);
+                sel.classList.add(opt.classList.contains('text-dark') ? 'text-dark' : 'text-white');
+            };
+            paintSelect();
+
+            sel.addEventListener('change', function () {
+                paintSelect();
+                if (!masterStatusForm || !masterStatusValue) return;
+
+                const submitChange = function () {
+                    masterStatusValue.value = sel.value;
+                    masterStatusForm.action = sel.getAttribute('data-url');
+                    if (window.adecobUI) window.adecobUI.showLoader('Mise à jour du statut...');
+                    masterStatusForm.submit();
+                };
+
+                const label = sel.value || 'non défini';
+
                 if (window.adecobUI && typeof window.adecobUI.confirm === 'function') {
                     window.adecobUI.confirm({
-                        title: 'Confirmer la réhabilitation',
-                        message: 'Cette action marquera définitivement cette infrastructure comme réhabilitée.',
-                        icon: 'warning',
-                        okText: 'Réhabiliter',
-                        onConfirm: function() {
-                            if (masterRehabForm) {
-                                masterRehabForm.action = url;
-                                if (window.adecobUI) window.adecobUI.showLoader('Réhabilitation en cours...');
-                                masterRehabForm.submit();
-                            }
-                        }
+                        title: 'Modifier le statut d\'exécution',
+                        message: 'Définir le statut de cette infrastructure sur « ' + label + ' » ?',
+                        icon: 'info',
+                        okText: 'Valider',
+                        onConfirm: submitChange
                     });
+                } else {
+                    submitChange();
                 }
             });
         });
 
+        // --- Filtres : soumission automatique au changement ---
+        (function () {
+            const filterForm = document.getElementById('filter-statut-execution');
+            if (!filterForm) return;
+            filterForm.closest('form').querySelectorAll('select').forEach(function (sel) {
+                sel.addEventListener('change', function () { sel.form.submit(); });
+            });
+        })();
+
         // --- Boutons d'action : le loader global premium est géré par ui-confirm.js ---
 
         // --- Loader global premium pour tous les exports (PDF / Excel) ---
-        const showExportLoader = function () {
+        const showExportLoader = function (label) {
             if (window.adecobUI) {
-                window.adecobUI.showLoader('Téléchargement en cours...');
+                window.adecobUI.showLoader(label || 'Téléchargement en cours...');
                 setTimeout(function () {
                     if (window.adecobUI) window.adecobUI.hideLoader();
                 }, 8000);
             }
         };
 
-        // Liens d'export "tous filtrés" (Plan Triennal PDF + Excel)
+        // Liens d'export « tous les filtrés » (Plan Triennal PDF + Excel)
         document.querySelectorAll('.export-link-loader').forEach(function (link) {
-            link.addEventListener('click', showExportLoader);
+            link.addEventListener('click', function () { showExportLoader('Génération du fichier...'); });
         });
 
     });

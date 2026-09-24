@@ -43,6 +43,8 @@ class SecurityHeaders
         }
 
         // Content-Security-Policy — politique compatible avec Bootstrap, FontAwesome, Google reCAPTCHA, Google Fonts, OpenStreetMap.
+        // api.open-meteo.com n'est autorisé qu'en repli : l'altitude passe d'abord par le proxy serveur
+        // (route infrastructures.elevation) afin de ne pas exposer les coordonnées GPS de l'utilisateur.
         // 'unsafe-inline' reste nécessaire pour les styles/scripts inline existants du projet ;
         // à durcir progressivement avec des nonces lors d'une refonte des vues.
         $csp = implode('; ', [
@@ -54,7 +56,7 @@ class SecurityHeaders
             "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://www.google.com https://www.gstatic.com",
-            "connect-src 'self' https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://cdn.jsdelivr.net https://unpkg.com https://www.google.com https://www.gstatic.com",
+            "connect-src 'self' https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://cdn.jsdelivr.net https://unpkg.com https://www.google.com https://www.gstatic.com https://api.open-meteo.com",
             "frame-src https://www.google.com",
             "worker-src 'self' blob:",
             "manifest-src 'self'",

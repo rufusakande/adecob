@@ -6,10 +6,9 @@
         <img src="{{ asset('logo.jpg') }}" alt="Logo {{ config('app.name', 'Armani') }}" class="img-fluid" style="max-height: 100px;">
     </div>
     <div class="alert alert-danger text-center shadow-sm" style="border-radius: 12px; border: 2px solid #dc3545;">
-        <h4 class="fw-bold mb-1"><i class="bi bi-wifi-off me-2"></i> MODE STRICTEMENT HORS-LIGNE</h4>
+        <h4 class="fw-bold mb-1"><i class="bi bi-wifi-off me-2"></i> MODE HORS-LIGNE</h4>
         <p class="mb-0">Vous êtes actuellement déconnecté du réseau. Vous pouvez saisir les informations de l'infrastructure ici. Elles seront sauvegardées sur votre appareil.</p>
     </div>
-    <h2 class="text-center mb-4">DONNEES INFRASTRUCTURES SOCIOCOMMUNAUTAIRES ET ÉCONOMIQUES/{{ config('app.name', 'Armani') }}</h2>
     
     @include('infrastructures._form', [
         'action' => '#',

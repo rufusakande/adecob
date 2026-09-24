@@ -5,16 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Infrastructure;
 use App\Models\InfrastructureAssignment;
+use App\Models\InfrastructureWork;
 use App\Models\Commune;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\InfrastructuresImport;
 use App\Exports\InfrastructuresExport;
+use App\Exports\PlannedPlanExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\MairieAgentData;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 use App\Http\Requests\InfrastructureRequest;
 
 class InfrastructureController extends Controller
@@ -53,20 +57,28 @@ class InfrastructureController extends Controller
         $villages = Infrastructure::query()->visibleTo($user)->select('village')->distinct()->orderBy('village')->pluck('village')->filter()->values();
         $secteurs = Infrastructure::query()->visibleTo($user)->select('secteur_domaine')->distinct()->orderBy('secteur_domaine')->pluck('secteur_domaine')->filter()->values();
         $types = Infrastructure::query()->visibleTo($user)->select('type_infrastructure')->distinct()->orderBy('type_infrastructure')->pluck('type_infrastructure')->filter()->values();
-        // Années valides uniquement (4 chiffres, plage plausible), tri numérique.
-        $annees = Infrastructure::query()->visibleTo($user)
+        // Calendrier des années : une plage complète et continue (et non plus seulement
+        // les années déjà présentes en base) afin de pouvoir filtrer/exporter aussi
+        // une année récente ou à venir encore vierge de données.
+        $anneeCourante = (int) date('Y');
+        $anneeFin      = $anneeCourante + 5;
+
+        // Année la plus ancienne réellement renseignée (les valeurs non numériques
+        // de l'ancien import sont ignorées).
+        $anneeLaPlusAncienne = Infrastructure::query()->visibleTo($user)
             ->whereNotNull('annee_realisation')
             ->pluck('annee_realisation')
-            ->filter(function ($a) {
-                if ($a === null || $a === '') return false;
-                if (! preg_match('/^\d{4}$/', trim((string) $a))) return false;
-                $y = (int) $a;
-                return $y >= 1900 && $y <= ((int) date('Y') + 5);
-            })
-            ->map(fn ($a) => (string) ((int) $a))
-            ->unique()
-            ->sortBy(fn ($y) => (int) $y)
-            ->values();
+            ->map(fn ($a) => trim((string) $a))
+            ->filter(fn ($a) => preg_match('/^\d{4}$/', $a) === 1)
+            ->map(fn ($a) => (int) $a)
+            ->filter(fn ($y) => $y >= 1900 && $y <= $anneeFin)
+            ->min();
+
+        // 30 ans d'historique minimum, sans descendre sous 1900.
+        $anneeDebut = max(min($anneeLaPlusAncienne ?? $anneeCourante, $anneeCourante - 30), 1900);
+
+        // Du plus récent au plus ancien : l'année en cours apparaît en tête de liste.
+        $annees = collect(range($anneeFin, $anneeDebut))->map(fn ($y) => (string) $y);
         $etats = Infrastructure::query()->visibleTo($user)->select('etat_fonctionnement')->distinct()->orderBy('etat_fonctionnement')->pluck('etat_fonctionnement')->filter()->values();
         $niveaux = Infrastructure::query()->visibleTo($user)->select('niveau_degradation')->distinct()->orderBy('niveau_degradation')->pluck('niveau_degradation')->filter()->values();
 
@@ -270,6 +282,42 @@ class InfrastructureController extends Controller
         if ($request->filled('niveau_degradation')) {
             $query->where('niveau_degradation', $request->niveau_degradation);
         }
+    }
+
+    /**
+     * Proxy serveur vers l'API d'altitude Open-Meteo.
+     *
+     * Évite d'appeler un domaine tiers directement depuis le navigateur :
+     *  - garde la CSP stricte (connect-src 'self'),
+     *  - n'expose pas les coordonnées GPS de l'utilisateur à un tiers,
+     *  - contourne un éventuel blocage réseau de l'API côté client.
+     *
+     * Réponse : { "elevation": 123.45 } ou { "elevation": null } (502) si indisponible.
+     */
+    public function elevation(Request $request)
+    {
+        $data = $request->validate([
+            'lat' => 'required|numeric|between:-90,90',
+            'lng' => 'required|numeric|between:-180,180',
+        ]);
+
+        try {
+            $response = Http::timeout(6)
+                ->retry(2, 200, throw: false)
+                ->get('https://api.open-meteo.com/v1/elevation', [
+                    'latitude'  => $data['lat'],
+                    'longitude' => $data['lng'],
+                ]);
+
+            $values = $response->successful() ? ($response->json('elevation') ?? null) : null;
+            if (is_array($values) && isset($values[0]) && is_numeric($values[0])) {
+                return response()->json(['elevation' => (float) $values[0]]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Recherche d\'altitude impossible', ['error' => $e->getMessage()]);
+        }
+
+        return response()->json(['elevation' => null], 502);
     }
 
     public function import(Request $request)
@@ -977,6 +1025,12 @@ class InfrastructureController extends Controller
             'trimestres_annees.*.t3'      => 'nullable|numeric|min:0|max:9999999999999',
             'trimestres_annees.*.t4'      => 'nullable|numeric|min:0|max:9999999999999',
             'statut_execution'    => 'nullable|string|max:255',
+        ], [
+            // Le coût total est généré automatiquement à partir de la quantité et du coût
+            // unitaire : on guide l'utilisateur si l'un des deux manque.
+            'cost.required' => 'Le coût total est obligatoire : renseignez la quantité et le coût unitaire dans la fiche de planification triennale.',
+            'cost.numeric'  => 'Le coût total doit être un montant valide.',
+            'cost.min'      => 'Le coût total ne peut pas être négatif.',
         ]);
 
         // Limite de sécurité sur la plage (ex. 12 années max pour éviter les abus).
@@ -1075,6 +1129,18 @@ class InfrastructureController extends Controller
         }
         if ($request->filled('niveau_degradation')) {
             $query->where('niveau_degradation', $request->niveau_degradation);
+        }
+        // Filtre par statut d'exécution : l'infrastructure doit avoir au moins une
+        // intervention planifiée portant ce statut (« __none__ » = statut non défini).
+        if ($request->filled('statut_execution')) {
+            $statut = $request->input('statut_execution');
+            if ($statut === '__none__') {
+                $query->whereDoesntHave('works', fn ($q) => $q->where('status', 'planned')
+                    ->whereNotNull('statut_execution')->where('statut_execution', '!=', ''));
+            } else {
+                $query->whereHas('works', fn ($q) => $q->where('status', 'planned')
+                    ->where('statut_execution', $statut));
+            }
         }
 
         $infrastructures = $query->with(['works' => fn($q) => $q->where('status', 'planned')->orderBy('completion_date')])
@@ -1236,6 +1302,160 @@ class InfrastructureController extends Controller
         return $pdf->download($filename);
     }
 
+    /**
+     * Exporter le Plan Triennal des infrastructures planifiées en Excel (.xlsx).
+     * Reproduit la présentation du PDF : en-tête institutionnel, logos, tableau.
+     */
+    public function exportPlannedExcel(Request $request)
+    {
+        return $this->plannedExcelDownload($request, PlannedPlanExport::MODE_TRIENNAL, 'plan_triennal');
+    }
+
+    /**
+     * Exporter le Plan Annuel des infrastructures planifiées en Excel (.xlsx).
+     */
+    public function exportPlannedAnnualExcel(Request $request)
+    {
+        return $this->plannedExcelDownload($request, PlannedPlanExport::MODE_ANNUEL, 'plan_annuel');
+    }
+
+    /**
+     * Fabrique commune aux deux exports Excel (triennal / annuel).
+     */
+    protected function plannedExcelDownload(Request $request, string $mode, string $filePrefix)
+    {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $data = $this->plannedExportData($request);
+        if ($data === null) {
+            return redirect()->back()->with('error', 'Sélectionnez au moins une infrastructure avant d\'exporter.');
+        }
+
+        $meta = [
+            'communeName'     => $data['communeName'],
+            'departement'     => $data['departement'],
+            'anneeBase'       => $data['anneeBase'],
+            'anneeDebut'      => $data['anneeDebut'],
+            'anneeFin'        => $data['anneeFin'],
+            'anneeExport'     => $data['anneeExport'],
+            'dateElaboration' => now()->locale('fr')->isoFormat('D MMMM YYYY'),
+        ];
+
+        $export = new PlannedPlanExport(
+            $data['infrastructures'],
+            $mode,
+            $meta,
+            $this->armoiriesPath(),
+            $this->communeLogoFilePath($data['communeName'])
+        );
+
+        $filename = $filePrefix . '_'
+            . ($data['communeName'] ? \Illuminate\Support\Str::slug($data['communeName']) . '_' : '')
+            . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download($export, $filename);
+    }
+
+    /**
+     * Chemin du logo des armoiries (le même que celui utilisé par les PDF).
+     */
+    protected function armoiriesPath(): ?string
+    {
+        foreach ([
+            public_path('logo-alt.png'),
+            base_path('public/logo-alt.png'),
+            dirname(base_path()) . '/public_html/logo-alt.png',
+            dirname(base_path()) . '/public/logo-alt.png',
+            base_path('logo-alt.png'),
+        ] as $path) {
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Chemin du logo de la commune sur le disque (PhpSpreadsheet lit les fichiers
+     * directement, contrairement à Dompdf qui a besoin d'une image encodée).
+     */
+    protected function communeLogoFilePath(?string $communeName): ?string
+    {
+        if (!$communeName) {
+            return null;
+        }
+
+        $commune = Commune::where('name', $communeName)->first();
+        if (!$commune || !$commune->logo) {
+            return null;
+        }
+
+        $absolute = storage_path('app/public/' . $commune->logo);
+
+        return is_file($absolute) ? $absolute : null;
+    }
+
+
+    /**
+     * Définir le statut d'exécution d'une infrastructure planifiée.
+     *
+     * Appelé depuis le select présent sur chaque ligne de la page
+     * « infrastructures planifiées ». Le statut est porté par les interventions
+     * planifiées (`infrastructure_works.statut_execution`) : on l'applique à toutes
+     * les interventions « planned » afin que la couleur de la ligne, le filtre et
+     * les exports PDF restent cohérents.
+     */
+    public function updateExecutionStatus(Request $request, Infrastructure $infrastructure)
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->isSuperAdmin() || $user->isCommuneAdmin()), 403);
+
+        if ($user->isCommuneAdmin()) {
+            $same = ((int) $infrastructure->commune_id === (int) $user->commune_id)
+                 || (optional($user->commune)->name === $infrastructure->commune);
+            abort_unless($same, 403, 'Cette infrastructure n\'appartient pas à votre commune.');
+        }
+
+        $validated = $request->validate([
+            'statut_execution' => ['nullable', 'string', Rule::in(InfrastructureWork::STATUTS_EXECUTION)],
+        ], [
+            'statut_execution.in' => 'Statut d\'exécution invalide.',
+        ]);
+
+        $statut = $validated['statut_execution'] ?? null;
+
+        try {
+            $updated = $infrastructure->works()
+                ->where('status', 'planned')
+                ->update([
+                    'statut_execution' => $statut,
+                    'updated_at'       => now(),
+                ]);
+
+            if ($updated === 0) {
+                return redirect()->back()->with('error',
+                    "Aucune intervention planifiée à mettre à jour pour l'infrastructure #{$infrastructure->id}.");
+            }
+
+            Log::info('Statut d\'exécution mis à jour', [
+                'infrastructure_id' => $infrastructure->id,
+                'statut'            => $statut,
+                'works_updated'     => $updated,
+                'by'                => $user->id,
+            ]);
+
+            $label = $statut ?: 'non défini';
+
+            return redirect()->back()->with('success',
+                "Statut d'exécution de l'infrastructure #{$infrastructure->id} défini sur « {$label} ».");
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la mise à jour du statut d\'exécution: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
+        }
+    }
 
     /** Marquer une infrastructure comme réhabilitée */
     public function markAsRehabilitated(Request $request, Infrastructure $infrastructure)

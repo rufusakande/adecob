@@ -19,6 +19,17 @@ use Illuminate\Support\Facades\DB;
  */
 class InfrastructureAssignmentController extends Controller
 {
+    /** Paramètres de filtrage de la section « Affectations existantes ». */
+    public const ASSIGNMENT_FILTERS = ['a_q', 'a_statut', 'a_commune', 'a_secteur', 'a_agent'];
+
+    /** Statuts d'affectation acceptés par le filtre. */
+    private const ASSIGNMENT_STATUSES = [
+        InfrastructureAssignment::STATUS_ASSIGNED,
+        InfrastructureAssignment::STATUS_SUBMITTED,
+        InfrastructureAssignment::STATUS_VALIDATED,
+        InfrastructureAssignment::STATUS_REJECTED,
+    ];
+
     /**
      * Page selon le rôle :
      *  - agent : ses affectations actives
@@ -86,17 +97,102 @@ class InfrastructureAssignmentController extends Controller
         // Liste initiale des infrastructures (filtres + pagination).
         $infraList = $this->buildInfraList($request, $user);
 
-        // Toutes les affectations concernant les infrastructures visibles.
-        $assignments = InfrastructureAssignment::with(['infrastructure', 'agent.commune:id,name', 'assigner', 'reviewer'])
+        // Toutes les affectations concernant les infrastructures visibles (filtres de la section).
+        $assignQuery = $this->assignmentQuery($user);
+        $this->applyAssignmentFilters($assignQuery, $request);
+
+        // Nombre de retirables selon les filtres courants (une affectation validée ne se retire jamais).
+        $assignRevocableCount = (clone $assignQuery)
+            ->where('status', '!=', InfrastructureAssignment::STATUS_VALIDATED)
+            ->count();
+
+        $assignments = $assignQuery->orderByDesc('id')->paginate(20)->withQueryString();
+
+        // Options des filtres de la section « Affectations existantes ».
+        $assignCommunes = Infrastructure::query()->visibleTo($user)
+            ->select('commune')->distinct()->orderBy('commune')
+            ->pluck('commune')->filter()->values();
+        $assignSecteurs = Infrastructure::query()->visibleTo($user)
+            ->select('secteur_domaine')->distinct()->orderBy('secteur_domaine')
+            ->pluck('secteur_domaine')->filter()->values();
+        $assignAgentIds = InfrastructureAssignment::query()
             ->whereHas('infrastructure', fn ($q) => $q->visibleTo($user))
-            ->orderByDesc('id')
-            ->paginate(20)
-            ->withQueryString();
+            ->distinct()->pluck('assigned_to');
+        $assignAgents = $assignAgentIds->isEmpty()
+            ? collect()
+            : User::query()->whereIn('id', $assignAgentIds)
+                ->with('commune:id,name')
+                ->orderBy('name')
+                ->get(['id', 'name', 'prenom', 'commune_id']);
+        $assignStatusCounts = InfrastructureAssignment::query()
+            ->whereHas('infrastructure', fn ($q) => $q->visibleTo($user))
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
         return view('infrastructures.affectations.admin', compact(
             'agents', 'agentAssignCounts', 'assignments', 'totalAffectables',
-            'communes', 'arrondissements', 'villages', 'secteurs', 'types'
+            'communes', 'arrondissements', 'villages', 'secteurs', 'types',
+            'assignCommunes', 'assignSecteurs', 'assignAgents', 'assignStatusCounts',
+            'assignRevocableCount'
         ) + $infraList);
+    }
+
+    /**
+     * Requête de base des affectations visibles par l'utilisateur.
+     */
+    private function assignmentQuery($user)
+    {
+        return InfrastructureAssignment::query()
+            ->with(['infrastructure', 'agent.commune:id,name', 'assigner', 'reviewer'])
+            ->whereHas('infrastructure', fn ($q) => $q->visibleTo($user));
+    }
+
+    /**
+     * Filtres de la section « Affectations existantes »
+     * (recherche, statut, agent, commune, secteur).
+     */
+    private function applyAssignmentFilters($query, Request $request): void
+    {
+        $q = trim((string) $request->input('a_q'));
+        if ($q !== '') {
+            $query->where(function ($b) use ($q) {
+                $b->whereHas('infrastructure', function ($i) use ($q) {
+                    $i->where('nom_infrastructure', 'like', "%{$q}%")
+                      ->orWhere('type_infrastructure', 'like', "%{$q}%")
+                      ->orWhere('village', 'like', "%{$q}%")
+                      ->orWhere('commune', 'like', "%{$q}%");
+                })->orWhereHas('agent', function ($a) use ($q) {
+                    $a->where('name', 'like', "%{$q}%")
+                      ->orWhere('prenom', 'like', "%{$q}%")
+                      ->orWhere('email', 'like', "%{$q}%");
+                });
+            });
+        }
+
+        if (in_array($request->input('a_statut'), self::ASSIGNMENT_STATUSES, true)) {
+            $query->where('status', $request->input('a_statut'));
+        }
+        if ($request->filled('a_agent')) {
+            $query->where('assigned_to', (int) $request->input('a_agent'));
+        }
+        if ($request->filled('a_commune')) {
+            $query->whereHas('infrastructure', fn ($i) => $i->where('commune', $request->input('a_commune')));
+        }
+        if ($request->filled('a_secteur')) {
+            $query->whereHas('infrastructure', fn ($i) => $i->where('secteur_domaine', $request->input('a_secteur')));
+        }
+    }
+
+    /**
+     * Paramètres de filtre à conserver après une action (retrait notamment).
+     */
+    private function assignmentFilterParams(Request $request): array
+    {
+        return array_filter(
+            $request->only(self::ASSIGNMENT_FILTERS),
+            fn ($v) => $v !== null && $v !== ''
+        );
     }
 
     /**
@@ -225,13 +321,16 @@ class InfrastructureAssignmentController extends Controller
     /**
      * Retirer une affectation (admin). Une affectation validée ne peut pas être retirée.
      */
-    public function revoke(InfrastructureAssignment $assignment)
+    public function revoke(Request $request, InfrastructureAssignment $assignment)
     {
         $user = auth()->user();
         abort_unless($user->isSuperAdmin() || $user->isCommuneAdmin(), 403);
 
+        $redirect = fn () => redirect()
+            ->route('infrastructure-assignments.index', $this->assignmentFilterParams($request));
+
         if ($assignment->isValidated()) {
-            return redirect()->route('infrastructure-assignments.index')->with('error', 'Cette affectation est déjà terminée (validée) et ne peut plus être retirée.');
+            return $redirect()->with('error', 'Cette affectation est déjà terminée (validée) et ne peut plus être retirée.');
         }
 
         // Sécurité : un admin de commune ne retire que les affectations de sa commune.
@@ -246,7 +345,72 @@ class InfrastructureAssignmentController extends Controller
         $agentLabel = optional($assignment->agent)->name ?: ('#' . $assignment->assigned_to);
         $assignment->delete();
 
-        return redirect()->route('infrastructure-assignments.index')->with('success', "Affectation de « {$infraLabel} » à {$agentLabel} retirée.");
+        return $redirect()->with('success', "Affectation de « {$infraLabel} » à {$agentLabel} retirée.");
+    }
+
+    /**
+     * Retirer plusieurs affectations d'un coup (« Retirer la sélection »)
+     * ou toutes celles correspondant aux filtres affichés (« Retirer tout »).
+     *
+     * Une affectation validée (mise à jour déjà approuvée) est toujours conservée.
+     */
+    public function bulkRevoke(Request $request)
+    {
+        $user = auth()->user();
+        abort_unless($user->isSuperAdmin() || $user->isCommuneAdmin(), 403);
+
+        $data = $request->validate([
+            'assignment_ids'   => ['sometimes', 'array'],
+            'assignment_ids.*' => ['integer'],
+            'select_all'       => ['sometimes'],
+        ]);
+
+        $redirect = fn () => redirect()
+            ->route('infrastructure-assignments.index', $this->assignmentFilterParams($request));
+
+        // Périmètre : uniquement les affectations d'infrastructures visibles par l'utilisateur
+        // (pour un admin de commune, visibleTo() restreint déjà à sa commune).
+        $query = InfrastructureAssignment::query()
+            ->whereHas('infrastructure', fn ($q) => $q->visibleTo($user));
+
+        // Une affectation validée est terminée : elle ne se retire jamais.
+        $query->where('status', '!=', InfrastructureAssignment::STATUS_VALIDATED);
+
+        $requested = null;
+        if (empty($data['select_all'])) {
+            $ids = collect($data['assignment_ids'] ?? [])
+                ->filter(fn ($v) => is_numeric($v))
+                ->map(fn ($v) => (int) $v)
+                ->unique()
+                ->values();
+
+            if ($ids->isEmpty()) {
+                return $redirect()->with('error', 'Veuillez sélectionner au moins une affectation à retirer.');
+            }
+
+            $query->whereIn('id', $ids);
+            $requested = $ids->count();
+        } else {
+            // « Retirer tout » : on ne retire que les affectations correspondant aux filtres affichés.
+            $this->applyAssignmentFilters($query, $request);
+        }
+
+        $targetIds = $query->pluck('id');
+        if ($targetIds->isEmpty()) {
+            return $redirect()->with('error', 'Aucune affectation retirable ne correspond à cette sélection.');
+        }
+
+        $deleted = 0;
+        foreach ($targetIds->chunk(500) as $chunk) {
+            $deleted += InfrastructureAssignment::whereIn('id', $chunk)->delete();
+        }
+
+        $message = "✅ {$deleted} affectation(s) retirée(s).";
+        if ($requested !== null && $requested > $deleted) {
+            $message .= ' ' . ($requested - $deleted) . " non retirée(s) : déjà validée(s) ou hors de votre périmètre.";
+        }
+
+        return $redirect()->with('success', $message);
     }
 
     /** Construit la requête paginée des infrastructures (filtres + affectations actives). */

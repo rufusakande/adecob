@@ -107,6 +107,9 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     Route::get('/infrastructures/export', [App\Http\Controllers\InfrastructureController::class, 'export'])->name('infrastructures.export');
     Route::get('/infrastructures/filter-options', [App\Http\Controllers\InfrastructureController::class, 'filterOptions'])->name('infrastructures.filter-options');
 
+    // Altitude (proxy serveur vers Open-Meteo) — doit rester AVANT la route « /infrastructures/{infrastructure} »
+    Route::get('/infrastructures/elevation', [App\Http\Controllers\InfrastructureController::class, 'elevation'])->name('infrastructures.elevation');
+
     // Gestion des fiches saisies hors-ligne (stockées dans le navigateur de l'appareil)
     Route::view('/infrastructures-hors-ligne', 'infrastructures.offline-pending')->name('infrastructures.offline');
 
@@ -127,6 +130,12 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     Route::match(['get','post'], '/infrastructures-planifiees/export-pdf-annuel', [App\Http\Controllers\InfrastructureController::class, 'exportPlannedAnnualPdf'])
         ->middleware('admin.access')->name('infrastructures.planned.export.annual');
 
+    // Exports Excel des fiches de planification (même présentation que les PDF)
+    Route::match(['get','post'], '/infrastructures-planifiees/export-excel', [App\Http\Controllers\InfrastructureController::class, 'exportPlannedExcel'])
+        ->middleware('admin.access')->name('infrastructures.planned.export.excel');
+    Route::match(['get','post'], '/infrastructures-planifiees/export-excel-annuel', [App\Http\Controllers\InfrastructureController::class, 'exportPlannedAnnualExcel'])
+        ->middleware('admin.access')->name('infrastructures.planned.export.excel.annual');
+
     // Planification single-infrastructure: formulaire et enregistrement
     Route::get('/infrastructures/{infrastructure}/plan', [App\Http\Controllers\InfrastructureController::class, 'planForm'])
         ->middleware('admin.access')->name('infrastructures.plan');
@@ -136,6 +145,10 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
     // Marquer une infrastructure planifiée comme réhabilitée
     Route::post('/infrastructures/{infrastructure}/mark-rehabilitated', [App\Http\Controllers\InfrastructureController::class, 'markAsRehabilitated'])
         ->middleware('admin.access')->name('infrastructures.mark-rehabilitated');
+
+    // Définir le statut d'exécution d'une infrastructure planifiée (select par ligne)
+    Route::post('/infrastructures/{infrastructure}/statut-execution', [App\Http\Controllers\InfrastructureController::class, 'updateExecutionStatus'])
+        ->middleware('admin.access')->name('infrastructures.update-status');
 
     Route::delete('infrastructures/{infrastructure}', [InfrastructureController::class, 'destroy'])->name('infrastructures.destroy');
     Route::get('/infrastructures/create', [App\Http\Controllers\InfrastructureController::class, 'create'])->name('infrastructures.create');
@@ -170,6 +183,8 @@ Route::middleware(['auth', 'check.approval'])->group(function () {
         ->middleware('admin.access')->name('infrastructure-assignments.list');
     Route::post('/affectations', [App\Http\Controllers\InfrastructureAssignmentController::class, 'store'])
         ->middleware('admin.access')->name('infrastructure-assignments.store');
+    Route::post('/affectations/retirer-lot', [App\Http\Controllers\InfrastructureAssignmentController::class, 'bulkRevoke'])
+        ->middleware('admin.access')->name('infrastructure-assignments.bulk-revoke');
     Route::delete('/affectations/{assignment}', [App\Http\Controllers\InfrastructureAssignmentController::class, 'revoke'])
         ->middleware('admin.access')->name('infrastructure-assignments.revoke');
 });

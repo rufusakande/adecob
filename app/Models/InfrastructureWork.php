@@ -9,6 +9,35 @@ class InfrastructureWork extends Model
 {
     use HasFactory;
 
+    /**
+     * Statuts d'exécution d'une intervention planifiée (ordre = progression).
+     * Source unique utilisée par la validation, le filtre et le tableau de la page
+     * « infrastructures planifiées ». Les couleurs associées sont définies dans la vue.
+     */
+    public const STATUTS_EXECUTION = [
+        'Non démarré',
+        'En cours',
+        'Partiellement exécuté',
+        'Terminé',
+        'Suspendu',
+    ];
+
+    /**
+     * Classe Bootstrap (badge / fond de ligne) associée à un statut d'exécution.
+     * Retourne null si le statut n'est pas défini ou inconnu.
+     */
+    public static function statutExecutionClass(?string $statut): ?string
+    {
+        return match ($statut) {
+            'Non démarré'           => 'secondary',
+            'En cours'              => 'info',
+            'Partiellement exécuté' => 'warning',
+            'Terminé'               => 'success',
+            'Suspendu'              => 'danger',
+            default                 => null,
+        };
+    }
+
     protected $fillable = [
         'infrastructure_id',
         'work_type',
