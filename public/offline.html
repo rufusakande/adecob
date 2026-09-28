@@ -1626,12 +1626,14 @@
             return;
         }
 
+        // Choix unique : on ne preselectionne que le premier arrondissement enregistre.
+        const savedArr = previousArrondissements.find(a => communeArrondissements.includes(a)) || null;
+
         communeArrondissements.forEach(arr => {
             const div = document.createElement('div');
             div.className = 'form-check form-check-inline';
-            const isChecked = previousArrondissements.includes(arr) ? 'checked' : '';
             div.innerHTML = `
-                <input class="form-check-input" type="checkbox" name="arrondissement[]" id="arr_${arr}" value="${arr}" ${isChecked}>
+                <input class="form-check-input" type="radio" name="arrondissement[]" id="arr_${arr}" value="${arr}" ${savedArr === arr ? 'checked' : ''}>
                 <label class="form-check-label" for="arr_${arr}">${arr}</label>
             `;
             arrContainer.appendChild(div);

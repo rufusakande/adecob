@@ -444,7 +444,9 @@ class InfrastructureController extends Controller
         $infrastructure->date = $validated['date'] ?? null;
         $infrastructure->nom_enqueteur = $validated['nom_enqueteur'];
         $infrastructure->numero_telephone = $validated['numero_telephone'] ?? null;
-        $infrastructure->arrondissement = json_encode($validated['arrondissement'] ?? []);
+        // Le cast « array » du modèle encode le tableau en JSON : ne pas encoder ici
+        // (= double encodage, source de valeurs illisibles en base).
+        $infrastructure->arrondissement = $validated['arrondissement'] ?? [];
         $infrastructure->village = $validated['village'] ?? null;
         $infrastructure->hameau = $validated['hameau'] ?? null;
         $infrastructure->latitude = $validated['latitude'] ?? null;
@@ -567,7 +569,9 @@ class InfrastructureController extends Controller
         } else {
             $infrastructure->commune = $validated['commune'] ?? null;
         }
-        $infrastructure->arrondissement = json_encode($validated['arrondissement'] ?? []);
+        // Le cast « array » du modèle encode le tableau en JSON : ne pas encoder ici
+        // (= double encodage, source de valeurs illisibles en base).
+        $infrastructure->arrondissement = $validated['arrondissement'] ?? [];
         $infrastructure->village = $validated['village'] ?? null;
         $infrastructure->hameau = $validated['hameau'] ?? null;
         $infrastructure->latitude = $validated['latitude'] ?? null;
@@ -1001,7 +1005,7 @@ class InfrastructureController extends Controller
             'work_type'           => 'required|string|max:255',
             'description'         => 'required|string|min:5|max:5000',
             'completion_date'     => 'required|date|after_or_equal:today',
-            'cost'                => 'required|numeric|min:0|max:9999999999999',
+            'cost'                => 'required|integer|min:0|max:9999999999',
             // Plage d'années d'exécution (structurée : début → fin)
             'annee_debut'         => 'required|integer|min:2000|max:2100',
             'annee_fin'           => 'required|integer|min:2000|max:2100|gte:annee_debut',
@@ -1010,27 +1014,31 @@ class InfrastructureController extends Controller
             'provider_name'       => 'nullable|string|max:255',
             'provider_contact'    => 'nullable|string|max:255',
             'observations'        => 'nullable|string|max:5000',
-            // Fiche triennale
+            // Fiche triennale — montants entiers uniquement (pas de décimales)
             'unite'               => 'nullable|string|max:255',
-            'quantite'            => 'nullable|numeric|min:0|max:9999999999999',
-            'cout_unitaire'       => 'nullable|numeric|min:0|max:9999999999999',
+            'quantite'            => 'nullable|integer|min:0|max:9999999999',
+            'cout_unitaire'       => 'nullable|integer|min:0|max:9999999999',
             'repartition_annees'  => 'nullable|array',
-            'repartition_annees.*' => 'nullable|numeric|min:0|max:9999999999999',
+            'repartition_annees.*' => 'nullable|integer|min:0|max:9999999999',
             'priorite'            => 'nullable|string|max:255',
-            // Fiche annuelle (par année)
+            // Fiche annuelle (par année) — montants entiers uniquement
             'trimestres_annees'           => 'nullable|array',
             'trimestres_annees.*'         => 'nullable|array',
-            'trimestres_annees.*.t1'      => 'nullable|numeric|min:0|max:9999999999999',
-            'trimestres_annees.*.t2'      => 'nullable|numeric|min:0|max:9999999999999',
-            'trimestres_annees.*.t3'      => 'nullable|numeric|min:0|max:9999999999999',
-            'trimestres_annees.*.t4'      => 'nullable|numeric|min:0|max:9999999999999',
+            'trimestres_annees.*.t1'      => 'nullable|integer|min:0|max:9999999999',
+            'trimestres_annees.*.t2'      => 'nullable|integer|min:0|max:9999999999',
+            'trimestres_annees.*.t3'      => 'nullable|integer|min:0|max:9999999999',
+            'trimestres_annees.*.t4'      => 'nullable|integer|min:0|max:9999999999',
             'statut_execution'    => 'nullable|string|max:255',
         ], [
             // Le coût total est généré automatiquement à partir de la quantité et du coût
             // unitaire : on guide l'utilisateur si l'un des deux manque.
-            'cost.required' => 'Le coût total est obligatoire : renseignez la quantité et le coût unitaire dans la fiche de planification triennale.',
-            'cost.numeric'  => 'Le coût total doit être un montant valide.',
-            'cost.min'      => 'Le coût total ne peut pas être négatif.',
+            'cost.required'         => 'Le coût total est obligatoire : renseignez la quantité et le coût unitaire dans la fiche de planification triennale.',
+            'cost.numeric'          => 'Le coût total doit être un montant valide.',
+            'cost.integer'          => 'Le coût total doit être un montant entier, sans décimale.',
+            'cost.min'              => 'Le coût total ne peut pas être négatif.',
+            'cost.max'              => 'Le coût total ne peut pas dépasser 9 999 999 999 FCFA.',
+            'quantite.integer'      => 'La quantité doit être un nombre entier, sans décimale.',
+            'cout_unitaire.integer' => 'Le coût unitaire doit être un montant entier, sans décimale.',
         ]);
 
         // Limite de sécurité sur la plage (ex. 12 années max pour éviter les abus).

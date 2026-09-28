@@ -191,13 +191,13 @@
                     <div class="col-md-4">
                         <label class="form-label">Année de début <span class="text-danger">*</span></label>
                         <input type="number" name="annee_debut" id="annee-debut" class="form-control @error('annee_debut') is-invalid @enderror"
-                               min="2000" max="2100" value="{{ $pDebut }}" required>
+                               min="2000" max="2100" step="1" value="{{ $pDebut }}" required>
                         @error('annee_debut')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Année de fin <span class="text-danger">*</span></label>
                         <input type="number" name="annee_fin" id="annee-fin" class="form-control @error('annee_fin') is-invalid @enderror"
-                               min="2000" max="2100" value="{{ $pFin }}" required>
+                               min="2000" max="2100" step="1" value="{{ $pFin }}" required>
                         <div class="form-text">Ex. : début 2027, fin 2030.</div>
                         @error('annee_fin')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
@@ -237,13 +237,13 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Quantité</label>
-                        <input type="number" name="quantite" class="form-control" min="0" step="0.01" placeholder="Ex. : 1"
+                        <input type="number" name="quantite" class="form-control" min="0" step="1" placeholder="Ex. : 1"
                                value="{{ old('quantite', optional($existingPlannedWork)->quantite) }}">
                         @error('quantite')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Coût unitaire (FCFA)</label>
-                        <input type="number" name="cout_unitaire" class="form-control" min="0" step="500" placeholder="Ex. : 2 500 000"
+                        <input type="number" name="cout_unitaire" class="form-control" min="0" step="1" placeholder="Ex. : 2 500 000"
                                value="{{ old('cout_unitaire', optional($existingPlannedWork)->cout_unitaire) }}">
                         @error('cout_unitaire')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
@@ -252,12 +252,9 @@
                          et un champ d'affichage formaté montre le montant à l'utilisateur. --}}
                     <div class="col-md-3">
                         <label class="form-label">Coût total (FCFA)</label>
-                        <div class="input-group">
-                            <input type="text" id="cout-total-display" class="form-control cost-input" readonly tabindex="-1"
-                                   placeholder="—"
-                                   value="{{ old('cost', optional($existingPlannedWork)->cost) ? number_format((float) old('cost', optional($existingPlannedWork)->cost), 0, ',', ' ') : '' }}">
-                            <span class="input-group-text">FCFA</span>
-                        </div>
+                        <input type="text" id="cout-total-display" class="form-control cost-input" readonly tabindex="-1"
+                               placeholder="—"
+                               value="{{ old('cost', optional($existingPlannedWork)->cost) ? number_format((float) old('cost', optional($existingPlannedWork)->cost), 0, ',', ' ') : '' }}">
                         <input type="hidden" name="cost" id="cout-total" value="{{ old('cost', optional($existingPlannedWork)->cost) }}">
                         <div class="form-text">Calculé automatiquement : quantité × coût unitaire.</div>
                         @error('cost')<div class="text-danger small">{{ $message }}</div>@enderror
@@ -270,7 +267,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Répartition {{ $yr }} (FCFA)</label>
                             <input type="number" name="repartition_annees[{{ $yr }}]" class="form-control repartition-input"
-                                   min="0" step="500" placeholder="Ex. : 2 500 000" data-year="{{ $yr }}"
+                                   min="0" step="1" placeholder="Ex. : 2 500 000" data-year="{{ $yr }}"
                                    value="{{ old('repartition_annees.' . $yr, $pRepart[$yr] ?? '') }}">
                         </div>
                     @endforeach
@@ -286,22 +283,28 @@
                         <div class="col-12 annual-year-block" data-year="{{ $yr }}">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <span class="badge bg-success-subtle text-success fs-6">Exercice {{ $yr }}</span>
-                                <span class="small text-muted">Budget annuel repris automatiquement de la répartition triennale.</span>
+                                <span class="small text-muted">Budget annuel de l'exercice — saisissable ici ou dans la répartition triennale.</span>
                             </div>
-                            <div class="row g-2 align-items-end">
-                                <div class="col-md-4">
+                            {{-- Ligne en flex : les champs se placent côte à côte tant qu'il y a
+                                 la place, puis passent automatiquement à la ligne. Chaque champ
+                                 conserve une largeur plancher (flex-shrink-0) qui permet
+                                 d'afficher 10 chiffres, s'élargit (flex-grow-1) pour occuper la
+                                 ligne, et reste plafonné (max-width) pour ne pas s'étirer seul
+                                 sur toute la largeur. Le budget annuel est saisissable : sa
+                                 valeur est répercutée sur la « Répartition » triennale de la
+                                 même année, qui reste le champ réellement enregistré. --}}
+                            <div class="d-flex flex-wrap align-items-end gap-2">
+                                <div class="flex-grow-1 flex-shrink-0" style="flex-basis:200px; max-width:280px;">
                                     <label class="form-label">Budget annuel (FCFA)</label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control annual-budget-input" readonly tabindex="-1"
-                                               value="{{ old('repartition_annees.' . $yr, $pRepart[$yr] ?? '') ? number_format((float)(old('repartition_annees.' . $yr, $pRepart[$yr] ?? '')), 0, ',', ' ') : '' }}">
-                                        <span class="input-group-text">FCFA</span>
-                                    </div>
+                                    <input type="number" class="form-control annual-budget-input" data-year="{{ $yr }}"
+                                           min="0" step="1" placeholder="Ex. : 2 500 000"
+                                           value="{{ old('repartition_annees.' . $yr, $pRepart[$yr] ?? '') }}">
                                 </div>
                                 @foreach(['t1'=>'Trimestre 1','t2'=>'Trimestre 2','t3'=>'Trimestre 3','t4'=>'Trimestre 4'] as $qk => $qlbl)
-                                    <div class="col-6 col-md-2">
+                                    <div class="flex-grow-1 flex-shrink-0" style="flex-basis:145px; max-width:280px;">
                                         <label class="form-label">{{ $qlbl }} (FCFA)</label>
                                         <input type="number" name="trimestres_annees[{{ $yr }}][{{ $qk }}]" class="form-control quarter-input"
-                                               min="0" step="500" data-quarter="{{ $qk }}"
+                                               min="0" step="1" data-quarter="{{ $qk }}"
                                                value="{{ old('trimestres_annees.' . $yr . '.' . $qk, $q[$qk] ?? '') }}">
                                     </div>
                                 @endforeach
@@ -411,7 +414,7 @@
             const col = document.createElement('div');
             col.className = 'col-md-4';
             col.innerHTML = '<label class="form-label">Répartition ' + y + ' (FCFA)</label>' +
-                '<input type="number" name="repartition_annees[' + y + ']" class="form-control repartition-input" min="0" step="500" ' +
+                '<input type="number" name="repartition_annees[' + y + ']" class="form-control repartition-input" min="0" step="1" ' +
                 'placeholder="Ex. : 2 500 000" data-year="' + y + '" value="' + esc(saved.rep[y] || '') + '">';
             trienFields.appendChild(col);
         });
@@ -425,18 +428,20 @@
             blk.setAttribute('data-year', y);
             const quarters = ['t1', 't2', 't3', 't4'];
             const qInputs = quarters.map(function (qn) {
-                return '<div class="col-6 col-md-2"><label class="form-label">Trimestre ' + qn.toUpperCase() + ' (FCFA)</label>' +
+                return '<div class="flex-grow-1 flex-shrink-0" style="flex-basis:145px; max-width:280px;">' +
+                    '<label class="form-label">Trimestre ' + qn.toUpperCase() + ' (FCFA)</label>' +
                     '<input type="number" name="trimestres_annees[' + y + '][' + qn + ']" class="form-control quarter-input" ' +
-                    'min="0" step="500" data-quarter="' + qn + '" value="' + esc(q[qn] || '') + '"></div>';
+                    'min="0" step="1" data-quarter="' + qn + '" value="' + esc(q[qn] || '') + '"></div>';
             }).join('');
             blk.innerHTML =
                 '<div class="d-flex align-items-center gap-2 mb-2">' +
                 '<span class="badge bg-success-subtle text-success fs-6">Exercice ' + y + '</span>' +
-                '<span class="small text-muted">Budget annuel repris automatiquement de la répartition triennale.</span></div>' +
-                '<div class="row g-2 align-items-end">' +
-                '<div class="col-md-4"><label class="form-label">Budget annuel (FCFA)</label>' +
-                '<div class="input-group"><input type="text" class="form-control annual-budget-input" readonly tabindex="-1" value="">' +
-                '<span class="input-group-text">FCFA</span></div></div>' +
+                '<span class="small text-muted">Budget annuel de l\'exercice — saisissable ici ou dans la répartition triennale.</span></div>' +
+                '<div class="d-flex flex-wrap align-items-end gap-2">' +
+                '<div class="flex-grow-1 flex-shrink-0" style="flex-basis:200px; max-width:280px;">' +
+                '<label class="form-label">Budget annuel (FCFA)</label>' +
+                '<input type="number" class="form-control annual-budget-input" data-year="' + y + '" min="0" step="1" ' +
+                'placeholder="Ex. : 2 500 000" value="' + esc(saved.rep[y] || '') + '"></div>' +
                 qInputs +
                 '</div>';
             annFields.appendChild(blk);
@@ -445,21 +450,38 @@
         syncAnnualBudgets();
     }
 
-    // Le budget annuel d'une année = répartition triennale de cette année.
+    // Le « Budget annuel » et la « Répartition triennale » d'une même année portent
+    // le même montant : il est saisissable depuis l'un ou l'autre champ.
+    // (Le champ enregistré reste la répartition triennale.)
+    function syncBudgetPair(year, source) {
+        const repInput = trienFields.querySelector('.repartition-input[data-year="' + year + '"]');
+        const budInput = annFields.querySelector('.annual-year-block[data-year="' + year + '"] .annual-budget-input');
+        if (!repInput || !budInput) return;
+
+        const from = (source === 'bud') ? budInput.value : repInput.value;
+        const to   = (source === 'bud') ? repInput : budInput;
+
+        // Affecter « value » ne déclenche aucun événement : aucun risque de boucle.
+        if (to.value !== from) to.value = from;
+    }
+
     function syncAnnualBudgets() {
         annFields.querySelectorAll('.annual-year-block').forEach(function (blk) {
-            const y = blk.getAttribute('data-year');
-            const repInput = trienFields.querySelector('.repartition-input[data-year="' + y + '"]');
-            const budgetInput = blk.querySelector('.annual-budget-input');
-            if (repInput && budgetInput) {
-                budgetInput.value = fmtMoney(repInput.value);
-            }
+            syncBudgetPair(blk.getAttribute('data-year'), 'rep');
         });
     }
 
     trienFields.addEventListener('input', function (e) {
         if (e.target.classList && e.target.classList.contains('repartition-input')) {
             syncAnnualBudgets();
+        }
+    });
+
+    // Saisie directe du budget annuel : on répercute sur la répartition triennale,
+    // le champ réellement enregistré.
+    annFields.addEventListener('input', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('annual-budget-input')) {
+            syncBudgetPair(e.target.getAttribute('data-year'), 'bud');
         }
     });
 

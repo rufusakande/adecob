@@ -22,7 +22,8 @@ class InfrastructureRequest extends FormRequest
             'nom_enqueteur' => ['required', 'string', 'min:2', 'max:120', 'regex:/^[\p{L}\p{M}\s\'\-\.]+$/u'],
             'numero_telephone' => ['nullable', 'string', 'regex:/^(\+229|00229)?[\s\-]?[0-9]{8,10}$/'],
             'commune' => 'nullable|string|max:120',
-            'arrondissement' => 'nullable|array|max:20',
+            // Choix unique : un seul arrondissement est transmis.
+            'arrondissement' => 'nullable|array|max:1',
             'arrondissement.*' => 'string|max:120',
             'village' => 'nullable|string|max:120',
             'hameau' => 'nullable|string|max:120',

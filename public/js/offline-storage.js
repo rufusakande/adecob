@@ -2,7 +2,7 @@
 localforage.config({
     name: 'ADECOB',
     storeName: 'infrastructures_offline',
-    description: 'Stockage des infrastructures cr��es hors-ligne'
+    description: 'Stockage des infrastructures creees hors-ligne'
 });
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -57,12 +57,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 existingData.push(data);
                 await localforage.setItem('pending_infrastructures', existingData);
                 
-                // Reset UI
+                // Retour a l'etape 1 avec des champs vides, pret pour une nouvelle saisie.
                 submitBtn.innerHTML = originalBtnText;
                 submitBtn.disabled = false;
-                form.reset();
-                form.classList.remove('was-validated');
-                window.scrollTo(0, 0);
+                resetOfflineForm(form);
                 
                 // Show success banner
                 showSuccessBanner();
@@ -92,7 +90,7 @@ async function updatePendingCount() {
         if (container) {
             const existingBadge = document.getElementById('pending-badge');
             if (existingData.length > 0) {
-                const html = '<div id="pending-badge" class="alert alert-warning text-center fw-bold shadow-sm"><i class="bi bi-hdd-fill me-2"></i> Vous avez ' + existingData.length + ' infrastructure(s) sauvegard�e(s) sur cet appareil, en attente de synchronisation.</div>';
+                const html = '<div id="pending-badge" class="alert alert-warning text-center fw-bold shadow-sm"><i class="bi bi-hdd-fill me-2"></i> Vous avez ' + existingData.length + ' infrastructure(s) sauvegardee(s) sur cet appareil, en attente de synchronisation.</div>';
                 if (existingBadge) {
                     existingBadge.outerHTML = html;
                 } else {
@@ -108,9 +106,54 @@ async function updatePendingCount() {
 function showSuccessBanner() {
     const container = document.getElementById('offline-ui-container');
     if (container) {
-        const html = '<div class="alert alert-success alert-dismissible fade show text-center shadow-sm" role="alert"><h4 class="alert-heading fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Sauvegarde r�ussie !</h4><p class="mb-0">L\'infrastructure a bien �t� enregistr�e sur votre t�l�phone.</p><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        const html = '<div class="alert alert-success alert-dismissible fade show text-center shadow-sm" role="alert"><h4 class="alert-heading fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Sauvegarde reussie !</h4><p class="mb-0">L\'infrastructure a bien ete enregistree sur votre telephone.</p><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
         container.insertAdjacentHTML('afterbegin', html);
     }
+}
+
+/**
+ * Reinitialise entierement le formulaire hors-ligne apres une sauvegarde :
+ * champs vides et retour a la premiere etape du stepper.
+ */
+function resetOfflineForm(form) {
+    if (!form) return;
+
+    form.reset();
+    form.classList.remove('was-validated');
+
+    // Les apercus de photos ne sont pas vides par form.reset().
+    form.querySelectorAll('input[type="file"]').forEach(function (input) { input.value = ''; });
+    form.querySelectorAll('[id^="upload-preview-"]').forEach(function (el) { el.innerHTML = ''; });
+
+    // Les listes d'arrondissements et de types sont generees dynamiquement :
+    // on les reconstruit pour repartir d'un etat vierge.
+    if (typeof window.updateArrondissements === 'function') {
+        window.updateArrondissements();
+    }
+    if (typeof window.updateTypesBySecteur === 'function') {
+        window.updateTypesBySecteur();
+    }
+
+    // Retour a la premiere etape.
+    form.querySelectorAll('.step').forEach(function (step, index) {
+        step.style.display = index === 0 ? 'block' : 'none';
+    });
+
+    const stepper = document.getElementById('infraStepper');
+    if (stepper) {
+        stepper.querySelectorAll('.st-item').forEach(function (item) {
+            item.classList.remove('done');
+            item.classList.toggle('active', parseInt(item.dataset.step, 10) === 1);
+        });
+    }
+
+    // Qualite de la saisie remise a zero.
+    const bar = document.getElementById('completionBar');
+    const txt = document.getElementById('completionText');
+    if (bar) bar.style.width = '0%';
+    if (txt) txt.textContent = '0 %';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Helper to convert File to Base64
