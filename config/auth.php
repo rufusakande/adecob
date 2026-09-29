@@ -112,4 +112,20 @@ return [
 
     'password_timeout' => 10800,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Authentification multi-facteurs (MFA)
+    |--------------------------------------------------------------------------
+    |
+    | La MFA par code OTP est obligatoire pour les rôles super_admin et
+    | commune_admin. Elle peut être mise EN PAUSE via MFA_ENABLED=false :
+    | ces comptes se connectent alors directement, comme les agents.
+    |
+    | ⚠️ Par défaut la MFA est ACTIVE. Ne passer à false que temporairement
+    |    (phase de test) et rétablir la valeur ensuite.
+    |
+    */
+
+    'mfa_enabled' => env('MFA_ENABLED', true),
+
 ];

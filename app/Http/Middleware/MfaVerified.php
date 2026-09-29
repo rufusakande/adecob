@@ -17,8 +17,10 @@ class MfaVerified
 
         $user = Auth::user();
 
-        // MFA requis uniquement pour super_admin et commune_admin
-        if (!$user->isSuperAdmin() && !$user->isCommuneAdmin()) {
+        // MFA requise uniquement pour super_admin et commune_admin,
+        // et seulement si la fonctionnalité n'est pas mise en pause
+        // (voir auth.mfa_enabled / MFA_ENABLED).
+        if (!$user->requiresMfa()) {
             return $next($request);
         }
 

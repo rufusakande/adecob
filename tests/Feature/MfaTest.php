@@ -16,13 +16,23 @@ class MfaTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Ces tests vérifient le fonctionnement de la MFA : on force son activation,
+     * indépendamment de la valeur de MFA_ENABLED dans l'environnement
+     * (la MFA peut être mise en pause pour une phase de test).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['auth.mfa_enabled' => true]);
+    }
+
     protected function makeAdmin(string $role = 'super_admin'): User
     {
         $communeId = null;
         if ($role === 'commune_admin') {
-            $communeId = Commune::factory()->create()->id ?? Commune::create([
-                'name' => 'TestCommune',
-            ])->id;
+            // Ce projet ne fournit pas de CommuneFactory : création directe.
+            $communeId = Commune::create(['name' => 'TestCommune'])->id;
         }
 
         $admin = User::create([
@@ -138,6 +148,28 @@ class MfaTest extends TestCase
 
         $this->post(route('mfa.verify'), ['code' => '123456'])
             ->assertSessionHasErrors('code');
+    }
+
+    /** @test */
+    public function commune_admin_dashboard_requires_mfa_when_enabled(): void
+    {
+        // Le middleware commune.admin impose la MFA de son côté : il doit
+        // continuer à le faire quand la MFA est active (pas de contournement).
+        $admin = $this->makeAdmin('commune_admin');
+        $this->actingAs($admin);
+
+        $this->get(route('commune-admin.dashboard'))->assertRedirect(route('mfa.show'));
+
+        // Après validation du code, l'accès est accordé.
+        $code = '654321';
+        MfaCode::create([
+            'user_id'    => $admin->id,
+            'code_hash'  => Hash::make($code),
+            'expires_at' => now()->addMinutes(10),
+        ]);
+        $this->post(route('mfa.verify'), ['code' => $code])->assertRedirect();
+
+        $this->get(route('commune-admin.dashboard'))->assertOk();
     }
 
     /** @test */

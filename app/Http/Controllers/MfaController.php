@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MfaCode;
+use App\Models\User;
 use App\Notifications\MfaCodeNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,9 +22,10 @@ class MfaController extends Controller
             return redirect()->route('login.form');
         }
 
-        // Si MFA pas requis pour ce rôle, on dégage.
-        if (!$user->isSuperAdmin() && !$user->isCommuneAdmin()) {
-            return redirect()->intended('/home');
+        // Si la MFA n'est pas requise pour ce compte (rôle non concerné ou
+        // fonctionnalité en pause), on renvoie directement vers son espace.
+        if (!$user->requiresMfa()) {
+            return redirect()->intended($this->dashboardFor($user));
         }
 
         // Envoyer un code la première fois.
@@ -106,6 +108,18 @@ class MfaController extends Controller
             return redirect()->intended(route('commune-admin.dashboard'));
         }
         return redirect()->intended('/home');
+    }
+
+    /** Espace d'accueil d'un compte selon son rôle (après authentification). */
+    private function dashboardFor(User $user): string
+    {
+        if ($user->isSuperAdmin()) {
+            return route('admin.dashboard');
+        }
+        if ($user->isCommuneAdmin()) {
+            return route('commune-admin.dashboard');
+        }
+        return '/home';
     }
 
     protected function issueCode($user, Request $request): void

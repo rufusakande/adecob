@@ -108,4 +108,17 @@ class User extends Authenticatable
     {
         return $this->is_approved === true;
     }
+
+    /**
+     * La MFA (code OTP par e-mail) est-elle requise pour ce compte ?
+     *
+     * Elle ne concerne que les rôles d'administration, et peut être mise en
+     * pause globalement via la configuration « auth.mfa_enabled »
+     * (variable d'environnement MFA_ENABLED=false).
+     */
+    public function requiresMfa(): bool
+    {
+        return (bool) config('auth.mfa_enabled', true)
+            && ($this->isSuperAdmin() || $this->isCommuneAdmin());
+    }
 }
